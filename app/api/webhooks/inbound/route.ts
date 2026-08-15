@@ -200,7 +200,7 @@ async function handleCustomerReply(args: {
 }
 
 // ========== 通知老板（邮件 + 可选 Slack） ==========
-export async function notifyOwner(
+async function notifyOwner(
   admin: ReturnType<typeof createAdminClient>,
   account: any,
   text: string,
