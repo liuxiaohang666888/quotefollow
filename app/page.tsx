@@ -1,3 +1,5 @@
+import PayPalSubscribeButton from '../components/PayPalSubscribeButton';
+
 const PAYPAL_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || '#';
 
 export default function LandingPage() {
@@ -16,9 +18,7 @@ export default function LandingPage() {
             follows up for you on day 1, 3, and 7 — answers common questions
             automatically — and pings you the second a customer sounds ready to book.
           </p>
-          <a className="btn" href={PAYPAL_URL}>
-            Get Started — $29/mo
-          </a>
+          <PayPalSubscribeButton label="Get Started — $29/mo" />
           <a className="btn secondary" href="#pricing">
             See pricing
           </a>
@@ -78,7 +78,7 @@ export default function LandingPage() {
                 <li>Hot-lead alerts</li>
                 <li>Slack notifications</li>
               </ul>
-              <a className="btn" href={PAYPAL_URL}>Start monthly</a>
+              <PayPalSubscribeButton label="Start monthly" />
             </div>
             <div className="price-card featured">
               <span className="tag">Best value</span>

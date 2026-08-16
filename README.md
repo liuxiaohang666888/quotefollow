@@ -20,8 +20,9 @@ inbox; we chase them on day 1/3/7, answer common questions, and ping you on hot 
 | Cloudflare account (optional, for custom inbox domain) | cloudflare.com | Free |
 | PayPal account (Dad's, receives money) | paypal.com | Free |
 
-> 收款：产品页 "Get Started" 按钮直接指到你的 PayPal 发票链接（在 paypal.com 后台
-> "请求付款 / 创建发票" 生成，把链接填进 `NEXT_PUBLIC_PAYPAL_INVOICE_URL`）。
+> 收款：产品页 "Get Started" 按钮直接嵌 PayPal 订阅按钮（在 paypal.com 后台
+> "定期付款计划" 创建 $29/月订阅，拿到 `plan_id` 和 SDK `client-id`，填进
+> `NEXT_PUBLIC_PAYPAL_PLAN_ID` / `NEXT_PUBLIC_PAYPAL_CLIENT_ID`）。未配置时回退到发票链接。
 
 ---
 
@@ -98,7 +99,9 @@ inbox; we chase them on day 1/3/7, answer common questions, and ping you on hot 
 | `RESEND_API_KEY` | from step 2 |
 | `RESEND_FROM_EMAIL` | `Your Business <followup@yourdomain.com>` |
 | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` (after first deploy, update this) |
-| `NEXT_PUBLIC_PAYPAL_INVOICE_URL` | your PayPal invoice link |
+| `NEXT_PUBLIC_PAYPAL_PLAN_ID` | your PayPal subscription plan_id (from step 4) |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | your PayPal SDK client-id (from step 4) |
+| `NEXT_PUBLIC_PAYPAL_INVOICE_URL` | your PayPal invoice link (fallback for yearly card) |
 | `INBOUND_WEBHOOK_SECRET` | any long random string, e.g. `qf_` + 24 random chars |
 | `CRON_SECRET` | another long random string |
 
