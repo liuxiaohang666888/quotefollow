@@ -57,11 +57,16 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1>Your quotes</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <h1>Your quotes</h1>
+        <Link href="/dashboard/new" className="btn" style={{ width: 'fit-content', padding: '10px 16px' }}>
+          + Add a quote
+        </Link>
+      </div>
       <p className="page-sub">
         {account?.followup_email
-          ? <>Forward or BCC every quote to <strong>{account.followup_email}</strong> and it appears here automatically.</>
-          : <>Set up your follow-up inbox in <Link href="/dashboard/settings" style={{ color: '#2563eb' }}>Settings</Link>.</>}
+          ? <>Forward or BCC every quote to <strong>{account.followup_email}</strong> and it appears here automatically — or click <strong>Add a quote</strong> to paste it in.</>
+          : <>Click <strong>Add a quote</strong> and paste the email you sent a customer, or set up your follow-up inbox in <Link href="/dashboard/settings" style={{ color: '#2563eb' }}>Settings</Link>.</>}
       </p>
 
       <div className="status-pills">
@@ -86,7 +91,7 @@ export default function DashboardPage() {
           <div className="big">{filter === 'all' ? 'No quotes yet' : 'Nothing here'}</div>
           <p>
             {filter === 'all'
-              ? 'Send your next quote with a BCC to your follow-up inbox and watch it appear here — with follow-ups handled automatically.'
+              ? 'Click “+ Add a quote” above and paste the email you sent a customer — we’ll read it, save it, and start the Day 1 / 3 / 7 follow-ups automatically.'
               : 'Quotes in this status will show up here.'}
           </p>
         </div>
