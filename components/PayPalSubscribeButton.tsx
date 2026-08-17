@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
+const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
 const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL;
 
@@ -14,15 +14,19 @@ declare global {
 
 export default function PayPalSubscribeButton({
   label = 'Get Started — $29/mo',
+  planId,
   fallbackHref,
 }: {
   label?: string;
+  planId?: string;
   fallbackHref?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // 传入 planId 优先（如 yearly 专属计划），否则用默认订阅计划
+  const activePlanId = planId || DEFAULT_PLAN_ID;
 
   useEffect(() => {
-    if (!PLAN_ID || !CLIENT_ID || !containerRef.current) return;
+    if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
 
     const render = () => {
       if (!window.paypal || !containerRef.current) return;
@@ -36,7 +40,7 @@ export default function PayPalSubscribeButton({
             label: 'subscribe',
           },
           createSubscription: (data: any, actions: any) =>
-            actions.subscription.create({ plan_id: PLAN_ID }),
+            actions.subscription.create({ plan_id: activePlanId }),
           onApprove: (data: any) => {
             window.location.href = `/signup?sub=${data.subscriptionID}`;
           },
@@ -58,10 +62,10 @@ export default function PayPalSubscribeButton({
     return () => {
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
-  }, []);
+  }, [activePlanId]);
 
   // 没配置订阅计划 → 回退到普通发票链接
-  if (!PLAN_ID || !CLIENT_ID) {
+  if (!activePlanId || !CLIENT_ID) {
     return (
       <a className="btn" href={fallbackHref || INVOICE_URL || '#'}>
         {label}

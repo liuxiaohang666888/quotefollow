@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -13,6 +13,14 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  // PayPal 付款成功后会带 ?sub=<subscriptionID> 跳过来，识别到就显示"已收款"横幅 + 换标题
+  const [paid, setPaid] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sub = new URLSearchParams(window.location.search).get('sub');
+      if (sub) setPaid(true);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,6 +65,13 @@ export default function SignupPage() {
       return;
     }
 
+    // 3) 自动确认邮箱（service_role 后端确认，跳过邮件验证，保证全自动）
+    fetch('/api/signup/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    }).catch((e) => console.warn('[signup] auto-confirm failed:', e));
+
     router.push('/dashboard');
     router.refresh();
   }
@@ -64,8 +79,21 @@ export default function SignupPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <h1>Start your 14-day free trial</h1>
-        <p className="sub">Set up in 10 minutes — no credit card required</p>
+        {paid && (
+          <div style={{
+            background: '#d1fae5', border: '1px solid #10b981', color: '#065f46',
+            borderRadius: 10, padding: '12px 16px', fontSize: 14, fontWeight: 600,
+            marginBottom: 20,
+          }}>
+            ✓ Payment received — create your account below to open your dashboard.
+          </div>
+        )}
+        <h1>{paid ? 'Create your account' : 'Start your 14-day free trial'}</h1>
+        <p className="sub">
+          {paid
+            ? "You're 30 seconds away from your dashboard."
+            : 'Set up in 10 minutes — no credit card required'}
+        </p>
         {error && <div className="error-box">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="field">

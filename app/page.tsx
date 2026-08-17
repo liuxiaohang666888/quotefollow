@@ -1,8 +1,6 @@
 import PayPalSubscribeButton from '../components/PayPalSubscribeButton';
 import DemoPreview from './components/DemoPreview';
 
-const PAYPAL_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || '#';
-
 export default function LandingPage() {
   return (
     <div>
@@ -68,11 +66,56 @@ export default function LandingPage() {
       {/* ===== Live Demo Preview ===== */}
       <DemoPreview />
 
+      {/* ===== Why I built this ===== */}
+      <section style={{ padding: '72px 0', background: '#fff', borderBottom: '1px solid var(--border)' }}>
+        <div className="container" style={{ maxWidth: 720 }}>
+          <h2 style={{ fontSize: 28, textAlign: 'center', marginBottom: 24 }}>Why I built this</h2>
+          <p style={{ fontSize: 17, lineHeight: 1.7 }}>
+            A few years back, a friend who runs a cleaning company told me he&apos;d
+            sent out dozens of quotes that month — and only heard back from a
+            handful. He was busy doing the actual jobs, so the quotes just sat
+            there. When we added it up, the deals he never followed up on came to
+            about <strong>$23,000</strong> in lost work that quarter. Not because
+            his prices were wrong — just because nobody followed up.
+          </p>
+          <p style={{ fontSize: 17, lineHeight: 1.7, marginTop: 16 }}>
+            QuoteFollow exists so that never happens to you. You send the quote
+            exactly like you always do — and the follow-up happens automatically,
+            even on your busiest week.
+          </p>
+        </div>
+      </section>
+
+      {/* ===== What happens after you subscribe ===== */}
+      <section style={{ padding: '64px 0', background: '#eff6ff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="container" style={{ maxWidth: 760, textAlign: 'center' }}>
+          <h2 style={{ fontSize: 26, marginBottom: 8 }}>What happens after you subscribe</h2>
+          <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 32 }}>Three quick steps. About 2 minutes total.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, textAlign: 'left' }}>
+            <div className="card" style={{ margin: 0 }}>
+              <div className="step-num">1</div>
+              <h3 style={{ fontSize: 16, margin: '10px 0 6px' }}>PayPal checkout</h3>
+              <p style={{ fontSize: 14, color: 'var(--muted)' }}>Click subscribe, pay $29/month on PayPal. Cancel any time.</p>
+            </div>
+            <div className="card" style={{ margin: 0 }}>
+              <div className="step-num">2</div>
+              <h3 style={{ fontSize: 16, margin: '10px 0 6px' }}>Create your account</h3>
+              <p style={{ fontSize: 14, color: 'var(--muted)' }}>We redirect you to a quick sign-up — just email + password (30 seconds).</p>
+            </div>
+            <div className="card" style={{ margin: 0 }}>
+              <div className="step-num">3</div>
+              <h3 style={{ fontSize: 16, margin: '10px 0 6px' }}>Dashboard ready</h3>
+              <p style={{ fontSize: 14, color: 'var(--muted)' }}>Connect your follow-up inbox, teach the AI about your business — done.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== Pricing ===== */}
       <section className="pricing" id="pricing">
         <div className="container">
           <h2>Simple pricing</h2>
-          <div className="price-cards">
+          <div className="price-cards" style={{ gridTemplateColumns: 'minmax(0, 420px)', justifyContent: 'center' }}>
             <div className="price-card">
               <div className="amount">
                 $29<small>/month</small>
@@ -86,20 +129,6 @@ export default function LandingPage() {
                 <li>Slack notifications</li>
               </ul>
               <PayPalSubscribeButton label="Start monthly" />
-            </div>
-            <div className="price-card featured">
-              <span className="tag">Best value</span>
-              <div className="amount">
-                $199<small>/year</small>
-              </div>
-              <ul>
-                <li>Everything in Monthly</li>
-                <li>43% off — less than $17/mo</li>
-                <li>Custom follow-up template built for your business</li>
-                <li>Priority onboarding call</li>
-                <li>Founding member pricing, locked in forever</li>
-              </ul>
-              <a className="btn" href={PAYPAL_URL}>Start yearly</a>
             </div>
           </div>
         </div>
