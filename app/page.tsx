@@ -1,4 +1,5 @@
 import PayPalSubscribeButton from '../components/PayPalSubscribeButton';
+import DemoPreview from './components/DemoPreview';
 
 const PAYPAL_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || '#';
 
@@ -19,7 +20,10 @@ export default function LandingPage() {
             automatically — and pings you the second a customer sounds ready to book.
           </p>
           <PayPalSubscribeButton label="Get Started — $29/mo" />
-          <a className="btn secondary" href="#pricing">
+          <a className="btn secondary" href="#demo">
+            ▶ See it in action (free preview)
+          </a>
+          <a className="btn ghost" href="#pricing">
             See pricing
           </a>
           <div className="proof">
@@ -60,6 +64,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ===== Live Demo Preview ===== */}
+      <DemoPreview />
 
       {/* ===== Pricing ===== */}
       <section className="pricing" id="pricing">

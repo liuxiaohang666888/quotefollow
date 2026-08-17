@@ -81,6 +81,14 @@ button { font-family: inherit; }
   margin-left: 12px;
 }
 .btn.secondary:hover { background: #f9fafb; }
+.btn.ghost {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+.btn.ghost:hover { color: var(--fg); text-decoration: underline; }
 
 /* PayPal 订阅按钮容器：在 hero 中居中，在价格卡片中占满宽度 */
 .paypal-subscribe {
