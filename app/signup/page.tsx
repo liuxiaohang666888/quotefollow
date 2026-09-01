@@ -14,7 +14,6 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
-  // PayPal 付款成功后带 ?sub=<subscriptionID> 跳过来
   const [paid, setPaid] = useState(false);
   const [subId, setSubId] = useState('');
   
@@ -42,7 +41,6 @@ export default function SignupPage() {
 
     const supabase = createClient();
 
-    // 1) 创建 auth 用户
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
@@ -59,7 +57,6 @@ export default function SignupPage() {
       return;
     }
 
-    // 2) 创建 accounts 记录
     const { error: accError } = await supabase.from('accounts').insert({
       id: userId,
       business_name: businessName,
@@ -73,14 +70,12 @@ export default function SignupPage() {
       return;
     }
 
-    // 3) 自动确认邮箱
     fetch('/api/signup/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
     }).catch((e) => console.warn('[signup] auto-confirm failed:', e));
 
-    // 4) 直接跳到 Dashboard
     router.push('/dashboard');
     router.refresh();
   }
@@ -90,12 +85,12 @@ export default function SignupPage() {
       <div className="auth-card">
         {paid && (
           <div style={{
-            background: 'rgba(16,185,129,0.1)', 
-            border: '1px solid rgba(16,185,129,0.3)', 
+            background: 'rgba(16,185,129,0.1)',
+            border: '1px solid rgba(16,185,129,0.3)',
             color: '#34d399',
-            borderRadius: 12, 
-            padding: '14px 18px', 
-            fontSize: 14, 
+            borderRadius: 12,
+            padding: '14px 18px',
+            fontSize: 14,
             fontWeight: 600,
             marginBottom: 24,
             display: 'flex',
@@ -139,15 +134,7 @@ export default function SignupPage() {
               onChange={(e) => setBusinessName(e.target.value)}
               placeholder="e.g. Sparkle Clean Co."
               required
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: 'var(--bg-glass)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                color: 'var(--fg)',
-                font-size: 15,
-              }}
+              className="field-input"
             />
           </div>
           
@@ -161,15 +148,7 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@yourbusiness.com"
               required
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: 'var(--bg-glass)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                color: 'var(--fg)',
-                font-size: 15,
-              }}
+              className="field-input"
             />
           </div>
           
@@ -184,15 +163,7 @@ export default function SignupPage() {
               placeholder="At least 8 characters"
               required
               autoComplete="new-password"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: 'var(--bg-glass)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                color: 'var(--fg)',
-                font-size: 15,
-              }}
+              className="field-input"
             />
           </div>
           
@@ -205,24 +176,16 @@ export default function SignupPage() {
               value={followupEmail}
               onChange={(e) => setFollowupEmail(e.target.value)}
               placeholder="follow@yourbusiness.com"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: 'var(--bg-glass)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                color: 'var(--fg)',
-                font-size: 15,
-              }}
+              className="field-input"
             />
             <div style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 6 }}>
-              The address you'll BCC on every quote. Leave blank to set up later.
+              The address you&apos;ll BCC on every quote. Leave blank to set up later.
             </div>
           </div>
           
-          <button 
-            className="btn" 
-            type="submit" 
+          <button
+            className="btn"
+            type="submit"
             disabled={loading}
             style={{ width: '100%', justifyContent: 'center' }}
           >
@@ -237,17 +200,17 @@ export default function SignupPage() {
         </div>
         
         {paid && (
-          <div style={{ 
-            marginTop: 24, 
-            padding: '16px', 
-            background: 'rgba(99,102,241,0.08)', 
+          <div style={{
+            marginTop: 24,
+            padding: '16px',
+            background: 'rgba(99,102,241,0.08)',
             border: '1px solid rgba(99,102,241,0.2)',
             borderRadius: 12,
             fontSize: 13,
             color: 'var(--fg-dim)',
             lineHeight: 1.6,
           }}>
-            <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What's next?</div>
+            <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What&apos;s next?</div>
             <ol style={{ paddingLeft: 18, margin: 0 }}>
               <li>Check your email for login credentials</li>
               <li>Go to <Link href="/dashboard" style={{ color: 'var(--accent)' }}>your Dashboard</Link></li>
