@@ -1,10 +1,10 @@
 // Cloudflare Email Routing → Worker
-// 作用：收到发往 follow@yourdomain.com 的邮件后，转成 webhook POST 到你的 QuoteFollow 后端。
+// 作用：收到发往 follow@voxalo.top 的邮件后，转成 webhook POST 到你的 QuoteFollow 后端。
 // 部署：Cloudflare Dashboard → Email → Email Routing → 路由规则 → 发送到 Worker。
 // 需要把该域名接入 Cloudflare（DNS 托管），Email Routing 免费。
 
-const BACKEND_URL = 'https://YOUR-APP.vercel.app/api/webhooks/inbound';
-const INBOUND_SECRET = 'change-me-to-a-long-random-string'; // 必须与后端 INBOUND_WEBHOOK_SECRET 一致
+const BACKEND_URL = 'https://voxalo.top/api/webhooks/inbound';
+const INBOUND_SECRET = '32365fcfa36b01f61a84fa15ebade27229c3604578ecb1c3'; // INBOUND_WEBHOOK_SECRET
 
 export default {
   async email(message, env, ctx) {
