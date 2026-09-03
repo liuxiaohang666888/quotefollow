@@ -34,26 +34,61 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; paypal_subscription_id: string | null } | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-    (async () => {
-      const { data: q } = await supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setQuotes((q as Quote[]) || []);
-      const { data: acc } = await supabase
+    
+    // 检查是否登录
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      // 检查是否付费
+      supabase
         .from('accounts')
-        .select('followup_email, business_name')
-        .single();
-      setAccount((acc as { followup_email: string }) || null);
-      setLoading(false);
-    })();
+        .select('followup_email, paypal_subscription_id')
+        .single()
+        .then(({ data: acc }) => {
+          setAccount(acc);
+          
+          if (!acc?.paypal_subscription_id) {
+            // 未付费，跳转到signup
+            setRedirecting(true);
+            setTimeout(() => {
+              window.location.href = '/signup';
+            }, 2000);
+            return;
+          }
+          
+          // 获取报价列表
+          supabase
+            .from('quotes')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .then(({ data: q }) => {
+              setQuotes((q as Quote[]) || []);
+              setLoading(false);
+            });
+        });
+    });
   }, []);
 
   const filtered = quotes.filter((q) => filter === 'all' || q.status === filter);
+
+  if (redirecting) {
+    return (
+      <div className="auth-wrap">
+        <div className="auth-card" style={{ textAlign: 'center' }}>
+          <div className="spinner" />
+          <p style={{ color: 'var(--fg-dim)', marginTop: 16 }}>Please subscribe to access dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -91,7 +126,7 @@ export default function DashboardPage() {
           <div className="big">{filter === 'all' ? 'No quotes yet' : 'Nothing here'}</div>
           <p>
             {filter === 'all'
-              ? 'Click “+ Add a quote” above and paste the email you sent a customer — we’ll read it, save it, and start the Day 1 / 3 / 7 follow-ups automatically.'
+              ? 'Click "+ Add a quote" above and paste the email you sent a customer — we'll read it, save it, and start the Day 1 / 3 / 7 follow-ups automatically.'
               : 'Quotes in this status will show up here.'}
           </p>
         </div>
