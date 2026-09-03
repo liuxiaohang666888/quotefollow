@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/followups",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/keepalive",
+      "schedule": "0 */6 * * *"
     }
   ],
   "buildCommand": "next build",
