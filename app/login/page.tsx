@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -11,6 +11,32 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // 检查是否已登录且已付费
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // 已登录，检查是否付费
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('paypal_subscription_id')
+          .single();
+        
+        if (account?.paypal_subscription_id) {
+          // 已付费，跳转到dashboard
+          router.push('/dashboard');
+        } else {
+          // 未付费，清除session并跳转signup
+          await supabase.auth.signOut();
+          router.push('/signup');
+        }
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,8 +49,20 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    router.push('/dashboard');
-    router.refresh();
+    
+    // 登录成功后检查是否付费
+    const { data: account } = await supabase
+      .from('accounts')
+      .select('paypal_subscription_id')
+      .single();
+    
+    if (account?.paypal_subscription_id) {
+      router.push('/dashboard');
+    } else {
+      // 未付费，跳转到signup
+      router.push('/signup');
+    }
+    setLoading(false);
   }
 
   return (
