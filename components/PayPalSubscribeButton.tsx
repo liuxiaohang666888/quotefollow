@@ -44,7 +44,10 @@ export default function PayPalSubscribeButton({
           createSubscription: (data: any, actions: any) =>
             actions.subscription.create({ plan_id: activePlanId }),
           onApprove: (data: any) => {
-            window.location.href = `/signup?sub=${data.subscriptionID}`;
+            // 付款成功后跳转到 signup 页面，带 subscription ID
+            const url = new URL('/signup', window.location.origin);
+            url.searchParams.set('sub', data.subscriptionID);
+            window.location.href = url.toString();
           },
         })
         .render(containerRef.current);

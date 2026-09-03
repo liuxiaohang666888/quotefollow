@@ -24,9 +24,12 @@ export default function SignupPage() {
       if (sub) {
         setPaid(true);
         setSubId(sub);
+      } else {
+        // 没有付款参数，跳转到落地页
+        router.replace('/');
       }
     }
-  }, []);
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,35 +83,51 @@ export default function SignupPage() {
     router.refresh();
   }
 
+  // 如果未付款，显示引导信息
+  if (!paid) {
+    return (
+      <div className="auth-wrap">
+        <div className="auth-card" style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
+            Payment Required
+          </h1>
+          <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 24 }}>
+            You need to subscribe first before creating an account.
+          </p>
+          <Link href="/" className="btn" style={{ display: 'inline-block', width: '100%', justifyContent: 'center' }}>
+            Go to Landing Page →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        {paid && (
-          <div style={{
-            background: 'rgba(16,185,129,0.1)',
-            border: '1px solid rgba(16,185,129,0.3)',
-            color: '#34d399',
-            borderRadius: 12,
-            padding: '14px 18px',
-            fontSize: 14,
-            fontWeight: 600,
-            marginBottom: 24,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}>
-            <span style={{ fontSize: 18 }}>✓</span>
-            <span>Payment received! Create your account below to access your dashboard.</span>
-          </div>
-        )}
+        <div style={{
+          background: 'rgba(16,185,129,0.1)',
+          border: '1px solid rgba(16,185,129,0.3)',
+          color: '#34d399',
+          borderRadius: 12,
+          padding: '14px 18px',
+          fontSize: 14,
+          fontWeight: 600,
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <span style={{ fontSize: 18 }}>✓</span>
+          <span>Payment received! Create your account below to access your dashboard.</span>
+        </div>
         
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
-          {paid ? 'Complete your setup' : 'Create your account'}
+          Complete your setup
         </h1>
         <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 28 }}>
-          {paid
-            ? "You're one step away from your dashboard."
-            : 'Set up takes 30 seconds — no credit card required for preview.'}
+          You're one step away from your dashboard.
         </p>
         
         {error && (
@@ -189,7 +208,7 @@ export default function SignupPage() {
             disabled={loading}
             style={{ width: '100%', justifyContent: 'center' }}
           >
-            {loading ? 'Creating account…' : paid ? 'Go to Dashboard →' : 'Create account'}
+            {loading ? 'Creating account…' : 'Go to Dashboard →'}
           </button>
         </form>
         
@@ -199,26 +218,24 @@ export default function SignupPage() {
           </Link>
         </div>
         
-        {paid && (
-          <div style={{
-            marginTop: 24,
-            padding: '16px',
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.2)',
-            borderRadius: 12,
-            fontSize: 13,
-            color: 'var(--fg-dim)',
-            lineHeight: 1.6,
-          }}>
-            <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What&apos;s next?</div>
-            <ol style={{ paddingLeft: 18, margin: 0 }}>
-              <li>Check your email for login credentials</li>
-              <li>Go to <Link href="/dashboard" style={{ color: 'var(--accent)' }}>your Dashboard</Link></li>
-              <li>BCC <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>follow@yourbusiness.com</code> on your next quote email</li>
-              <li>Done! QuoteFollow handles the rest.</li>
-            </ol>
-          </div>
-        )}
+        <div style={{
+          marginTop: 24,
+          padding: '16px',
+          background: 'rgba(99,102,241,0.08)',
+          border: '1px solid rgba(99,102,241,0.2)',
+          borderRadius: 12,
+          fontSize: 13,
+          color: 'var(--fg-dim)',
+          lineHeight: 1.6,
+        }}>
+          <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What&apos;s next?</div>
+          <ol style={{ paddingLeft: 18, margin: 0 }}>
+            <li>Check your email for login credentials</li>
+            <li>Go to <Link href="/dashboard" style={{ color: 'var(--accent)' }}>your Dashboard</Link></li>
+            <li>BCC <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>follow@yourbusiness.com</code> on your next quote email</li>
+            <li>Done! QuoteFollow handles the rest.</li>
+          </ol>
+        </div>
       </div>
     </div>
   );
