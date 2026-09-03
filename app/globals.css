@@ -888,13 +888,12 @@ footer {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--fg-dim);
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
-  cursor: pointer;
+  cursor: default;
   transition: all 0.2s;
 }
-.preview-filter:hover,
 .preview-filter.active {
   background: rgba(99,102,241,0.2);
   border-color: rgba(99,102,241,0.4);
