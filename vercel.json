@@ -4,5 +4,9 @@
       "path": "/api/cron/followups",
       "schedule": "0 14 * * *"
     }
-  ]
+  ],
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "devCommand": "next dev",
+  "installCommand": "npm install"
 }
