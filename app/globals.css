@@ -444,6 +444,7 @@ section { position: relative; z-index: 1; }
 .pain-section {
   padding: 80px 24px;
   border-top: 1px solid var(--border);
+  text-align: center;
 }
 .section-label {
   text-align: center;
@@ -483,6 +484,7 @@ section .section-sub {
   border-radius: var(--radius);
   padding: 28px;
   transition: all 0.2s;
+  text-align: left;
 }
 .case-card:hover {
   border-color: var(--border-hover);
@@ -493,6 +495,7 @@ section .section-sub {
   font-weight: 600;
   color: var(--accent);
   margin-bottom: 12px;
+  text-align: center;
 }
 .case-card p {
   font-size: 15px;
@@ -500,10 +503,12 @@ section .section-sub {
   color: var(--fg);
   margin: 0 0 16px;
   font-style: italic;
+  text-align: left;
 }
 .case-loss {
   font-size: 13px;
   color: var(--fg-dim);
+  text-align: center;
 }
 .case-loss strong {
   color: #f87171;
@@ -514,6 +519,7 @@ section .section-sub {
 .compare-section {
   padding: 80px 24px;
   border-top: 1px solid var(--border);
+  text-align: center;
 }
 .compare-grid {
   display: grid;
@@ -521,6 +527,7 @@ section .section-sub {
   gap: 24px;
   max-width: 900px;
   margin: 48px auto 0;
+  text-align: left;
 }
 @media (max-width: 768px) {
   .compare-grid {
@@ -542,6 +549,7 @@ section .section-sub {
 .compare-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 20px;
   padding-bottom: 16px;
@@ -571,6 +579,7 @@ section .section-sub {
   letter-spacing: 0.1em;
   color: var(--fg-dim);
   margin-bottom: 8px;
+  text-align: center;
 }
 .compare-scenario p {
   font-size: 14px;
@@ -608,6 +617,7 @@ section .section-sub {
 .compare-result {
   padding-top: 16px;
   border-top: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
 }
 .result-label {
   font-size: 12px;
@@ -680,14 +690,16 @@ section .section-sub {
 
 /* ===== How it works ===== */
 .steps-section {
-  padding: 80px 0;
+  padding: 80px 24px;
   border-top: 1px solid var(--border);
+  text-align: center;
 }
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  margin-top: 48px;
+  max-width: 900px;
+  margin: 48px auto 0;
 }
 @media (max-width: 768px) { .steps-grid { grid-template-columns: 1fr; } }
 .step-card {
@@ -720,6 +732,7 @@ section .section-sub {
 .features-section {
   padding: 80px 24px;
   border-top: 1px solid var(--border);
+  text-align: center;
 }
 .features-grid {
   display: grid;
@@ -727,6 +740,7 @@ section .section-sub {
   gap: 20px;
   max-width: 900px;
   margin: 48px auto 0;
+  text-align: left;
 }
 @media (max-width: 768px) {
   .features-grid {
@@ -830,8 +844,16 @@ section .section-sub {
 .price-card-wrap .btn { width: 100%; justify-content: center; }
 
 /* ===== FAQ ===== */
-.faq-section { padding: 80px 0; border-top: 1px solid var(--border); }
-.faq-list { max-width: 700px; margin: 0 auto; }
+.faq-section {
+  padding: 80px 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.faq-list {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: left;
+}
 .faq-item {
   background: var(--bg-glass);
   border: 1px solid var(--border);
@@ -867,8 +889,9 @@ section .section-sub {
 }
 
 /* ===== CTA ===== */
-.cta-section {
-  padding: 100px 0;
+/* ===== Final CTA ===== */
+.final-cta-section {
+  padding: 100px 24px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -879,22 +902,22 @@ section .section-sub {
   inset: 0;
   background: radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%);
 }
-.cta-section h2 {
+.final-cta-section h2 {
   font-size: clamp(28px, 5vw, 44px);
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-bottom: 16px;
   position: relative;
 }
-.cta-section p {
+.final-cta-section p {
   color: var(--fg-dim);
   font-size: 16px;
   max-width: 480px;
   margin: 0 auto 36px;
   position: relative;
 }
-.cta-section .btn { position: relative; }
-.cta-section .note {
+.final-cta-section .btn { position: relative; }
+.final-cta-section .note {
   font-size: 13px;
   color: var(--fg-dim);
   margin-top: 16px;
@@ -1029,6 +1052,7 @@ footer {
   overflow: hidden;
   border: 1px solid var(--border);
   background: var(--bg-glass);
+  text-align: left;
 }
 .preview-filters {
   display: flex;
@@ -1128,6 +1152,7 @@ footer {
   grid-template-columns: 1fr 1fr;
   gap: 48px;
   align-items: center;
+  text-align: left;
 }
 @media (max-width: 768px) {
   .story-section {

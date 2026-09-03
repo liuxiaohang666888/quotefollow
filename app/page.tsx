@@ -15,10 +15,10 @@ export default function LandingPage() {
           <span className="brand-name">QuoteFollow</span>
         </div>
         <nav className="landing-nav">
-          <Link href="#pricing" className="nav-link">Pricing</Link>
-          <Link href="#how-it-works" className="nav-link">How it Works</Link>
-          <Link href="#features" className="nav-link">Features</Link>
-          <Link href="/login" className="nav-link">Log in</Link>
+          <Link href="#pricing" className="nav-link"> Pricing</Link>
+          <Link href="#how-it-works" className="nav-link"> How it Works</Link>
+          <Link href="#features" className="nav-link"> Features</Link>
+          <Link href="/login" className="nav-link"> Log in</Link>
           <a href="#pricing" className="btn btn-sm">Get started free</a>
         </nav>
       </header>
@@ -46,10 +46,10 @@ export default function LandingPage() {
 
       {/* Pain section */}
       <section className="pain-section" id="how-it-works">
-        <p className="eyebrow">Sound familiar?</p>
+        <p className="eyebrow"> Sound familiar?</p>
         <h2>These are the jobs people lose because they forgot to follow up.</h2>
         <div className="case-cards">
-          <div className="case-card">
+        <div className="case-card">
             <div className="case-tag">Plumber · Sydney</div>
             <p>"Sent 15 quotes last month. Followed up on 3. The other 12? Who knows."</p>
             <div className="case-loss">Lost revenue: <strong>$14,200</strong></div>
