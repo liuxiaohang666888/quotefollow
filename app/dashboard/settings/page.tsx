@@ -105,15 +105,10 @@ export default function SettingsPage() {
               placeholder="e.g. Sparkle Clean Co."
             />
           </div>
-          <div className="field">
-            <label>Follow-up inbox address</label>
-            <input
-              type="text"
-              value={account?.followup_email || ''}
-              onChange={(e) => setAccount((a) => (a ? { ...a, followup_email: e.target.value } : a))}
-              placeholder="follow@yourdomain.com"
-            />
-            <div className="hint">BCC every quote you send to this address.</div>
+          <div className="field" style={{ opacity: 0.6 }}>
+            <label>Follow-up inbox</label>
+            <input type="text" value="follow@voxalo.top" disabled />
+            <div className="hint">BCC every quote you send to follow@voxalo.top — it is pre-configured.</div>
           </div>
           <div className="field">
             <label>Slack webhook (optional)</label>

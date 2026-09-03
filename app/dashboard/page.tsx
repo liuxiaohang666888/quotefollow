@@ -90,7 +90,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <h1>Your quotes</h1>
         <Link href="/dashboard/new" className="btn" style={{ width: 'fit-content', padding: '10px 16px' }}>
-          + Add a quote
+          + Send a quote
         </Link>
       </div>
       <p className="page-sub">

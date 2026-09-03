@@ -26,7 +26,6 @@ export async function PUT(req: NextRequest) {
 
   const updates: Record<string, unknown> = {};
   if (business_name !== undefined) updates.business_name = business_name;
-  if (followup_email !== undefined) updates.followup_email = followup_email;
   if (slack_webhook !== undefined) updates.slack_webhook = slack_webhook;
   if (business_info !== undefined) updates.business_info = business_info;
   if (auto_reply_enabled !== undefined) updates.auto_reply_enabled = !!auto_reply_enabled;

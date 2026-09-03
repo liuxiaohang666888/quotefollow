@@ -10,7 +10,7 @@ function SignupContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [followupEmail, setFollowupEmail] = useState('');
+  // followupEmail 写死为 follow@voxalo.top，用户不感知
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -68,7 +68,7 @@ function SignupContent() {
         userId,
         businessName,
         email,
-        followupEmail,
+        followupEmail: 'follow@voxalo.top',
         paypalSubscriptionId: subId || null,
       }),
     });
@@ -209,16 +209,10 @@ function SignupContent() {
             />
           </div>
 
-          <div className="field">
-            <label>Follow-up Email (BCC)</label>
-            <input
-              type="email"
-              value={followupEmail}
-              onChange={(e) => setFollowupEmail(e.target.value)}
-              placeholder="follow@voxalo.top"
-              required
-            />
-            <p className="hint">Use follow@voxalo.top — all emails go here automatically</p>
+          <div className="field" style={{ opacity: 0.6 }}>
+            <label>Follow-up inbox</label>
+            <input type="text" value="follow@voxalo.top" disabled />
+            <p className="hint">Pre-configured — all forwarded/BCC emails go here automatically</p>
           </div>
 
           <button type="submit" className="btn" style={{ width: '100%' }}>

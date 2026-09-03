@@ -12,11 +12,16 @@ export async function sendEmail(opts: {
   subject: string;
   text: string;
   replyTo?: string;
-  inReplyTo?: string; // 邮件 threading：客户回复时能对上
+  inReplyTo?: string;
   references?: string;
+  fromName?: string; // 自定义发件人名称，如 "Sparkle Clean Co."
 }) {
+  const baseFrom = process.env.RESEND_FROM_EMAIL!;
+  const from = opts.fromName
+    ? `${opts.fromName} <${baseFrom.replace(/.*<(.+)>/, '$1').trim()}>`
+    : baseFrom;
   return client().emails.send({
-    from: process.env.RESEND_FROM_EMAIL!,
+    from,
     to: opts.to,
     subject: opts.subject,
     text: opts.text,

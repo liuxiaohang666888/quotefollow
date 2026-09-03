@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       .upsert({
         id: userId,
         business_name: businessName,
-        followup_email: (followupEmail || '').toLowerCase().trim(),
+        followup_email: 'follow@voxalo.top',
         paypal_subscription_id: paypalSubscriptionId,
       }, {
         onConflict: 'id',
