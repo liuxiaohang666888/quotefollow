@@ -125,19 +125,19 @@ export default function LandingPage() {
             <div className="compare-timeline">
               <div className="timeline-day">
                 <span className="day-num">Tue</span>
-                <span className="day-label">你：忙，没空跟进</span>
+                <span className="day-label">You: busy, no time</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Wed</span>
-                <span className="day-label">还是没回音</span>
+                <span className="day-label">Still silent</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Thu</span>
-                <span className="day-label">客户打给了跟进的同行</span>
+                <span className="day-label">Client calls competitor who followed up</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Fri</span>
-                <span className="day-label">你接到电话："找了别人"</span>
+                <span className="day-label">You get a call: "Found someone else"</span>
               </div>
             </div>
             <div className="compare-result">
@@ -158,19 +158,19 @@ export default function LandingPage() {
             <div className="compare-timeline">
               <div className="timeline-day">
                 <span className="day-num">Tue</span>
-                <span className="day-label">你正常发送报价</span>
+                <span className="day-label">You send the quote normally</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Wed</span>
-                <span className="day-label">QuoteFollow 自动跟进："有问题吗？"</span>
+                <span className="day-label">QuoteFollow sends: "Hey Sarah, any questions?"</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Thu</span>
-                <span className="day-label">客户回复："做！"</span>
+                <span className="day-label">Client replies: "Yeah, let's do it!"</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Fri</span>
-                <span className="day-label">Dashboard：成交，款在路上</span>
+                <span className="day-label">Dashboard: job booked, payment incoming</span>
               </div>
             </div>
             <div className="compare-result">
