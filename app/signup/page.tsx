@@ -197,10 +197,10 @@ function SignupContent() {
               type="email"
               value={followupEmail}
               onChange={(e) => setFollowupEmail(e.target.value)}
-              placeholder="quotes@voxalo.top"
+              placeholder="follow@voxalo.top"
               required
             />
-            <p className="hint">Use quotes@voxalo.top — all emails go here automatically</p>
+            <p className="hint">Use follow@voxalo.top — all emails go here automatically</p>
           </div>
 
           <button type="submit" className="btn" style={{ width: '100%' }}>

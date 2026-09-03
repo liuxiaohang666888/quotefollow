@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
-import { VERSION } from '@/version';
 
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
@@ -211,7 +210,6 @@ export default function LandingPage() {
         <p className="preview-sub">All your quotes in one place. Filter, search, and track every job.</p>
         <DashboardPreview />
         <div className="preview-cta">
-          <p style={{fontSize: 12, color: "#6b7280"}}>v{VERSION}</p>
           <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
           <a href="#pricing" className="btn">
             Get started — $29/month →
