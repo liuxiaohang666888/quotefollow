@@ -82,6 +82,27 @@ export default function QuoteDetailPage() {
     router.refresh();
   }
 
+  async function sendFollowupNow() {
+    setBusy(true);
+    setError('');
+    const res = await fetch(`/api/quotes/${id}/followup`, { method: 'POST' });
+    const json = await res.json();
+    if (!json.ok) { setError(json.error || 'Failed to send'); setBusy(false); return; }
+    await load();
+    setBusy(false);
+  }
+
+  async function copyPublicLink() {
+    const url = `${window.location.origin}/q/${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setError('');
+      alert('Copied! Send this link to your customer:\n\n' + url + '\n\nThey can view the quote and accept/decline with one click.');
+    } catch {
+      prompt('Copy this link and send it to your customer:', url);
+    }
+  }
+
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
   if (!quote) return <p>Quote not found. <a href="/dashboard" style={{ color: '#2563eb' }}>Back to dashboard</a></p>;
 
@@ -133,6 +154,12 @@ export default function QuoteDetailPage() {
           <div className="card">
             <h3>Actions</h3>
             <div className="actions">
+              <button className="btn sm blue" disabled={busy} onClick={copyPublicLink}>
+                🔗 Copy customer link
+              </button>
+              <button className="btn sm blue" disabled={busy} onClick={sendFollowupNow}>
+                ✉ Send follow-up now
+              </button>
               <button className="btn sm green" disabled={busy} onClick={() => setStatus('won')}>
                 ✓ Mark won
               </button>
@@ -147,7 +174,8 @@ export default function QuoteDetailPage() {
               </button>
             </div>
             <p style={{ fontSize: 13, color: '#6b7280', marginTop: 12 }}>
-              Marking a quote won or lost stops automatic follow-ups.
+              The customer link lets them accept or decline the quote in one click — no account needed.
+              Marking won or lost stops automatic follow-ups.
             </p>
           </div>
         </div>

@@ -99,6 +99,37 @@ export default function DashboardPage() {
           : <>Click <strong>Add a quote</strong> and paste the email you sent a customer, or set up your follow-up inbox in <Link href="/dashboard/settings" style={{ color: '#2563eb' }}>Settings</Link>.</>}
       </p>
 
+      {!loading && (
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-label">Total quotes</div>
+            <div className="stat-value purple">{quotes.length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Following up</div>
+            <div className="stat-value amber">{quotes.filter((q) => q.status === 'following').length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Won</div>
+            <div className="stat-value green">{quotes.filter((q) => q.status === 'won').length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Revenue won</div>
+            <div className="stat-value green">
+              ${quotes.filter((q) => q.status === 'won').reduce((s, q) => s + (q.amount || 0), 0).toLocaleString()}
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Replied</div>
+            <div className="stat-value blue">{quotes.filter((q) => q.status === 'replied').length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Lost</div>
+            <div className="stat-value" style={{ color: '#f87171' }}>{quotes.filter((q) => q.status === 'lost').length}</div>
+          </div>
+        </div>
+      )}
+
       <div className="status-pills">
         {(['all', 'following', 'replied', 'won', 'lost'] as Filter[]).map((f) => (
           <button
