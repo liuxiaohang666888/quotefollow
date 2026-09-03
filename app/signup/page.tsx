@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -24,12 +25,9 @@ export default function SignupPage() {
       if (sub) {
         setPaid(true);
         setSubId(sub);
-      } else {
-        // 没有付款参数，跳转到落地页
-        router.replace('/');
       }
     }
-  }, [router]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,51 +81,35 @@ export default function SignupPage() {
     router.refresh();
   }
 
-  // 如果未付款，显示引导信息
-  if (!paid) {
-    return (
-      <div className="auth-wrap">
-        <div className="auth-card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
-            Payment Required
-          </h1>
-          <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 24 }}>
-            You need to subscribe first before creating an account.
-          </p>
-          <Link href="/" className="btn" style={{ display: 'inline-block', width: '100%', justifyContent: 'center' }}>
-            Go to Landing Page →
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div style={{
-          background: 'rgba(16,185,129,0.1)',
-          border: '1px solid rgba(16,185,129,0.3)',
-          color: '#34d399',
-          borderRadius: 12,
-          padding: '14px 18px',
-          fontSize: 14,
-          fontWeight: 600,
-          marginBottom: 24,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}>
-          <span style={{ fontSize: 18 }}>✓</span>
-          <span>Payment received! Create your account below to access your dashboard.</span>
-        </div>
+        {paid && (
+          <div style={{
+            background: 'rgba(16,185,129,0.1)',
+            border: '1px solid rgba(16,185,129,0.3)',
+            color: '#34d399',
+            borderRadius: 12,
+            padding: '14px 18px',
+            fontSize: 14,
+            fontWeight: 600,
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 18 }}>✓</span>
+            <span>Payment received! Create your account below to access your dashboard.</span>
+          </div>
+        )}
         
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
-          Complete your setup
+          {paid ? 'Complete your setup' : 'Subscribe to get started'}
         </h1>
         <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 28 }}>
-          You're one step away from your dashboard.
+          {paid
+            ? "You're one step away from your dashboard."
+            : 'Pay $29/month to unlock QuoteFollow. You will be redirected to the payment page.'}
         </p>
         
         {error && (
@@ -142,75 +124,88 @@ export default function SignupPage() {
           }}>{error}</div>
         )}
         
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
-              Business name
-            </label>
-            <input
-              type="text"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="e.g. Sparkle Clean Co."
-              required
-              className="field-input"
-            />
-          </div>
-          
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@yourbusiness.com"
-              required
-              className="field-input"
-            />
-          </div>
-          
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              required
-              autoComplete="new-password"
-              className="field-input"
-            />
-          </div>
-          
+        {/* 未付款时显示 PayPal 按钮 */}
+        {!paid && (
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
-              Follow-up inbox (optional)
-            </label>
-            <input
-              type="email"
-              value={followupEmail}
-              onChange={(e) => setFollowupEmail(e.target.value)}
-              placeholder="follow@yourbusiness.com"
-              className="field-input"
-            />
-            <div style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 6 }}>
-              The address you&apos;ll BCC on every quote. Leave blank to set up later.
-            </div>
+            <PayPalSubscribeButton label="Subscribe — $29/month" />
+            <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginTop: 12, textAlign: 'center' }}>
+              No credit card required · Cancel anytime
+            </p>
           </div>
-          
-          <button
-            className="btn"
-            type="submit"
-            disabled={loading}
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
-            {loading ? 'Creating account…' : 'Go to Dashboard →'}
-          </button>
-        </form>
+        )}
+        
+        {/* 已付款时显示表单 */}
+        {paid && (
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
+                Business name
+              </label>
+              <input
+                type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="e.g. Sparkle Clean Co."
+                required
+                className="field-input"
+              />
+            </div>
+            
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@yourbusiness.com"
+                required
+                className="field-input"
+              />
+            </div>
+            
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                required
+                autoComplete="new-password"
+                className="field-input"
+              />
+            </div>
+            
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
+                Follow-up inbox (optional)
+              </label>
+              <input
+                type="email"
+                value={followupEmail}
+                onChange={(e) => setFollowupEmail(e.target.value)}
+                placeholder="follow@yourbusiness.com"
+                className="field-input"
+              />
+              <div style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 6 }}>
+                The address you&apos;ll BCC on every quote. Leave blank to set up later.
+              </div>
+            </div>
+            
+            <button
+              className="btn"
+              type="submit"
+              disabled={loading}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              {loading ? 'Creating account…' : 'Go to Dashboard →'}
+            </button>
+          </form>
+        )}
         
         <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--fg-dim)' }}>
           <Link href="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>
@@ -218,24 +213,26 @@ export default function SignupPage() {
           </Link>
         </div>
         
-        <div style={{
-          marginTop: 24,
-          padding: '16px',
-          background: 'rgba(99,102,241,0.08)',
-          border: '1px solid rgba(99,102,241,0.2)',
-          borderRadius: 12,
-          fontSize: 13,
-          color: 'var(--fg-dim)',
-          lineHeight: 1.6,
-        }}>
-          <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What&apos;s next?</div>
-          <ol style={{ paddingLeft: 18, margin: 0 }}>
-            <li>Check your email for login credentials</li>
-            <li>Go to <Link href="/dashboard" style={{ color: 'var(--accent)' }}>your Dashboard</Link></li>
-            <li>BCC <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>follow@yourbusiness.com</code> on your next quote email</li>
-            <li>Done! QuoteFollow handles the rest.</li>
-          </ol>
-        </div>
+        {paid && (
+          <div style={{
+            marginTop: 24,
+            padding: '16px',
+            background: 'rgba(99,102,241,0.08)',
+            border: '1px solid rgba(99,102,241,0.2)',
+            borderRadius: 12,
+            fontSize: 13,
+            color: 'var(--fg-dim)',
+            lineHeight: 1.6,
+          }}>
+            <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>📧 What&apos;s next?</div>
+            <ol style={{ paddingLeft: 18, margin: 0 }}>
+              <li>Check your email for login credentials</li>
+              <li>Go to <Link href="/dashboard" style={{ color: 'var(--accent)' }}>your Dashboard</Link></li>
+              <li>BCC <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>follow@yourbusiness.com</code> on your next quote email</li>
+              <li>Done! QuoteFollow handles the rest.</li>
+            </ol>
+          </div>
+        )}
       </div>
     </div>
   );
