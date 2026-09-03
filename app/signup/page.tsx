@@ -113,7 +113,7 @@ function SignupContent() {
             每月$29，通过PayPal订阅后即可解锁全部功能
           </p>
           
-          <PayPalSubscribeButton onApprove={handlePaymentConfirmed} />
+          <PayPalSubscribeButton />
           
           <div style={{ marginTop: '24px', fontSize: '14px', color: 'var(--fg-dim)' }}>
             <p>已经付钱了吗？</p>
