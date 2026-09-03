@@ -1553,3 +1553,292 @@ footer {
 .stat-value.amber { color: #fbbf24; }
 .stat-value.purple { color: #a78bfa; }
 .stat-value.blue { color: #60a5fa; }
+
+
+/* ===== Apple-like polish (applied last, overrides mess above) ===== */
+.landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,10,15,0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.landing-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.landing-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(99,102,241,0.16);
+  color: #a5b4fc;
+}
+.brand-name { color: var(--fg); }
+.landing-nav { display: flex; align-items: center; gap: 6px; }
+.landing-nav .nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: color 0.2s;
+}
+.landing-nav .nav-link:hover { color: var(--fg); }
+.landing-nav .btn-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+  margin-left: 8px;
+}
+.eyebrow {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-dim);
+  margin-bottom: 14px;
+}
+.hero h1 {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+  color: var(--fg);
+  font-weight: 700;
+}
+.hero h1 .gradient {
+  background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub, .hero p.sub {
+  color: var(--fg-dim);
+  font-size: 18px;
+  line-height: 1.7;
+  max-width: 580px;
+  margin: 0 auto 32px;
+}
+.hero-trust { font-size: 13px; color: var(--fg-dim); margin-top: 20px; }
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-top: 12px;
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  margin-bottom: 16px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.feature-card:hover .feature-icon {
+  color: #a5b4fc;
+  border-color: rgba(99,102,241,0.4);
+}
+
+/* Landing shared polish */
+.hero { padding-top: 140px; }
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 24px 64px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--fg-dim); transition: color 0.2s; }
+.footer-links a:hover { color: var(--fg); }
+.footer-copy { font-size: 12px; color: var(--fg-dim); }
+
+/* Responsive header */
+@media (max-width: 760px) {
+  .landing-header-inner { flex-direction: column; gap: 10px; padding: 12px 16px; }
+  .landing-nav { flex-wrap: wrap; justify-content: center; }
+  .landing-header-inner .btn-sm { margin-left: 0; }
+}
+
+
+/* =========================================================================
+   iOS 26-style glass overhaul — scoped to LANDING + PUBLIC pages only.
+   Dashboard keeps its clean look. (applied last = wins)
+   ========================================================================= */
+
+/* --- softer, larger radii + glass for landing cards --- */
+.landing .feature-card,
+.landing .step-card,
+.landing .case-card,
+.landing .compare-col,
+.landing .faq-item,
+.landing .pricing-card,
+.landing .price-card-wrap {
+  border-radius: 24px;
+}
+
+.landing .feature-card,
+.landing .step-card,
+.landing .case-card,
+.landing .faq-item {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* --- hover: lift + brighter glass (the “glide over” feel) --- */
+.landing .feature-card,
+.landing .step-card,
+.landing .case-card,
+.landing .faq-item {
+  transition: transform 0.22s cubic-bezier(0.2,0.8,0.2,1), background 0.22s, border-color 0.22s, box-shadow 0.22s;
+}
+.landing .feature-card:hover,
+.landing .step-card:hover,
+.landing .case-card:hover {
+  transform: translateY(-4px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+  border-color: rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 8px 24px rgba(0,0,0,0.3);
+}
+.landing .faq-item:hover {
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* --- section spacing breathes more --- */
+.landing section {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.landing section .case-cards,
+.landing section .compare-grid,
+.landing section .features-grid,
+.landing section .steps-grid,
+.landing section .faq-list,
+.landing section .pricing-card {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- hero area — iOS pill button group & trust line --- */
+.landing .hero .btn {
+  border-radius: 999px;
+  padding: 14px 30px;
+}
+.landing .hero .btn-ghost {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* --- eyebrow chips look like iOS capsules --- */
+.landing .eyebrow {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #c9c9dd;
+  letter-spacing: 0.12em;
+}
+.landing section h2 { margin-top: 4px; }
+
+/* --- pricing: make the featured card glassy & soft-glow --- */
+.landing .pricing-card {
+  background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(255,255,255,0.04));
+  border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 28px;
+  padding: 40px 32px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 20px 50px rgba(0,0,0,0.35),
+    0 0 80px rgba(99,102,241,0.08);
+}
+
+/* --- FAQ toggle: full-round row --- */
+.landing .faq-item { border-radius: 18px; overflow: hidden; }
+.landing .faq-question { padding: 20px 24px; }
+
+/* --- footer cleaner --- */
+.landing .footer { border-top: 1px solid rgba(255,255,255,0.07); }
+
+/* --- PUBLIC QUOTE PAGE: iOS glass card --- */
+.public-wrap {
+  background:
+    radial-gradient(1000px 500px at 20% -10%, rgba(99,102,241,0.14), transparent 60%),
+    radial-gradient(800px 400px at 90% 110%, rgba(168,85,247,0.10), transparent 60%);
+}
+.public-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 32px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 24px 60px rgba(0,0,0,0.35);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  padding: 44px 40px;
+}
+.public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+.public-meta {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.public-accept,
+.public-decline {
+  border-radius: 999px !important;
+}
+.public-note {
+  font-size: 13px;
+  color: var(--fg-dim);
+  margin-top: 22px;
+}
