@@ -49,6 +49,7 @@ function SignupContent() {
 
     const supabase = createClient();
 
+    // 1. 先创建用户认证
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
@@ -65,25 +66,28 @@ function SignupContent() {
       return;
     }
 
-    const { error: accError } = await supabase.from('accounts').insert({
-      id: userId,
-      business_name: businessName,
-      followup_email: followupEmail.toLowerCase().trim(),
-      paypal_subscription_id: subId || null,
+    // 2. 调用服务端API创建账户（使用admin client绕过RLS）
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        businessName,
+        email,
+        followupEmail,
+        paypalSubscriptionId: subId || null,
+      }),
     });
-    if (accError) {
-      console.error('[signup] account insert failed:', accError);
+
+    const result = await res.json();
+    if (!result.ok) {
+      console.error('[signup] account creation failed:', result.error);
       setError('Account created, but we could not save your details. Please contact support.');
       setLoading(false);
       return;
     }
 
-    fetch('/api/signup/confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    }).catch((e) => console.warn('[signup] auto-confirm failed:', e));
-
+    // 3. 跳转到dashboard
     router.push('/dashboard');
     router.refresh();
   }
