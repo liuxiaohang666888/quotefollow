@@ -1,34 +1,18 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 
-function SignupContent() {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
-  // followupEmail 写死为 follow@voxalo.top，用户不感知
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const [paid, setPaid] = useState(false);
-  const [subId, setSubId] = useState('');
-  const [loadingCheck, setLoadingCheck] = useState(true);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sub = params.get('sub');
-    if (sub) {
-      setPaid(true);
-      setSubId(sub);
-    }
-    setLoadingCheck(false);
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +27,6 @@ function SignupContent() {
 
     const supabase = createClient();
 
-    // 1. 先创建用户认证
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
@@ -60,7 +43,6 @@ function SignupContent() {
       return;
     }
 
-    // 2. 调用服务端API创建账户（使用admin client绕过RLS）
     const res = await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -69,106 +51,43 @@ function SignupContent() {
         businessName,
         email,
         followupEmail: 'follow@voxalo.top',
-        paypalSubscriptionId: subId || null,
+        paypalSubscriptionId: null,
       }),
     });
 
     const result = await res.json();
     if (!result.ok) {
-      console.error('[signup] account creation failed:', result.error);
       setError('Account created, but we could not save your details. Please contact support.');
       setLoading(false);
       return;
     }
 
-    // 3. 跳转到dashboard
-    router.push('/dashboard');
-    router.refresh();
+    // 注册成功，提示用户检查邮箱确认
+    setSuccess(true);
+    setLoading(false);
   }
 
-  if (loadingCheck) {
-    return (
-      <div className="auth-wrap">
-        <div className="auth-card">
-          <div className="spinner" />
-          <p style={{ textAlign: 'center', color: 'var(--fg-dim)', marginTop: 16 }}>Checking payment status...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 如果没有付款，显示PayPal支付按钮
-  if (!paid) {
+  if (success) {
     return (
       <div className="auth-wrap">
         <div className="auth-card" style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>订阅以开始</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Check your email</h1>
           <p className="sub" style={{ marginBottom: '24px' }}>
-            每月$29，通过PayPal订阅后即可解锁全部功能
+            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
           </p>
-          
-          <PayPalSubscribeButton />
-          
-          <div style={{ marginTop: '24px', fontSize: '14px', color: 'var(--fg-dim)' }}>
-            <p>已经付款了吗？在下面输入 PayPal 订阅 ID（以 I- 开头）：</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const raw = (document.getElementById('sub-id-input') as HTMLInputElement)?.value?.trim() || '';
-                if (/^I-[A-Z0-9]+$/i.test(raw)) {
-                  window.location.href = `/signup?sub=${encodeURIComponent(raw)}`;
-                } else {
-                  alert('订阅 ID 格式不对。请在 PayPal 订阅确认邮件或 PayPal 账户页面查看，格式类似 I-XXXXXXXXX。');
-                }
-              }}
-              style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}
-            >
-              <input
-                id="sub-id-input"
-                type="text"
-                placeholder="I-XXXXXXXXXX"
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  background: 'transparent',
-                  color: 'var(--text)',
-                  fontSize: '14px',
-                  width: '220px',
-                  textAlign: 'center',
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  background: 'var(--fg)',
-                  border: 'none',
-                  color: 'var(--bg)',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                }}
-              >
-                验证并继续
-              </button>
-            </form>
-          </div>
-          
-          <p className="alt-link" style={{ marginTop: '24px' }}>
-            <Link href="/login">已有账号？登录</Link>
+          <p className="sub" style={{ fontSize: '14px', color: 'var(--fg-dim)' }}>
+            After confirming, log in at <Link href="/login" style={{ color: 'var(--accent)' }}>/login</Link>
           </p>
         </div>
       </div>
     );
   }
 
-  // 已付款，显示注册表单
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <h1>订阅以开始</h1>
-        <p className="sub">每月$29，通过PayPal订阅后即可解锁全部功能</p>
+        <h1>Create your account</h1>
+        <p className="sub">Free for up to 10 quotes. Upgrade anytime for unlimited.</p>
 
         {error && (
           <div className="error-box">{error}</div>
@@ -215,29 +134,15 @@ function SignupContent() {
             <p className="hint">Pre-configured — all forwarded/BCC emails go here automatically</p>
           </div>
 
-          <button type="submit" className="btn" style={{ width: '100%' }}>
-            Continue to Dashboard →
+          <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
+            {loading ? 'Creating account...' : 'Create account — free'}
           </button>
         </form>
 
-        <p className="alt-link">
-          <Link href="/login">已有账号？登录</Link>
+        <p className="alt-link" style={{ marginTop: '16px', textAlign: 'center' }}>
+          <Link href="/login">Already have an account? Log in</Link>
         </p>
       </div>
     </div>
-  );
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense fallback={
-      <div className="auth-wrap">
-        <div className="auth-card">
-          <div className="spinner" />
-        </div>
-      </div>
-    }>
-      <SignupContent />
-    </Suspense>
   );
 }

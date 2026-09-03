@@ -40,23 +40,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 2. 防白嫖：必须有真实 PayPal 订阅 ID（格式 I- 开头）
-    if (!isValidPaypalSubscriptionId(paypalSubscriptionId)) {
-      return NextResponse.json(
-        { ok: false, error: 'Valid PayPal subscription is required. Please subscribe first.' },
-        { status: 402 }
-      );
-    }
+    // 2. 免费注册：paypalSubscriptionId 可选，没有则走免费版（10 条报价上限）
+    // 如果提供了有效订阅 ID，再验证
+    if (paypalSubscriptionId) {
+      if (!isValidPaypalSubscriptionId(paypalSubscriptionId)) {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid subscription ID format. Must start with I-.' },
+          { status: 400 }
+        );
+      }
 
-    // 3. 服务端真验证（配了 PAYPAL_CLIENT_SECRET 时执行；没配则仅格式校验）
-    const verify = await verifyPaypalSubscription(paypalSubscriptionId);
-    if (!verify.ok) {
-      return NextResponse.json({ ok: false, error: `Subscription verification failed: ${verify.reason}` }, { status: 402 });
+      // 服务端真验证（配了 PAYPAL_CLIENT_SECRET 时执行；没配则仅格式校验）
+      const verify = await verifyPaypalSubscription(paypalSubscriptionId);
+      if (!verify.ok) {
+        return NextResponse.json({ ok: false, error: `Subscription verification failed: ${verify.reason}` }, { status: 402 });
+      }
     }
 
     const admin = createAdminClient();
 
-    // 4. 确认邮箱
+    // 3. 确认邮箱
     const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
       email_confirm: true,
     });

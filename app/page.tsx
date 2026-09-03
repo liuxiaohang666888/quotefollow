@@ -59,7 +59,7 @@ export default function LandingPage() {
             <Link href="#how-it-works" className="nav-link"> How it Works</Link>
             <Link href="#features" className="nav-link"> Features</Link>
             <Link href="/login" className="nav-link"> Log in</Link>
-            <a href="#pricing" className="btn btn-sm">Get started free</a>
+            <Link href="/signup" className="btn btn-sm">Get started free</Link>
           </nav>
         </div>
       </header>
@@ -71,11 +71,11 @@ export default function LandingPage() {
           QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.
         </p>
         <div className="hero-actions">
-          <a href="#pricing" className="btn">
+          <Link href="/signup" className="btn">
             Get started free
             <span className="arrow">→</span>
-          </a>
-          <Link href="/signup" className="btn btn-ghost">
+          </Link>
+          <Link href="/login" className="btn btn-ghost">
             Log in
           </Link>
         </div>
