@@ -71,13 +71,13 @@ export default function SignupPage() {
     return (
       <div className="auth-wrap">
         <div className="auth-card" style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Check your email</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Account created</h1>
           <p className="sub" style={{ marginBottom: '24px' }}>
-            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
+            Your account is ready. <strong>You can log in now.</strong>
           </p>
-          <p className="sub" style={{ fontSize: '14px', color: 'var(--fg-dim)' }}>
-            After confirming, log in at <Link href="/login" style={{ color: 'var(--accent)' }}>/login</Link>
-          </p>
+          <Link href="/login" className="btn" style={{ textDecoration: 'none' }}>
+            Log in to dashboard
+          </Link>
         </div>
       </div>
     );

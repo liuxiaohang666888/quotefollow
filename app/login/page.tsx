@@ -70,6 +70,9 @@ export default function LoginPage() {
             {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>
+        <div className="alt-link" style={{ textAlign: 'center', marginTop: '16px' }}>
+          <Link href="/forgot-password" style={{ fontSize: '14px', color: 'var(--fg-dim)' }}>Forgot password?</Link>
+        </div>
         <div className="alt-link">
           No account? <Link href="/signup">Get started</Link>
         </div>
