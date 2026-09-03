@@ -1113,6 +1113,14 @@ footer {
 .faq-toggle {
   padding: 18px 22px;
 }
+.faq-answer {
+  padding: 0 22px 18px;
+  color: var(--fg-dim);
+  font-size: 14px;
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
 
 /* ===== Footer ===== */
 .footer {
