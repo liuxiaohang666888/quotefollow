@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { isAdminEmail } from '@/lib/paywall';
 
 interface Quote {
   id: string;
@@ -40,6 +41,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
+      // 管理员/开发者邮箱直接放行（免订阅测试）
+      const { data: authData } = await supabase.auth.getUser();
+      const adminEmail = authData.user?.email || null;
+      const isAdmin = isAdminEmail(adminEmail);
+
       const { data: q } = await supabase
         .from('quotes')
         .select('*')
@@ -52,7 +58,10 @@ export default function DashboardPage() {
       const accData = acc as { followup_email: string; paypal_subscription_id: string | null } | null;
       setAccount(accData);
       
-      if (!accData?.paypal_subscription_id) {
+      const hasValidSub =
+        !!accData?.paypal_subscription_id && /^I-[A-Z0-9]+$/i.test(accData.paypal_subscription_id);
+
+      if (!isAdmin && !hasValidSub) {
         setRedirecting(true);
         setTimeout(() => {
           window.location.href = '/signup';

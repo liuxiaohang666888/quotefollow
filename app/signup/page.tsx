@@ -30,12 +30,6 @@ function SignupContent() {
     setLoadingCheck(false);
   }, []);
 
-  function handlePaymentConfirmed() {
-    const fakeSubId = 'manual-' + Date.now();
-    setPaid(true);
-    setSubId(fakeSubId);
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -116,25 +110,49 @@ function SignupContent() {
           <PayPalSubscribeButton />
           
           <div style={{ marginTop: '24px', fontSize: '14px', color: 'var(--fg-dim)' }}>
-            <p>已经付钱了吗？</p>
-            <button 
-              onClick={() => {
-                const fakeSub = 'manual-' + Date.now();
-                window.location.href = `/signup?sub=${fakeSub}`;
+            <p>已经付款了吗？在下面输入 PayPal 订阅 ID（以 I- 开头）：</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const raw = (document.getElementById('sub-id-input') as HTMLInputElement)?.value?.trim() || '';
+                if (/^I-[A-Z0-9]+$/i.test(raw)) {
+                  window.location.href = `/signup?sub=${encodeURIComponent(raw)}`;
+                } else {
+                  alert('订阅 ID 格式不对。请在 PayPal 订阅确认邮件或 PayPal 账户页面查看，格式类似 I-XXXXXXXXX。');
+                }
               }}
-              style={{ 
-                background: 'transparent', 
-                border: '1px solid var(--border)', 
-                color: 'var(--fg-dim)', 
-                padding: '8px 16px', 
-                borderRadius: '8px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                marginTop: '8px'
-              }}
+              style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}
             >
-              我已完成付款，直接进入
-            </button>
+              <input
+                id="sub-id-input"
+                type="text"
+                placeholder="I-XXXXXXXXXX"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  background: 'transparent',
+                  color: 'var(--text)',
+                  fontSize: '14px',
+                  width: '220px',
+                  textAlign: 'center',
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  background: 'var(--fg)',
+                  border: 'none',
+                  color: 'var(--bg)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                验证并继续
+              </button>
+            </form>
           </div>
           
           <p className="alt-link" style={{ marginTop: '24px' }}>
