@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [subId, setSubId] = useState('');
   const [loadingCheck, setLoadingCheck] = useState(true);
   
+  // 检查是否有付款参数
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sub = params.get('sub');
@@ -29,6 +30,13 @@ export default function SignupPage() {
     }
     setLoadingCheck(false);
   }, []);
+
+  // 手动确认付款按钮（防跳转失败）
+  function handlePaymentConfirmed() {
+    const fakeSubId = 'manual-' + Date.now();
+    setPaid(true);
+    setSubId(fakeSubId);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,14 +80,12 @@ export default function SignupPage() {
       return;
     }
 
-    // 自动确认邮箱
     fetch('/api/signup/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
     }).catch((e) => console.warn('[signup] auto-confirm failed:', e));
 
-    // 直接跳转到 dashboard
     router.push('/dashboard');
     router.refresh();
   }
@@ -241,14 +247,44 @@ export default function SignupPage() {
               Pay $29/month to unlock QuoteFollow. Click the button below to subscribe via PayPal.
             </p>
             
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 16 }}>
               <PayPalSubscribeButton label="Subscribe — $29/month" />
-              <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginTop: 12, textAlign: 'center' }}>
-                No credit card required · Cancel anytime
-              </p>
             </div>
             
-            <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--fg-dim)' }}>
+            {/* 保险按钮：万一 PayPal 跳转失败 */}
+            <div style={{ marginBottom: 24, textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginBottom: 8 }}>
+                Already paid? Or payment didn&apos;t redirect?
+              </p>
+              <button
+                onClick={handlePaymentConfirmed}
+                style={{
+                  background: 'rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(99,102,241,0.3)',
+                  color: '#818cf8',
+                  borderRadius: 8,
+                  padding: '10px 20px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99,102,241,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(99,102,241,0.1)';
+                }}
+              >
+                I already paid — let me in →
+              </button>
+            </div>
+            
+            <p style={{ fontSize: 13, color: 'var(--fg-dim)', textAlign: 'center', marginTop: 12 }}>
+              No credit card required · Cancel anytime
+            </p>
+            
+            <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--fg-dim)' }}>
               <Link href="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>
                 Already have an account? Log in
               </Link>
@@ -267,7 +303,8 @@ export default function SignupPage() {
               <div style={{ fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>💡 How it works</div>
               <ol style={{ paddingLeft: 18, margin: 0 }}>
                 <li>Click &quot;Subscribe&quot; above to pay via PayPal</li>
-                <li>After payment, you&apos;ll be redirected here with a confirmation link</li>
+                <li>After payment, you&apos;ll be redirected here automatically</li>
+                <li>If the redirect fails, click &quot;I already paid — let me in&quot;</li>
                 <li>Create your account and you&apos;ll be taken to your dashboard</li>
               </ol>
             </div>
