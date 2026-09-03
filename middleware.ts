@@ -27,21 +27,17 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = request.nextUrl.pathname.startsWith('/dashboard');
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup');
-
-  if (isProtected && !user) {
+  // 如果用户在 dashboard 但没有有效会话，检查是否有 subscription 记录
+  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    // 检查是否有 cookies 标识已登录但未 session
+    // 这只是一个 fallback，主要依赖 Supabase auth
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  if (isAuthPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
+  // signup 页面不需要 auth，任何人可以访问
+  // 但我们需要在 signup 内部检查是否已付款（通过 ?sub= 参数）
 
   return supabaseResponse;
 }

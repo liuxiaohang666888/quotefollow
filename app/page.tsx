@@ -1,248 +1,447 @@
-import PayPalSubscribeButton from '../components/PayPalSubscribeButton';
-import DemoPreview from './components/DemoPreview';
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 
 export default function LandingPage() {
-  const painStories = [
-    { emoji: '😤', role: 'Plumber', location: 'Sydney', quote: 'Sent 15 quotes last month. Followed up on 3. The other 12? Who knows.' },
-    { emoji: '💸', role: 'Electrician', location: 'Melbourne', quote: 'Customer went with someone else because I took 4 days to follow up.' },
-    { emoji: '⏰', role: 'Builder', location: 'Brisbane', quote: 'Should follow up but on the tools at 6am. By the time I remember, it\'s been two weeks.' },
-  ];
-
-  const comparison = {
-    before: [
-      { day: 'Mon', event: 'Sent quote for bathroom reno — $8,500' },
-      { day: 'Tue–Wed', event: 'Silence… too busy to follow up' },
-      { day: 'Thu', event: 'Sarah chose a competitor who followed up first' },
-      { day: 'Fri', event: 'You call: "Oh, we found someone else." $8,500 gone.' },
-    ],
-    after: [
-      { day: 'Mon', event: 'Sent quote for bathroom reno — $8,500' },
-      { day: 'Wed', event: 'Auto follow-up sent: "Hey Sarah, any questions?"' },
-      { day: 'Thu', event: 'Sarah replies: "Yeah, let\'s do it!"' },
-      { day: 'Fri', event: 'You get alerted → Job booked. $8,500 locked in.' },
-    ],
-  };
-
-  const features = [
-    { icon: '🤖', title: 'Auto Follow-Up', desc: 'Intelligent follow-ups that sound like you wrote them. No robotic messages.' },
-    { icon: '🧠', title: 'Smart Timing', desc: 'AI picks the best moment to follow up — not too early, not too late.' },
-    { icon: '🔥', title: 'Hot Lead Detection', desc: 'Know which quotes are hot, warm, or cold before the customer tells you.' },
-    { icon: '📊', title: 'Win / Loss Analytics', desc: 'See what\'s working. Track your quote-to-job conversion rate over time.' },
-    { icon: '💬', title: 'AI Auto-Replies', desc: 'Common questions (pricing, timing, deposit) get answered automatically.' },
-    { icon: '🔔', title: 'Instant Alerts', desc: 'Get pinged the second a customer sounds ready to book. Strike while hot.' },
-  ];
-
-  const faqs = [
-    { q: 'Do I have to change how I send quotes?', a: 'No. Just forward or BCC follow@yourbusiness.com on any quote email you already send. We handle the rest. If you prefer, you can also paste quotes directly into your Dashboard.' },
-    { q: 'How does QuoteFollow know when I\'ve sent a quote?', a: 'You either BCC follow@yourbusiness.com when you email a quote, or paste the quote into your Dashboard. Our AI reads it, files it, and starts the follow-up sequence automatically.' },
-    { q: 'What happens when a customer replies?', a: 'The automatic follow-ups stop immediately. Our AI reads their reply — if it\'s a common question (pricing, timing, deposit), it answers for you. If they sound ready to book, you get an instant hot-lead alert so you can strike while the iron\'s hot.' },
-    { q: 'Will customers know it\'s automated?', a: 'No. Follow-ups are written to sound like they come from you — friendly, professional, and personal. You can customize the tone in your Dashboard settings, and you can review every message before it goes out.' },
-    { q: 'Can I control what the AI says?', a: 'Yes. In your Dashboard you set your availability, deposit policy, pricing ranges, and anything else the AI should know. You can turn auto-replies off any time, pause follow-ups, and review every message in your quote history.' },
-    { q: 'What if a customer asks something the AI can\'t answer?', a: 'The AI flags it as needing human attention and notifies you immediately. You handle it directly — no awkward silences or wrong information.' },
-    { q: 'Is my data safe?', a: 'Your quotes live in your own private Dashboard. Only you can see them, and you can delete anything at any time. We never share your customer data.' },
-    { q: 'How much does it cost?', a: '$29/month, cancel anytime. No contracts, no setup fees. Start with a free preview — no credit card required.' },
-    { q: 'When will I see results?', a: 'Most businesses see their first closed job within 2–4 weeks. The AI learns your business quickly, and follow-ups start automatically from day one.' },
-  ];
+  const [active, setActive] = useState(false);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Ambient background */}
-      <div className="ambient" />
+    <div className="landing">
+      <header className="landing-header">
+        <div className="brand">
+          <span className="brand-icon">⚡</span>
+          <span className="brand-name">QuoteFollow</span>
+        </div>
+        <nav className="landing-nav">
+          <Link href="#pricing" className="nav-link">Pricing</Link>
+          <Link href="#how-it-works" className="nav-link">How it Works</Link>
+          <Link href="#features" className="nav-link">Features</Link>
+          <Link href="/login" className="nav-link">Log in</Link>
+          <a href="#pricing" className="btn btn-sm">Get started free</a>
+        </nav>
+      </header>
 
-      {/* ===== Hero ===== */}
       <section className="hero">
-        <div className="container">
-          <span className="badge">⚡ For cleaners · movers · lawn care · handymen · tradies</span>
-          <h1>
-            You sent the quote.<br />
-            Now stop chasing.
-          </h1>
-          <p className="sub">
-            QuoteFollow automatically follows up on your quotes — at smart times,
-            in your voice — so you never lose another job to silence.
-          </p>
-          <div>
-            <PayPalSubscribeButton label="Get Started — $29/mo" />
-            <a className="btn secondary" href="#demo">
-              ▶ See it in action
-            </a>
+        <p className="eyebrow">For contractors & small business owners</p>
+        <h1>You sent the quote. <span className="gradient">Stop ignoring it.</span></h1>
+        <p className="hero-sub">
+          QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.
+        </p>
+        <div className="hero-actions">
+          <a href="#pricing" className="btn">
+            Get started free
+            <span className="arrow">→</span>
+          </a>
+          <Link href="/signup" className="btn btn-ghost">
+            Log in
+          </Link>
+        </div>
+        <p className="hero-trust">No credit card required · Cancel anytime</p>
+        <p className="hero-tech">
+          <span className="trust-badge">Powered by PayPal</span>
+        </p>
+      </section>
+
+      {/* Pain section */}
+      <section className="pain-section" id="how-it-works">
+        <p className="eyebrow">Sound familiar?</p>
+        <h2>These are the jobs people lose because they forgot to follow up.</h2>
+        <div className="case-cards">
+          <div className="case-card">
+            <div className="case-tag">Plumber · Sydney</div>
+            <p>"Sent 15 quotes last month. Followed up on 3. The other 12? Who knows."</p>
+            <div className="case-loss">Lost revenue: <strong>$14,200</strong></div>
           </div>
-          <div className="proof">
-            <span>⭐ No contracts</span>
-            <span>·</span>
-            <span>Cancel anytime</span>
-            <span>·</span>
-            <span>Set up in 10 minutes</span>
+          <div className="case-card">
+            <div className="case-tag">Electrician · Melbourne</div>
+            <p>"Client went with another guy because I took 4 days to get back to them."</p>
+            <div className="case-loss">Lost revenue: <strong>$8,500</strong></div>
+          </div>
+          <div className="case-card">
+            <div className="case-tag">Builder · Brisbane</div>
+            <p>"I meant to follow up, but by the time I remembered it was 2 weeks later."</p>
+            <div className="case-loss">Lost revenue: <strong>$22,000</strong></div>
           </div>
         </div>
       </section>
 
-      {/* ===== Pain Stories ===== */}
-      <section className="pain-section">
-        <div className="container">
-          <div className="section-label">Real stories</div>
-          <h2>Sound familiar?</h2>
-          <p className="section-sub">These are the stories we hear every day from tradespeople who lost jobs to poor follow-up.</p>
-          <div className="pain-grid">
-            {painStories.map((s, i) => (
-              <div key={i} className="pain-card">
-                <div className="emoji">{s.emoji}</div>
-                <blockquote>&ldquo;{s.quote}&rdquo;</blockquote>
-                <div className="meta">— {s.role}, {s.location}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Before / After ===== */}
+      {/* Comparison */}
       <section className="compare-section">
-        <div className="container">
-          <div className="section-label">See the difference</div>
-          <h2>Same quote. Different outcome.</h2>
-          <p className="section-sub">Watch what changes when QuoteFollow handles the follow-up.</p>
-          <div className="compare-grid">
-            <div className="compare-col bad">
-              <div className="label">✕ Without QuoteFollow</div>
-              {comparison.before.map((row, i) => (
-                <div key={i} className="timeline-row">
-                  <span className="day">{row.day}</span>
-                  <span className="event">{row.event}</span>
-                </div>
-              ))}
+        <p className="eyebrow">See the difference</p>
+        <h2>The same quote. Completely different outcome.</h2>
+        <div className="compare-grid">
+          <div className="compare-col compare-no">
+            <div className="compare-header">
+              <span className="compare-icon">✕</span>
+              <span>No follow-up</span>
             </div>
-            <div className="compare-col good">
-              <div className="label">✓ With QuoteFollow</div>
-              {comparison.after.map((row, i) => (
-                <div key={i} className="timeline-row">
-                  <span className="day">{row.day}</span>
-                  <span className="event">{row.event}</span>
-                </div>
-              ))}
+            <div className="compare-scenario">
+              <p className="scenario-label">Scenario</p>
+              <p>Sent a $8,500 bathroom renovation quote on Tuesday.</p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== How it works ===== */}
-      <section className="steps-section" id="demo">
-        <div className="container">
-          <div className="section-label">How it works</div>
-          <h2>Set it once. Forget about it. Win more jobs.</h2>
-          <p className="section-sub">Three steps. Ten minutes. That's it.</p>
-          <div className="steps-grid">
-            <div className="step-card">
-              <div className="step-num">1</div>
-              <h3>Send your quote as normal</h3>
-              <p>Use your existing process. Email, text, or hand-deliver your quotes. Or just paste it into your Dashboard.</p>
-            </div>
-            <div className="step-card">
-              <div className="step-num">2</div>
-              <h3>AI follows up at the right time</h3>
-              <p>QuoteFollow reads your quote, files it, and sends a friendly follow-up at the smartest moment. Replies stop the sequence instantly.</p>
-            </div>
-            <div className="step-card">
-              <div className="step-num">3</div>
-              <h3>You only handle hot leads</h3>
-              <p>Common questions get answered automatically. When a customer sounds ready to book, you get an instant alert — that's the quote worth your time.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Features ===== */}
-      <section className="features-section">
-        <div className="container">
-          <div className="section-label">Features</div>
-          <h2>Everything you need</h2>
-          <p className="section-sub">Built for tradespeople who want to close more jobs without chasing.</p>
-          <div className="features-grid">
-            {features.map((f, i) => (
-              <div key={i} className="feature-card">
-                <div className="icon">{f.icon}</div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
+            <div className="compare-timeline">
+              <div className="timeline-day">
+                <span className="day-num">Tue</span>
+                <span className="day-label">You: busy, no time</span>
               </div>
-            ))}
+              <div className="timeline-day">
+                <span className="day-num">Wed</span>
+                <span className="day-label">Still silent</span>
+              </div>
+              <div className="timeline-day">
+                <span className="day-num">Thu</span>
+                <span className="day-label">Client calls competitor who followed up</span>
+              </div>
+              <div className="timeline-day">
+                <span className="day-num">Fri</span>
+                <span className="day-label">You get a call: "Found someone else"</span>
+              </div>
+            </div>
+            <div className="compare-result">
+              <p className="result-label">Result</p>
+              <p className="result-amount">-$8,500</p>
+              <p className="result-note">Gone. Just like that.</p>
+            </div>
+          </div>
+          <div className="compare-col compare-yes">
+            <div className="compare-header">
+              <span className="compare-icon">✓</span>
+              <span>QuoteFollow follows up</span>
+            </div>
+            <div className="compare-scenario">
+              <p className="scenario-label">Scenario</p>
+              <p>Sent a $8,500 bathroom renovation quote on Tuesday.</p>
+            </div>
+            <div className="compare-timeline">
+              <div className="timeline-day">
+                <span className="day-num">Tue</span>
+                <span className="day-label">You send the quote normally</span>
+              </div>
+              <div className="timeline-day">
+                <span className="day-num">Wed</span>
+                <span className="day-label">QuoteFollow sends: "Hey Sarah, any questions?"</span>
+              </div>
+              <div className="timeline-day">
+                <span className="day-num">Thu</span>
+                <span className="day-label">Client replies: "Yeah, let's do it!"</span>
+              </div>
+              <div className="timeline-day">
+                <span className="day-num">Fri</span>
+                <span className="day-label">Dashboard: job booked, payment incoming</span>
+              </div>
+            </div>
+            <div className="compare-result">
+              <p className="result-label">Result</p>
+              <p className="result-amount">+$8,500</p>
+              <p className="result-note">Locked in. You did nothing.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ===== Live Demo Preview ===== */}
-      <DemoPreview />
-
-      {/* ===== Why I built this ===== */}
-      <section style={{ padding: '80px 0', borderTop: '1px solid var(--border)' }}>
-        <div className="container" style={{ maxWidth: 680, textAlign: 'center' }}>
-          <div className="section-label">The story</div>
-          <h2 style={{ marginBottom: 24 }}>Why I built this</h2>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--fg-dim)' }}>
-            A friend who runs a cleaning company told me he'd sent out dozens of quotes that month —
-            and only heard back from a handful. He was busy doing the actual jobs, so the quotes just sat there.
-            When we added it up, the deals he never followed up on came to about <strong style={{ color: 'var(--fg)' }}>$23,000</strong>
-            in lost work that quarter. Not because his prices were wrong — just because nobody followed up.
-          </p>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--fg-dim)', marginTop: 20 }}>
-            QuoteFollow exists so that never happens to you. You send the quote exactly like you always do —
-            and the follow-up happens automatically, even on your busiest week.
-          </p>
+      {/* How it works */}
+      <section className="steps-section">
+        <p className="eyebrow">How it works</p>
+        <h2>Set it up once. Walk away. Win more jobs.</h2>
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-num">01</div>
+            <h3>Send your quote as usual</h3>
+            <p>Email, SMS, or just paste it into the dashboard. We don't care how you work — we adapt to you.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-num">02</div>
+            <h3>AI follows up at the right time</h3>
+            <p>QuoteFollow reads your quote, saves it, and sends smart follow-ups when it matters most — not too early, not too late.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-num">03</div>
+            <h3>You only handle hot leads</h3>
+            <p>FAQs get answered automatically. When a customer says "yes", you get an instant alert. That's the money part.</p>
+          </div>
         </div>
       </section>
 
-      {/* ===== Pricing ===== */}
+      {/* Features */}
+      <section className="features-section" id="features">
+        <p className="eyebrow">Features</p>
+        <h2>Everything you need to stop losing quotes</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">🤖</div>
+            <h3>Smart follow-ups that sound like you</h3>
+            <p>No robotic "just checking in" messages. AI writes follow-ups that match your tone — friendly, professional, human.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">⏰</div>
+            <h3>Smart timing</h3>
+            <p>AI picks the best moment to follow up — when your customer is most likely to reply, not when you feel guilty.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🔥</div>
+            <h3>Hot lead detection</h3>
+            <p>Know which quotes are hot, warm, or cold before the customer tells you. Focus your energy where it counts.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📊</div>
+            <h3>Win/loss analysis</h3>
+            <p>See what's working. Track your quote-to-job conversion rate and understand why you win (or lose) jobs.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">💬</div>
+            <h3>AI auto-reply</h3>
+            <p>Common questions about pricing, availability, and deposits get answered instantly — 24/7, even while you sleep.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🔔</div>
+            <h3>Instant alerts</h3>
+            <p>Get notified the second a customer is ready to book. Strike while the iron is hot.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard preview */}
+      <section className="preview-section">
+        <p className="eyebrow">Preview</p>
+        <h2>This is what your dashboard looks like</h2>
+        <p className="preview-sub">All your quotes in one place. Filter, search, and track every job.</p>
+        <div className="dashboard-preview">
+          <div className="preview-filters">
+            <button className="preview-filter active">All (4)</button>
+            <button className="preview-filter">Following (1)</button>
+            <button className="preview-filter">Replied (1)</button>
+            <button className="preview-filter">Won (1)</button>
+            <button className="preview-filter">Lost (1)</button>
+          </div>
+          <div className="preview-quotes">
+            <div className="preview-quote">
+              <div className="preview-quote-left">
+                <div className="preview-quote-name">Mike Chen</div>
+                <div className="preview-quote-meta">Kitchen renovation · Aug 14 · 2 follow-ups</div>
+              </div>
+              <div className="preview-quote-right">
+                <span className="preview-amount">$3,200</span>
+                <span className="preview-status preview-status-following">Following up</span>
+              </div>
+            </div>
+            <div className="preview-quote">
+              <div className="preview-quote-left">
+                <div className="preview-quote-name">Sarah Johnson</div>
+                <div className="preview-quote-meta">Bathroom remodel · Aug 10 · 1 follow-up</div>
+              </div>
+              <div className="preview-quote-right">
+                <span className="preview-amount">$8,500</span>
+                <span className="preview-status preview-status-won">Won</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="preview-cta">
+          <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
+          <a href="#pricing" className="btn">
+            Get started — $29/month →
+          </a>
+        </div>
+      </section>
+
+      {/* Story */}
+      <section className="story-section">
+        <div className="story-content">
+          <p className="eyebrow">Story</p>
+          <h2>Why I built this</h2>
+          <p>
+            My mate runs a cleaning company. Last quarter he sent out 47 quotes. Got replies from 12. He was too busy actually doing the cleaning jobs to follow up on the other 35.
+          </p>
+          <p>
+            I did the math. At an average job value of $650, that's <strong>$22,750</strong> in potential revenue just… gone. Not because his prices were wrong. Not because his work was bad. Because he forgot to follow up.
+          </p>
+          <p>
+            QuoteFollow exists so you never have to face that again. Send your quotes the way you always do. Even on your busiest week, the follow-ups happen automatically.
+          </p>
+        </div>
+        <div className="story-visual">
+          <div className="story-card">
+            <div className="story-card-header">
+              <span className="story-card-label">QuoteFollow</span>
+              <span className="story-card-badge">Day 3 Follow-up</span>
+            </div>
+            <div className="story-card-body">
+              <p className="story-card-text">"Hey Mike, just checking in on that kitchen quote I sent over. Any questions or ready to lock it in?"</p>
+            </div>
+            <div className="story-card-footer">
+              <span>Sent automatically · 2:34 PM</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
       <section className="pricing-section" id="pricing">
-        <div className="container">
-          <div className="section-label">Pricing</div>
-          <h2>Simple pricing</h2>
-          <p className="section-sub">One plan. Everything included. No surprises.</p>
-          <div className="price-card-wrap">
-            <span className="tag">Most Popular</span>
-            <div className="amount">$29<small>/month</small></div>
-            <ul>
-              <li>Your own follow-up inbox</li>
-              <li>AI quote filing &amp; dashboard</li>
-              <li>Smart-timed follow-ups (day 1, 3, 7)</li>
-              <li>AI answers to common questions</li>
-              <li>Hot / warm / cold lead detection</li>
-              <li>Win / loss analytics</li>
-              <li>Slack notifications</li>
-              <li>Cancel anytime, no contracts</li>
-            </ul>
-            <PayPalSubscribeButton label="Start monthly" />
-            <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginTop: 12 }}>No credit card required for preview</p>
+        <p className="eyebrow">Pricing</p>
+        <h2>Simple pricing</h2>
+        <p className="pricing-sub">One plan. Includes everything. No surprises.</p>
+        <div className="pricing-card">
+          <div className="pricing-header">
+            <div className="pricing-name">Professional</div>
+            <div className="pricing-badge">Most popular</div>
+          </div>
+          <div className="pricing-price">
+            <span className="pricing-amount">$29</span>
+            <span className="pricing-period">USD / month</span>
+          </div>
+          <div className="pricing-features">
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>Your own follow-up inbox</span>
+            </div>
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>AI quote reading & dashboard</span>
+            </div>
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>Precise follow-ups (Day 1, 3, 7)</span>
+            </div>
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>AI answers common questions</span>
+            </div>
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>Unlimited quotes & customers</span>
+            </div>
+            <div className="pricing-feature">
+              <span className="check">✓</span>
+              <span>Cancel anytime</span>
+            </div>
+          </div>
+          <div className="pricing-cta">
+            <PayPalSubscribeButton label="Subscribe — $29/month" />
+            <p className="pricing-guarantee">No credit card required · Cancel anytime</p>
           </div>
         </div>
       </section>
 
-      {/* ===== FAQ ===== */}
+      {/* FAQ */}
       <section className="faq-section">
-        <div className="container">
-          <div className="section-label">FAQ</div>
-          <h2>Common questions</h2>
-          <p className="section-sub">Everything you need to know before getting started.</p>
-          <div className="faq-list">
-            {faqs.map((faq, i) => (
-              <details key={i} className="faq-item">
-                <summary>{faq.q}</summary>
-                <p>{faq.a}</p>
-              </details>
-            ))}
+        <p className="eyebrow">FAQ</p>
+        <h2>Common questions</h2>
+        <div className="faq-list">
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 0 ? false : 0)}>
+              <span>How does QuoteFollow know I sent a quote?</span>
+              <span className="faq-toggle">{active === 0 ? '−' : '+'}</span>
+            </button>
+            {active === 0 && (
+              <div className="faq-answer">
+                <p>You can forward quote emails to your unique inbox address, or paste them directly into the dashboard. Either way, we read and archive every quote automatically.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 1 ? false : 1)}>
+              <span>What happens when a customer replies?</span>
+              <span className="faq-toggle">{active === 1 ? '−' : '+'}</span>
+            </button>
+            {active === 1 && (
+              <div className="faq-answer">
+                <p>Any reply goes straight into your dashboard. You'll see whether it's positive, negative, or needs a response — and you'll get an instant alert if they say "yes".</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 2 ? false : 2)}>
+              <span>Will the customer know it's automated?</span>
+              <span className="faq-toggle">{active === 2 ? '−' : '+'}</span>
+            </button>
+            {active === 2 && (
+              <div className="faq-answer">
+                <p>No. The follow-ups are written to sound like you — natural, friendly, and professional. Most customers won't even notice it's automated.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 3 ? false : 3)}>
+              <span>Can I control what the AI says?</span>
+              <span className="faq-toggle">{active === 3 ? '−' : '+'}</span>
+            </button>
+            {active === 3 && (
+              <div className="faq-answer">
+                <p>Yes. You can review and edit every follow-up before it's sent. You're always in control.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 4 ? false : 4)}>
+              <span>What if the customer asks something the AI can't answer?</span>
+              <span className="faq-toggle">{active === 4 ? '−' : '+'}</span>
+            </button>
+            {active === 4 && (
+              <div className="faq-answer">
+                <p>The AI handles common questions about pricing, availability, and process. For anything complex, it flags it for you and you can step in directly.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 5 ? false : 5)}>
+              <span>Is my data secure?</span>
+              <span className="faq-toggle">{active === 5 ? '−' : '+'}</span>
+            </button>
+            {active === 5 && (
+              <div className="faq-answer">
+                <p>Your data is encrypted and stored securely. We never sell or share your information. You can delete your account and all data at any time.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 6 ? false : 6)}>
+              <span>How much does it cost?</span>
+              <span className="faq-toggle">{active === 6 ? '−' : '+'}</span>
+            </button>
+            {active === 6 && (
+              <div className="faq-answer">
+                <p>$29/month for the Professional plan. That's less than one lost job. Cancel anytime — no contracts, no hidden fees.</p>
+              </div>
+            )}
+          </div>
+          <div className="faq-item">
+            <button className="faq-question" onClick={() => setActive(active === 7 ? false : 7)}>
+              <span>When will I see results?</span>
+              <span className="faq-toggle">{active === 7 ? '−' : '+'}</span>
+            </button>
+            {active === 7 && (
+              <div className="faq-answer">
+                <p>Most users see their first recovered job within 2 weeks. The Day 1 follow-up alone can re-engage customers who went silent.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ===== Final CTA ===== */}
-      <section className="cta-section">
-        <div className="container">
-          <h2>Don't lose another job<br />to silence</h2>
-          <p>Join tradespeople who stopped chasing and started closing. Set up takes 10 minutes.</p>
-          <PayPalSubscribeButton label="Get Started — $29/mo" />
-          <p className="note">No credit card required · Cancel anytime · 10-minute setup</p>
-        </div>
+      {/* CTA */}
+      <section className="final-cta-section">
+        <h2>Stop losing jobs to silence.</h2>
+        <p>Join contractors who never miss a follow-up again.</p>
+        <a href="#pricing" className="btn btn-lg">
+          Get started — $29/month
+          <span className="arrow">→</span>
+        </a>
+        <p className="final-cta-note">No credit card required · Cancel anytime</p>
       </section>
 
-      <footer>
-        <div className="container">© {new Date().getFullYear()} QuoteFollow · Never lose a quote again</div>
+      <footer className="footer">
+        <div className="footer-brand">
+          <span className="brand-icon">⚡</span>
+          <span className="brand-name">QuoteFollow</span>
+        </div>
+        <div className="footer-links">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <a href="mailto:support@voxalo.top">Support</a>
+        </div>
+        <p className="footer-copy">© 2026 QuoteFollow. All rights reserved.</p>
       </footer>
     </div>
   );
