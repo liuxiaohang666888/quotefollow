@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
+import DashboardPreview from '@/components/DashboardPreview';
 
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
@@ -207,37 +208,7 @@ export default function LandingPage() {
         <p className="eyebrow">Preview</p>
         <h2>This is what your dashboard looks like</h2>
         <p className="preview-sub">All your quotes in one place. Filter, search, and track every job.</p>
-        <div className="dashboard-preview">
-          <div className="preview-filters">
-            <button className="preview-filter active">All (4)</button>
-            <button className="preview-filter">Following (1)</button>
-            <button className="preview-filter">Replied (1)</button>
-            <button className="preview-filter">Won (1)</button>
-            <button className="preview-filter">Lost (1)</button>
-          </div>
-          <div className="preview-quotes">
-            <div className="preview-quote">
-              <div className="preview-quote-left">
-                <div className="preview-quote-name">Mike Chen</div>
-                <div className="preview-quote-meta">Kitchen renovation · Aug 14 · 2 follow-ups</div>
-              </div>
-              <div className="preview-quote-right">
-                <span className="preview-amount">$3,200</span>
-                <span className="preview-status preview-status-following">Following up</span>
-              </div>
-            </div>
-            <div className="preview-quote">
-              <div className="preview-quote-left">
-                <div className="preview-quote-name">Sarah Johnson</div>
-                <div className="preview-quote-meta">Bathroom remodel · Aug 10 · 1 follow-up</div>
-              </div>
-              <div className="preview-quote-right">
-                <span className="preview-amount">$8,500</span>
-                <span className="preview-status preview-status-won">Won</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardPreview />
         <div className="preview-cta">
           <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
           <a href="#pricing" className="btn">
