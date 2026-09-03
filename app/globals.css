@@ -1033,6 +1033,31 @@ footer {
   margin-top: 16px;
 }
 
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 760px;
+  margin: 0 auto;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.pricing-card.free {
+  border-color: var(--border);
+}
+.pricing-card.free::before {
+  display: none;
+}
+.pricing-card.free .pricing-badge {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+}
+
 /* ===== Preview Section ===== */
 .preview-section {
   padding: 80px 24px;

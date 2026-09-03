@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { isAdminEmail } from '@/lib/paywall';
 
 interface Quote {
   id: string;
@@ -36,16 +35,10 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState<{ followup_email: string; paypal_subscription_id: string | null } | null>(null);
-  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      // 管理员/开发者邮箱直接放行（免订阅测试）
-      const { data: authData } = await supabase.auth.getUser();
-      const adminEmail = authData.user?.email || null;
-      const isAdmin = isAdminEmail(adminEmail);
-
       const { data: q } = await supabase
         .from('quotes')
         .select('*')
@@ -58,32 +51,11 @@ export default function DashboardPage() {
       const accData = acc as { followup_email: string; paypal_subscription_id: string | null } | null;
       setAccount(accData);
       
-      const hasValidSub =
-        !!accData?.paypal_subscription_id && /^I-[A-Z0-9]+$/i.test(accData.paypal_subscription_id);
-
-      if (!isAdmin && !hasValidSub) {
-        setRedirecting(true);
-        setTimeout(() => {
-          window.location.href = '/signup';
-        }, 2000);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     })();
   }, []);
 
   const filtered = quotes.filter((q) => filter === 'all' || q.status === filter);
-
-  if (redirecting) {
-    return (
-      <div className="auth-wrap">
-        <div className="auth-card" style={{ textAlign: 'center' }}>
-          <div className="spinner" />
-          <p style={{ color: 'var(--fg-dim)', marginTop: 16 }}>Please subscribe to access...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>

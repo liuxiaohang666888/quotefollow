@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { isAdminEmail } from '@/lib/paywall';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,33 +12,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function hasAccess(supabase: any): Promise<boolean> {
-    const { data: authData } = await supabase.auth.getUser();
-    if (isAdminEmail(authData.user?.email)) return true;
-    const { data: account } = await supabase
-      .from('accounts')
-      .select('paypal_subscription_id')
-      .single();
-    return !!account?.paypal_subscription_id && /^I-[A-Z0-9]+$/i.test(account.paypal_subscription_id);
-  }
-
-  // 检查是否已登录且已付费
+  // 检查是否已登录 → 直接去 dashboard
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
-        // 已登录，检查是否付费
-        const ok = await hasAccess(supabase);
-        if (ok) {
-          // 已付费，跳转到dashboard
-          router.push('/dashboard');
-        } else {
-          // 未付费，清除session并跳转signup
-          await supabase.auth.signOut();
-          router.push('/signup');
-        }
+        router.push('/dashboard');
       }
     };
     checkAuth();
@@ -56,16 +35,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    
-    // 登录成功后检查是否付费
-    const ok = await hasAccess(supabase);
-    if (ok) {
-      router.push('/dashboard');
-    } else {
-      // 未付费，跳转到signup
-      await supabase.auth.signOut();
-      router.push('/signup');
-    }
+    router.push('/dashboard');
     setLoading(false);
   }
 

@@ -125,19 +125,19 @@ export default function LandingPage() {
             <div className="compare-timeline">
               <div className="timeline-day">
                 <span className="day-num">Tue</span>
-                <span className="day-label">You: busy, no time</span>
+                <span className="day-label">你：忙，没空跟进</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Wed</span>
-                <span className="day-label">Still silent</span>
+                <span className="day-label">还是没回音</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Thu</span>
-                <span className="day-label">Client calls competitor who followed up</span>
+                <span className="day-label">客户打给了跟进的同行</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Fri</span>
-                <span className="day-label">You get a call: "Found someone else"</span>
+                <span className="day-label">你接到电话："找了别人"</span>
               </div>
             </div>
             <div className="compare-result">
@@ -158,19 +158,19 @@ export default function LandingPage() {
             <div className="compare-timeline">
               <div className="timeline-day">
                 <span className="day-num">Tue</span>
-                <span className="day-label">You send the quote normally</span>
+                <span className="day-label">你正常发送报价</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Wed</span>
-                <span className="day-label">QuoteFollow sends: "Hey Sarah, any questions?"</span>
+                <span className="day-label">QuoteFollow 自动跟进："有问题吗？"</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Thu</span>
-                <span className="day-label">Client replies: "Yeah, let's do it!"</span>
+                <span className="day-label">客户回复："做！"</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Fri</span>
-                <span className="day-label">Dashboard: job booked, payment incoming</span>
+                <span className="day-label">Dashboard：成交，款在路上</span>
               </div>
             </div>
             <div className="compare-result">
@@ -251,9 +251,9 @@ export default function LandingPage() {
         <DashboardPreview />
         <div className="preview-cta">
           <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
-          <a href="#pricing" className="btn">
-            Get started — $29/month →
-          </a>
+          <Link href="/signup" className="btn">
+            Get started free →
+          </Link>
         </div>
       </section>
 
@@ -292,45 +292,80 @@ export default function LandingPage() {
       <section className="pricing-section" id="pricing">
         <p className="eyebrow">Pricing</p>
         <h2>Simple pricing</h2>
-        <p className="pricing-sub">One plan. Includes everything. No surprises.</p>
-        <div className="pricing-card">
-          <div className="pricing-header">
-            <div className="pricing-name">Professional</div>
-            <div className="pricing-badge">Most popular</div>
+        <p className="pricing-sub">Free to start. Upgrade when you outgrow it.</p>
+        <div className="pricing-grid">
+          <div className="pricing-card free">
+            <div className="pricing-header">
+              <div className="pricing-name">Free</div>
+              <div className="pricing-badge">Start here</div>
+            </div>
+            <div className="pricing-price">
+              <span className="pricing-amount">$0</span>
+              <span className="pricing-period">forever</span>
+            </div>
+            <div className="pricing-features">
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Up to 10 quotes</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>AI quote reading & dashboard</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Day 1 / 3 / 7 follow-ups</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>AI auto-reply to common questions</span>
+              </div>
+            </div>
+            <div className="pricing-cta">
+              <Link href="/signup" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
+                Get started free
+              </Link>
+            </div>
           </div>
-          <div className="pricing-price">
-            <span className="pricing-amount">$29</span>
-            <span className="pricing-period">USD / month</span>
-          </div>
-          <div className="pricing-features">
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>Your own follow-up inbox</span>
+          <div className="pricing-card">
+            <div className="pricing-header">
+              <div className="pricing-name">Professional</div>
+              <div className="pricing-badge">Most popular</div>
             </div>
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>AI quote reading & dashboard</span>
+            <div className="pricing-price">
+              <span className="pricing-amount">$29</span>
+              <span className="pricing-period">USD / month</span>
             </div>
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>Precise follow-ups (Day 1, 3, 7)</span>
+            <div className="pricing-features">
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Unlimited quotes & customers</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Your own follow-up inbox</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>AI quote reading & dashboard</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Precise follow-ups (Day 1, 3, 7)</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>AI answers common questions</span>
+              </div>
+              <div className="pricing-feature">
+                <span className="check">✓</span>
+                <span>Cancel anytime</span>
+              </div>
             </div>
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>AI answers common questions</span>
+            <div className="pricing-cta">
+              <PayPalSubscribeButton label="Subscribe — $29/month" />
+              <p className="pricing-guarantee">No credit card required · Cancel anytime</p>
             </div>
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>Unlimited quotes & customers</span>
-            </div>
-            <div className="pricing-feature">
-              <span className="check">✓</span>
-              <span>Cancel anytime</span>
-            </div>
-          </div>
-          <div className="pricing-cta">
-            <PayPalSubscribeButton label="Subscribe — $29/month" />
-            <p className="pricing-guarantee">No credit card required · Cancel anytime</p>
           </div>
         </div>
       </section>
@@ -435,10 +470,10 @@ export default function LandingPage() {
       <section className="final-cta-section">
         <h2>Stop losing jobs to silence.</h2>
         <p>Join contractors who never miss a follow-up again.</p>
-        <a href="#pricing" className="btn btn-lg">
-          Get started — $29/month
+        <Link href="/signup" className="btn btn-lg">
+          Get started free
           <span className="arrow">→</span>
-        </a>
+        </Link>
         <p className="final-cta-note">No credit card required · Cancel anytime</p>
       </section>
 
