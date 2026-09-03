@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 
-export default function SignupPage() {
+function SignupContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
@@ -15,12 +15,11 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [paid, setPaid] = useState(false);
   const [subId, setSubId] = useState('');
   const [loadingCheck, setLoadingCheck] = useState(true);
-  
-  // 检查是否有付款参数
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sub = params.get('sub');
@@ -31,7 +30,6 @@ export default function SignupPage() {
     setLoadingCheck(false);
   }, []);
 
-  // 手动确认付款按钮（防跳转失败）
   function handlePaymentConfirmed() {
     const fakeSubId = 'manual-' + Date.now();
     setPaid(true);
@@ -90,7 +88,6 @@ export default function SignupPage() {
     router.refresh();
   }
 
-  // 加载中
   if (loadingCheck) {
     return (
       <div className="auth-wrap">
@@ -105,7 +102,6 @@ export default function SignupPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        {/* 已付款：显示成功提示和表单 */}
         {paid && (
           <>
             <div style={{
@@ -124,12 +120,12 @@ export default function SignupPage() {
               <span style={{ fontSize: 18 }}>✓</span>
               <span>Payment received! Create your account below to access your dashboard.</span>
             </div>
-            
+
             <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Complete your setup</h1>
             <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 28 }}>
               You&apos;re one step away from your dashboard.
             </p>
-            
+
             {error && (
               <div style={{
                 background: 'rgba(239,68,68,0.1)',
@@ -141,7 +137,7 @@ export default function SignupPage() {
                 marginBottom: 20,
               }}>{error}</div>
             )}
-            
+
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
@@ -156,7 +152,7 @@ export default function SignupPage() {
                   className="field-input"
                 />
               </div>
-              
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
                   Email
@@ -170,7 +166,7 @@ export default function SignupPage() {
                   className="field-input"
                 />
               </div>
-              
+
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
                   Password
@@ -185,7 +181,7 @@ export default function SignupPage() {
                   className="field-input"
                 />
               </div>
-              
+
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--fg)' }}>
                   Follow-up inbox (optional)
@@ -201,7 +197,7 @@ export default function SignupPage() {
                   The address you&apos;ll BCC on every quote. Leave blank to set up later.
                 </div>
               </div>
-              
+
               <button
                 className="btn"
                 type="submit"
@@ -211,13 +207,13 @@ export default function SignupPage() {
                 {loading ? 'Creating account…' : 'Go to Dashboard →'}
               </button>
             </form>
-            
+
             <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--fg-dim)' }}>
               <Link href="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>
                 Already have an account? Log in
               </Link>
             </div>
-            
+
             <div style={{
               marginTop: 24,
               padding: '16px',
@@ -238,20 +234,18 @@ export default function SignupPage() {
             </div>
           </>
         )}
-        
-        {/* 未付款：显示 PayPal 订阅按钮 */}
+
         {!paid && (
           <>
             <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Subscribe to get started</h1>
             <p style={{ color: 'var(--fg-dim)', fontSize: 14, marginBottom: 28 }}>
               Pay $29/month to unlock QuoteFollow. Click the button below to subscribe via PayPal.
             </p>
-            
+
             <div style={{ marginBottom: 16 }}>
               <PayPalSubscribeButton label="Subscribe — $29/month" />
             </div>
-            
-            {/* 保险按钮：万一 PayPal 跳转失败 */}
+
             <div style={{ marginBottom: 24, textAlign: 'center' }}>
               <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginBottom: 8 }}>
                 Already paid? Or payment didn&apos;t redirect?
@@ -279,17 +273,17 @@ export default function SignupPage() {
                 I already paid — let me in →
               </button>
             </div>
-            
+
             <p style={{ fontSize: 13, color: 'var(--fg-dim)', textAlign: 'center', marginTop: 12 }}>
               No credit card required · Cancel anytime
             </p>
-            
+
             <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--fg-dim)' }}>
               <Link href="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>
                 Already have an account? Log in
               </Link>
             </div>
-            
+
             <div style={{
               marginTop: 24,
               padding: '16px',
@@ -312,5 +306,20 @@ export default function SignupPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <div className="spinner" />
+          <p style={{ textAlign: 'center', color: 'var(--fg-dim)', marginTop: 16 }}>Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
   );
 }

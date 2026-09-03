@@ -5,7 +5,7 @@ import Link from 'next/link';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 
 export default function LandingPage() {
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState<number>(-1);
 
   return (
     <div className="landing">
@@ -330,7 +330,7 @@ export default function LandingPage() {
         <h2>Common questions</h2>
         <div className="faq-list">
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 0 ? false : 0)}>
+            <button className="faq-question" onClick={() => setActive(active === 0 ? -1 : 0)}>
               <span>How does QuoteFollow know I sent a quote?</span>
               <span className="faq-toggle">{active === 0 ? '−' : '+'}</span>
             </button>
@@ -341,7 +341,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 1 ? false : 1)}>
+            <button className="faq-question" onClick={() => setActive(active === 1 ? -1 : 1)}>
               <span>What happens when a customer replies?</span>
               <span className="faq-toggle">{active === 1 ? '−' : '+'}</span>
             </button>
@@ -352,7 +352,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 2 ? false : 2)}>
+            <button className="faq-question" onClick={() => setActive(active === 2 ? -1 : 2)}>
               <span>Will the customer know it's automated?</span>
               <span className="faq-toggle">{active === 2 ? '−' : '+'}</span>
             </button>
@@ -363,7 +363,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 3 ? false : 3)}>
+            <button className="faq-question" onClick={() => setActive(active === 3 ? -1 : 3)}>
               <span>Can I control what the AI says?</span>
               <span className="faq-toggle">{active === 3 ? '−' : '+'}</span>
             </button>
@@ -374,7 +374,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 4 ? false : 4)}>
+            <button className="faq-question" onClick={() => setActive(active === 4 ? -1 : 4)}>
               <span>What if the customer asks something the AI can't answer?</span>
               <span className="faq-toggle">{active === 4 ? '−' : '+'}</span>
             </button>
@@ -385,7 +385,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 5 ? false : 5)}>
+            <button className="faq-question" onClick={() => setActive(active === 5 ? -1 : 5)}>
               <span>Is my data secure?</span>
               <span className="faq-toggle">{active === 5 ? '−' : '+'}</span>
             </button>
@@ -396,7 +396,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 6 ? false : 6)}>
+            <button className="faq-question" onClick={() => setActive(active === 6 ? -1 : 6)}>
               <span>How much does it cost?</span>
               <span className="faq-toggle">{active === 6 ? '−' : '+'}</span>
             </button>
@@ -407,7 +407,7 @@ export default function LandingPage() {
             )}
           </div>
           <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 7 ? false : 7)}>
+            <button className="faq-question" onClick={() => setActive(active === 7 ? -1 : 7)}>
               <span>When will I see results?</span>
               <span className="faq-toggle">{active === 7 ? '−' : '+'}</span>
             </button>
