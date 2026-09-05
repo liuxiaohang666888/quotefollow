@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { parseMimeMessage, decodeRfc2047, ParsedMime } from '@/lib/mime';
 import { parseQuoteEmail, autoReply, generateFollowupBody } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
@@ -19,6 +20,7 @@ interface InboundMail {
   Subject?: string;
   text?: string;
   html?: string;
+  raw_mime?: string;
   'Message-Id'?: string;
   'In-Reply-To'?: string;
   References?: string;
@@ -37,13 +39,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
 
-  const fromRaw = mail.From || '';
-  const toRaw = mail.To || '';
-  const subject = mail.Subject || '';
-  const body = (mail.text || mail.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  const messageId = (mail['Message-Id'] || '').replace(/^<|>$/g, '').trim();
+  let mime: ParsedMime | null = null;
+  if (mail.raw_mime) {
+    try {
+      mime = parseMimeMessage(Buffer.from(mail.raw_mime, 'base64').toString('latin1'));
+    } catch (e) {
+      console.warn('[inbound] raw_mime parse failed:', e);
+    }
+  }
+
+  const fromRaw = mime?.headers['from'] || mail.From || '';
+  const toRaw = mime?.headers['to'] || mail.To || '';
+  const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
+  const plainText = mime ? mime.text || mime.html : mail.text || mail.html || '';
+  const body = plainText
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  const messageId = (mime?.headers['message-id'] || mail['Message-Id'] || '')
+    .replace(/^<|>$/g, '')
+    .trim();
   // In-Reply-To 可能带 < >，也可能多个引用；取第一个并剥掉尖括号
-  const rawInReply = (mail['In-Reply-To'] || '').split(',')[0].trim();
+  const rawInReply = (mime?.headers['in-reply-to'] || mail['In-Reply-To'] || '')
+    .split(',')[0]
+    .trim();
   const inReplyTo = rawInReply.replace(/^<|>$/g, '');
 
   // 发件人 = 客户（老板是收件人 follow@domain）

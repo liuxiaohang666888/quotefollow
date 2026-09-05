@@ -5,6 +5,7 @@
 // 注意：密钥从环境变量 INBOUND_SECRET 读取，须与 Vercel 的 INBOUND_WEBHOOK_SECRET 完全一致。
 
 const BACKEND_URL = 'https://www.voxalo.top/api/webhooks/inbound';
+const MAX_RAW_BYTES = 900000;
 
 export default {
   async email(message, env, ctx) {
@@ -14,7 +15,11 @@ export default {
       return;
     }
 
-    const text = await new Response(message.raw).text();
+    const rawBuf = await new Response(message.raw).arrayBuffer();
+    const capped = rawBuf.byteLength > MAX_RAW_BYTES ? rawBuf.slice(0, MAX_RAW_BYTES) : rawBuf;
+    const rawB64 = bufToB64(capped);
+
+    const text = new TextDecoder().decode(rawBuf);
 
     // 简单解析原始邮件：拿 From / To / Subject / Message-ID / In-Reply-To
     const headers = {};
@@ -38,6 +43,7 @@ export default {
         To: headers['to']?.trim() || '',
         Subject: subject,
         text: body,
+        raw_mime: rawB64,
         'Message-Id': (headers['message-id'] || '').trim(),
         'In-Reply-To': (headers['in-reply-to'] || '').trim(),
         References: (headers['references'] || '').trim(),
@@ -45,6 +51,16 @@ export default {
     });
   },
 };
+
+function bufToB64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  }
+  return btoa(bin);
+}
 
 function stripHeaders(raw) {
   const idx = raw.indexOf('\r\n\r\n');
