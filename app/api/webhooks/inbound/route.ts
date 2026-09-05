@@ -83,15 +83,43 @@ export async function POST(req: NextRequest) {
   }
 
   // ========== 情况 2：老板转发来的新报价邮件 ==========
-  // 找老板账号：按 followup_email 匹配（To 地址是老板的专属跟进邮箱）
-  const { data: account, error: accErr } = await admin
-    .from('accounts')
-    .select('*')
-    .eq('followup_email', followupEmail)
-    .maybeSingle();
+  // 幂等：同一封原始邮件重复投递（webhook 重试）时跳过，防止重复建档
+  if (messageId && (await isDuplicateMessage(admin, messageId))) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
 
-  if (accErr || !account) {
-    console.warn('[inbound] no account for followup email:', followupEmail);
+  // 找老板账号：优先按发件人邮箱（= 注册邮箱）精确匹配。
+  // 所有垂直共享入站邮箱 follow@voxalo.top，多账户下按 To 无法区分；
+  // 按 From 匹配不到时再按 To（followup_email）兜底（兼容老数据/单账户）。
+  let account: Record<string, any> | null = null;
+
+  if (senderEmail) {
+    const { data: bySender, error: senderErr } = await admin
+      .from('accounts')
+      .select('*')
+      .eq('email', senderEmail)
+      .limit(1)
+      .maybeSingle();
+    if (senderErr) {
+      // email 列可能尚未创建（未跑 003 migration）→ 降级到 To 匹配
+      console.warn('[inbound] sender lookup skipped:', senderErr.message);
+    } else if (bySender) {
+      account = bySender;
+    }
+  }
+
+  if (!account && followupEmail) {
+    const { data: byInbox } = await admin
+      .from('accounts')
+      .select('*')
+      .eq('followup_email', followupEmail)
+      .limit(1)
+      .maybeSingle();
+    account = byInbox || null;
+  }
+
+  if (!account) {
+    console.warn('[inbound] no account for followup email:', followupEmail, 'sender:', senderEmail);
     return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
   }
 
@@ -236,4 +264,18 @@ async function notifyOwner(
 function extractEmail(header: string): string {
   const m = header.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
   return m ? m[0] : '';
+}
+
+// ========== 幂等检查：message_id 是否已入库 ==========
+async function isDuplicateMessage(
+  admin: ReturnType<typeof createAdminClient>,
+  messageId: string
+): Promise<boolean> {
+  const { data } = await admin
+    .from('messages')
+    .select('id')
+    .eq('message_id', messageId)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
 }

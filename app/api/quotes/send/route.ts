@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       to: customerEmail,
       subject,
       text: message,
-      replyTo: 'follow@voxalo.top',
+      replyTo: acc?.followup_email || 'follow@voxalo.top',
       fromName: businessName,
     });
 

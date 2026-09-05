@@ -69,11 +69,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. 插入或更新账户
+    // email：老板注册邮箱，入站邮件按 From 精确匹配账户（多垂直共享数据库必需）
     const { error: insertError } = await admin
       .from('accounts')
       .upsert({
         id: userId,
         business_name: businessName,
+        email,
         followup_email: 'follow@voxalo.top',
         paypal_subscription_id: paypalSubscriptionId,
       }, {
