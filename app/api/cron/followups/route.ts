@@ -109,5 +109,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, sent, failed, scanned: quotes?.length || 0 });
+  return NextResponse.json({ ok: true, sent, failed, skipped, scanned: quotes?.length || 0 });
 }

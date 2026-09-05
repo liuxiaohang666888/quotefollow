@@ -67,7 +67,7 @@ function SignupForm() {
           businessName,
           email,
           followupEmail: 'follow@voxalo.top',
-          paypalSubscriptionId: null,
+          paypalSubscriptionId: paypalSub,
         }),
       });
       const result = await res.json();
@@ -80,7 +80,7 @@ function SignupForm() {
       const { error: directErr } = await supabase
         .from('accounts')
         .upsert(
-          { id: userId, business_name: businessName, email, followup_email: 'follow@voxalo.top' },
+          { id: userId, business_name: businessName, email, followup_email: 'follow@voxalo.top', paypal_subscription_id: paypalSub },
           { onConflict: 'id' }
         );
       if (directErr) {
