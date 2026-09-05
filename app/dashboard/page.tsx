@@ -47,7 +47,7 @@ export default function DashboardPage() {
       const { data: acc } = await supabase
         .from('accounts')
         .select('followup_email, business_name, paypal_subscription_id')
-        .single();
+        .maybeSingle();
       const accData = acc as { followup_email: string; paypal_subscription_id: string | null } | null;
       setAccount(accData);
       
