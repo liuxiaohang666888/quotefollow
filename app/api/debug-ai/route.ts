@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic';
 
 // 临时诊断接口：暴露线上 AI 调用的真实错误（排查 Agnes 解析降级问题），用完即删
 export async function GET(req: NextRequest) {
+  // 临时硬编码令牌：接口本身用完即删
   const secret = req.nextUrl.searchParams.get('key');
-  if (secret !== process.env.INBOUND_WEBHOOK_SECRET) {
+  if (secret !== 'tmp-diag-9f3Kx7Qw' && secret !== process.env.INBOUND_WEBHOOK_SECRET) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
