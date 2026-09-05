@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
+import { getVerticalConfig, getBrandName } from '@/lib/vertical';
 
 // 统一线性图标（stroke=currentColor），比 emoji 更克制、更接近苹果风格
 const icons = {
@@ -39,8 +40,19 @@ const icons = {
   ),
 };
 
+const iconMap: Record<string, React.ReactNode> = {
+  chat: icons.chat,
+  clock: icons.clock,
+  flame: icons.flame,
+  chart: icons.chart,
+  reply: icons.reply,
+  bell: icons.bell,
+};
+
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
+  const config = getVerticalConfig();
+  const brand = getBrandName();
 
   return (
     <div className="landing">
@@ -52,7 +64,7 @@ export default function LandingPage() {
                 <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/>
               </svg>
             </span>
-            <span className="brand-name">QuoteFollow</span>
+            <span className="brand-name">{brand}</span>
           </div>
           <nav className="landing-nav">
             <Link href="#pricing" className="nav-link"> Pricing</Link>
@@ -65,11 +77,9 @@ export default function LandingPage() {
       </header>
 
       <section className="hero">
-        <p className="eyebrow">For contractors & small business owners</p>
-        <h1>You sent the quote. <span className="gradient">Stop ignoring it.</span></h1>
-        <p className="hero-sub">
-          QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.
-        </p>
+        <p className="eyebrow">{config.eyebrow}</p>
+        <h1>{config.tagline} <span className="gradient">{config.gradientText}</span></h1>
+        <p className="hero-sub">{config.heroSub}</p>
         <div className="hero-actions">
           <Link href="/signup" className="btn">
             Get started free
@@ -90,21 +100,13 @@ export default function LandingPage() {
         <p className="eyebrow"> Sound familiar?</p>
         <h2>These are the jobs people lose because they forgot to follow up.</h2>
         <div className="case-cards">
-        <div className="case-card">
-            <div className="case-tag">Plumber · Sydney</div>
-            <p>"Sent 15 quotes last month. Followed up on 3. The other 12? Who knows."</p>
-            <div className="case-loss">Lost revenue: <strong>$14,200</strong></div>
-          </div>
-          <div className="case-card">
-            <div className="case-tag">Electrician · Melbourne</div>
-            <p>"Client went with another guy because I took 4 days to get back to them."</p>
-            <div className="case-loss">Lost revenue: <strong>$8,500</strong></div>
-          </div>
-          <div className="case-card">
-            <div className="case-tag">Builder · Brisbane</div>
-            <p>"I meant to follow up, but by the time I remembered it was 2 weeks later."</p>
-            <div className="case-loss">Lost revenue: <strong>$22,000</strong></div>
-          </div>
+          {config.painPoints.map((p, i) => (
+            <div className="case-card" key={i}>
+              <div className="case-tag">{p.tag}</div>
+              <p>{p.quote}</p>
+              <div className="case-loss">{p.loss}: <strong>{p.amount}</strong></div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -120,7 +122,7 @@ export default function LandingPage() {
             </div>
             <div className="compare-scenario">
               <p className="scenario-label">Scenario</p>
-              <p>Sent a $8,500 bathroom renovation quote on Tuesday.</p>
+              <p>Sent a $8,500 quote on Tuesday.</p>
             </div>
             <div className="compare-timeline">
               <div className="timeline-day">
@@ -149,11 +151,11 @@ export default function LandingPage() {
           <div className="compare-col compare-yes">
             <div className="compare-header">
               <span className="compare-icon">✓</span>
-              <span>QuoteFollow follows up</span>
+              <span>{brand} follows up</span>
             </div>
             <div className="compare-scenario">
               <p className="scenario-label">Scenario</p>
-              <p>Sent a $8,500 bathroom renovation quote on Tuesday.</p>
+              <p>Sent a $8,500 quote on Tuesday.</p>
             </div>
             <div className="compare-timeline">
               <div className="timeline-day">
@@ -162,7 +164,7 @@ export default function LandingPage() {
               </div>
               <div className="timeline-day">
                 <span className="day-num">Wed</span>
-                <span className="day-label">QuoteFollow sends: "Hey Sarah, any questions?"</span>
+                <span className="day-label">{brand} sends: "Hey Sarah, any questions?"</span>
               </div>
               <div className="timeline-day">
                 <span className="day-num">Thu</span>
@@ -187,21 +189,13 @@ export default function LandingPage() {
         <p className="eyebrow">How it works</p>
         <h2>Set it up once. Walk away. Win more jobs.</h2>
         <div className="steps-grid">
-          <div className="step-card">
-            <div className="step-num">01</div>
-            <h3>Send your quote as usual</h3>
-            <p>Email, SMS, or just paste it into the dashboard. We don't care how you work — we adapt to you.</p>
-          </div>
-          <div className="step-card">
-            <div className="step-num">02</div>
-            <h3>AI follows up at the right time</h3>
-            <p>QuoteFollow reads your quote, saves it, and sends smart follow-ups when it matters most — not too early, not too late.</p>
-          </div>
-          <div className="step-card">
-            <div className="step-num">03</div>
-            <h3>You only handle hot leads</h3>
-            <p>FAQs get answered automatically. When a customer says "yes", you get an instant alert. That's the money part.</p>
-          </div>
+          {config.howItWorks.map((step, i) => (
+            <div className="step-card" key={i}>
+              <div className="step-num">{step.num}</div>
+              <h3>{step.title}</h3>
+              <p>{step.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -210,36 +204,13 @@ export default function LandingPage() {
         <p className="eyebrow">Features</p>
         <h2>Everything you need to stop losing quotes</h2>
         <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">{icons.chat}</div>
-            <h3>Smart follow-ups that sound like you</h3>
-            <p>No robotic "just checking in" messages. AI writes follow-ups that match your tone — friendly, professional, human.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">{icons.clock}</div>
-            <h3>Smart timing</h3>
-            <p>AI picks the best moment to follow up — when your customer is most likely to reply, not when you feel guilty.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">{icons.flame}</div>
-            <h3>Hot lead detection</h3>
-            <p>Know which quotes are hot, warm, or cold before the customer tells you. Focus your energy where it counts.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">{icons.chart}</div>
-            <h3>Win/loss analysis</h3>
-            <p>See what's working. Track your quote-to-job conversion rate and understand why you win (or lose) jobs.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">{icons.reply}</div>
-            <h3>AI auto-reply</h3>
-            <p>Common questions about pricing, availability, and deposits get answered instantly — 24/7, even while you sleep.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">{icons.bell}</div>
-            <h3>Instant alerts</h3>
-            <p>Get notified the second a customer is ready to book. Strike while the iron is hot.</p>
-          </div>
+          {config.features.map((f, i) => (
+            <div className="feature-card" key={i}>
+              <div className="feature-icon">{iconMap[f.iconKey]}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -262,24 +233,22 @@ export default function LandingPage() {
         <div className="story-content">
           <p className="eyebrow">Story</p>
           <h2>Why I built this</h2>
+          <p>{config.story.intro} {config.story.hook} {config.story.business}</p>
           <p>
-            My mate runs a cleaning company. Last quarter he sent out 47 quotes. Got replies from 12. He was too busy actually doing the cleaning jobs to follow up on the other 35.
+            I did the math. That's <strong>{config.story.lossAmount}</strong> in potential revenue just… gone. {config.story.closing}
           </p>
           <p>
-            I did the math. At an average job value of $650, that's <strong>$22,750</strong> in potential revenue just… gone. Not because his prices were wrong. Not because his work was bad. Because he forgot to follow up.
-          </p>
-          <p>
-            QuoteFollow exists so you never have to face that again. Send your quotes the way you always do. Even on your busiest week, the follow-ups happen automatically.
+            {brand} exists so you never have to face that again. Send your quotes the way you always do. Even on your busiest week, the follow-ups happen automatically.
           </p>
         </div>
         <div className="story-visual">
           <div className="story-card">
             <div className="story-card-header">
-              <span className="story-card-label">QuoteFollow</span>
+              <span className="story-card-label">{brand}</span>
               <span className="story-card-badge">Day 3 Follow-up</span>
             </div>
             <div className="story-card-body">
-              <p className="story-card-text">"Hey Mike, just checking in on that kitchen quote I sent over. Any questions or ready to lock it in?"</p>
+              <p className="story-card-text">"Hey Mike, just checking in on that quote I sent over. Any questions or ready to lock it in?"</p>
             </div>
             <div className="story-card-footer">
               <span>Sent automatically · 2:34 PM</span>
@@ -333,8 +302,8 @@ export default function LandingPage() {
               <div className="pricing-badge">Most popular</div>
             </div>
             <div className="pricing-price">
-              <span className="pricing-amount">$29</span>
-              <span className="pricing-period">USD / month</span>
+              <span className="pricing-amount">${config.pricing.monthly}</span>
+              <span className="pricing-period">{config.pricing.currency} / month</span>
             </div>
             <div className="pricing-features">
               <div className="pricing-feature">
@@ -363,7 +332,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="pricing-cta">
-              <PayPalSubscribeButton label="Subscribe — $29/month" />
+              <PayPalSubscribeButton label={`Subscribe — $${config.pricing.monthly}/month`} />
               <p className="pricing-guarantee">No credit card required · Cancel anytime</p>
             </div>
           </div>
@@ -375,101 +344,26 @@ export default function LandingPage() {
         <p className="eyebrow">FAQ</p>
         <h2>Common questions</h2>
         <div className="faq-list">
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 0 ? -1 : 0)}>
-              <span>How does QuoteFollow know I sent a quote?</span>
-              <span className="faq-toggle">{active === 0 ? '−' : '+'}</span>
-            </button>
-            {active === 0 && (
-              <div className="faq-answer">
-                <p>You can forward quote emails to your unique inbox address, or paste them directly into the dashboard. Either way, we read and archive every quote automatically.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 1 ? -1 : 1)}>
-              <span>What happens when a customer replies?</span>
-              <span className="faq-toggle">{active === 1 ? '−' : '+'}</span>
-            </button>
-            {active === 1 && (
-              <div className="faq-answer">
-                <p>Any reply goes straight into your dashboard. You'll see whether it's positive, negative, or needs a response — and you'll get an instant alert if they say "yes".</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 2 ? -1 : 2)}>
-              <span>Will the customer know it's automated?</span>
-              <span className="faq-toggle">{active === 2 ? '−' : '+'}</span>
-            </button>
-            {active === 2 && (
-              <div className="faq-answer">
-                <p>No. The follow-ups are written to sound like you — natural, friendly, and professional. Most customers won't even notice it's automated.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 3 ? -1 : 3)}>
-              <span>Can I control what the AI says?</span>
-              <span className="faq-toggle">{active === 3 ? '−' : '+'}</span>
-            </button>
-            {active === 3 && (
-              <div className="faq-answer">
-                <p>Yes. You can review and edit every follow-up before it's sent. You're always in control.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 4 ? -1 : 4)}>
-              <span>What if the customer asks something the AI can't answer?</span>
-              <span className="faq-toggle">{active === 4 ? '−' : '+'}</span>
-            </button>
-            {active === 4 && (
-              <div className="faq-answer">
-                <p>The AI handles common questions about pricing, availability, and process. For anything complex, it flags it for you and you can step in directly.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 5 ? -1 : 5)}>
-              <span>Is my data secure?</span>
-              <span className="faq-toggle">{active === 5 ? '−' : '+'}</span>
-            </button>
-            {active === 5 && (
-              <div className="faq-answer">
-                <p>Your data is encrypted and stored securely. We never sell or share your information. You can delete your account and all data at any time.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 6 ? -1 : 6)}>
-              <span>How much does it cost?</span>
-              <span className="faq-toggle">{active === 6 ? '−' : '+'}</span>
-            </button>
-            {active === 6 && (
-              <div className="faq-answer">
-                <p>$29/month for the Professional plan. That's less than one lost job. Cancel anytime — no contracts, no hidden fees.</p>
-              </div>
-            )}
-          </div>
-          <div className="faq-item">
-            <button className="faq-question" onClick={() => setActive(active === 7 ? -1 : 7)}>
-              <span>When will I see results?</span>
-              <span className="faq-toggle">{active === 7 ? '−' : '+'}</span>
-            </button>
-            {active === 7 && (
-              <div className="faq-answer">
-                <p>Most users see their first recovered job within 2 weeks. The Day 1 follow-up alone can re-engage customers who went silent.</p>
-              </div>
-            )}
-          </div>
+          {config.faq.map((item, i) => (
+            <div className="faq-item" key={i}>
+              <button className="faq-question" onClick={() => setActive(active === i ? -1 : i)}>
+                <span>{item.q}</span>
+                <span className="faq-toggle">{active === i ? '−' : '+'}</span>
+              </button>
+              {active === i && (
+                <div className="faq-answer">
+                  <p>{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
       {/* CTA */}
       <section className="final-cta-section">
         <h2>Stop losing jobs to silence.</h2>
-        <p>Join contractors who never miss a follow-up again.</p>
+        <p>Join {config.audience} who never miss a follow-up again.</p>
         <Link href="/signup" className="btn btn-lg">
           Get started free
           <span className="arrow">→</span>
@@ -480,14 +374,14 @@ export default function LandingPage() {
       <footer className="footer">
         <div className="footer-brand">
           <span className="brand-icon">⚡</span>
-          <span className="brand-name">QuoteFollow</span>
+          <span className="brand-name">{brand}</span>
         </div>
         <div className="footer-links">
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <a href="mailto:support@voxalo.top">Support</a>
+          <a href={`mailto:${config.footer.supportEmail}`}>Support</a>
         </div>
-        <p className="footer-copy">© 2026 QuoteFollow. All rights reserved.</p>
+        <p className="footer-copy">© 2026 {config.footer.copyright}. All rights reserved.</p>
       </footer>
     </div>
   );

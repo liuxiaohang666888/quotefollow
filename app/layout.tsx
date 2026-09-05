@@ -1,10 +1,15 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { getBrandName, getVerticalConfig } from '@/lib/vertical';
 
-export const metadata: Metadata = {
-  title: 'QuoteFollow — Never Lose a Quote Again',
-  description: 'AI-powered quote follow-up for tradespeople. Automatically chases your quotes via email so you close more jobs.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = getBrandName();
+  const config = getVerticalConfig();
+  return {
+    title: `${brand} — Never Lose a ${config.customerLabel} Again`,
+    description: `AI-powered quote follow-up for ${config.audience}. Automatically chases your quotes via email so you close more jobs.`,
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

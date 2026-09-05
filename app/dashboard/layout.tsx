@@ -8,11 +8,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login');
 
+  const brand = process.env.NEXT_PUBLIC_BRAND_NAME || 'QuoteFollow';
+
   return (
     <div>
       <nav className="dash-nav">
         <div className="inner">
-          <Link href="/dashboard" className="brand">QuoteFollow</Link>
+          <Link href="/dashboard" className="brand">{brand}</Link>
           <nav>
             <Link href="/dashboard">Quotes</Link>
             <Link href="/dashboard/settings">Settings</Link>

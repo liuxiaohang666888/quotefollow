@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { getBrandName } from '@/lib/vertical';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -43,7 +44,7 @@ export default function LoginPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Welcome back</h1>
-        <p className="sub">Log in to your QuoteFollow dashboard</p>
+        <p className="sub">Log in to your {getBrandName()} dashboard</p>
         {error && <div className="error-box">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="field">
