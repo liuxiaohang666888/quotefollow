@@ -25,25 +25,46 @@ Output JSON only with exactly these keys:
 - quote_date: the date the quote was sent, as YYYY-MM-DD (use today's date if not stated)
 Never invent an email address. If you cannot determine customer email, return "" for it.`;
 
+// AI 不可用时的正则兜底解析：保证 AI 挂了也能把报价建上档（字段不全总比丢邮件强）
+function fallbackParse(subject: string, body: string): ParsedQuote {
+  const email = body.match(/[\w.+-]+@[\w-]+\.[\w.]+/)?.[0] || '';
+  const amountMatch = body.match(/\$\s?([\d,]+(?:\.\d{1,2})?)/);
+  const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
+  return {
+    customer_email: email,
+    customer_name: '',
+    amount: amount && amount > 0 ? amount : null,
+    service_type: subject.replace(/^re:\s*/i, '').replace(/\bquote\b/gi, '').trim().slice(0, 60),
+    quote_date: new Date().toISOString().slice(0, 10),
+  };
+}
+
 export async function parseQuoteEmail(
   subject: string,
   body: string
 ): Promise<ParsedQuote> {
   const client = getClient();
-  const res = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    temperature: 0,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: PARSE_SYSTEM },
-      {
-        role: 'user',
-        content: `Subject: ${subject}\n\nBody:\n${body.slice(0, 12000)}`,
-      },
-    ],
-  });
+  let raw = '';
+  try {
+    const res = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: PARSE_SYSTEM },
+        {
+          role: 'user',
+          content: `Subject: ${subject}\n\nBody:\n${body.slice(0, 12000)}`,
+        },
+      ],
+    });
+    raw = res.choices[0]?.message?.content || '';
+  } catch (e) {
+    // AI 服务挂掉/超时/欠费：不能让整条建档链路崩掉，降级到正则解析
+    console.error('[ai] parseQuoteEmail API failed, using regex fallback:', e);
+    return fallbackParse(subject, body);
+  }
 
-  const raw = res.choices[0]?.message?.content || '{}';
   try {
     const p = JSON.parse(raw) as ParsedQuote;
     return {
@@ -54,13 +75,7 @@ export async function parseQuoteEmail(
       quote_date: p.quote_date || new Date().toISOString().slice(0, 10),
     };
   } catch {
-    return {
-      customer_email: '',
-      customer_name: '',
-      amount: null,
-      service_type: '',
-      quote_date: new Date().toISOString().slice(0, 10),
-    };
+    return fallbackParse(subject, body);
   }
 }
 
@@ -95,20 +110,27 @@ export async function autoReply(
     .map(([k, v]) => `${k}: ${v}`)
     .join('\n') || '(empty — do not invent facts)';
 
-  const res = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    temperature: 0.3,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: REPLY_SYSTEM.replace('{{BUSINESS_INFO}}', biz) },
-      {
-        role: 'user',
-        content: `Customer: ${customerName || 'there'}\n\nCustomer's reply:\n${customerReply.slice(0, 4000)}`,
-      },
-    ],
-  });
+  let raw = '';
+  try {
+    const res = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: REPLY_SYSTEM.replace('{{BUSINESS_INFO}}', biz) },
+        {
+          role: 'user',
+          content: `Customer: ${customerName || 'there'}\n\nCustomer's reply:\n${customerReply.slice(0, 4000)}`,
+        },
+      ],
+    });
+    raw = res.choices[0]?.message?.content || '';
+  } catch (e) {
+    // AI 挂了：不敢瞎回客户，转人工处理
+    console.error('[ai] autoReply API failed, escalating to human:', e);
+    return { should_reply: false, reply_body: '', is_hot: false, needs_human: true };
+  }
 
-  const raw = res.choices[0]?.message?.content || '{}';
   try {
     const r = JSON.parse(raw) as AutoReplyResult;
     return {
@@ -149,19 +171,27 @@ export async function generateFollowupBody(
   const fromEmail = (process.env.RESEND_FROM_EMAIL || '').match(/[\w.+-]+@[\w-]+\.[\w.]+/)?.[0] || '';
   const signature = `${businessName || 'Your team'}\n(${fromEmail})`;
 
-  const res = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    temperature: 0.7,
-    messages: [
-      { role: 'system', content: FOLLOWUP_SYSTEM.replace('{{SIGNATURE}}', signature) },
-      {
-        role: 'user',
-        content: `Followup #${followupNumber}. Customer: ${customerName || 'there'}. Service: ${serviceType || 'our service'}. Quoted amount: ${amount ? '$' + amount : 'not specified'}.\nBusiness facts: ${biz}`,
-      },
-    ],
-  });
+  let raw = '';
+  try {
+    const res = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      temperature: 0.7,
+      messages: [
+        { role: 'system', content: FOLLOWUP_SYSTEM.replace('{{SIGNATURE}}', signature) },
+        {
+          role: 'user',
+          content: `Followup #${followupNumber}. Customer: ${customerName || 'there'}. Service: ${serviceType || 'our service'}. Quoted amount: ${amount ? '$' + amount : 'not specified'}.\nBusiness facts: ${biz}`,
+        },
+      ],
+    });
+    raw = res.choices[0]?.message?.content || '';
+  } catch (e) {
+    // AI 挂了：用模板兜底，跟进邮件照发（cron 每天跑，不能因 AI 抖动整体崩掉）
+    console.error('[ai] generateFollowupBody API failed, using template:', e);
+    return defaultFollowup(followupNumber, customerName, businessName);
+  }
 
-  return res.choices[0]?.message?.content?.trim() || defaultFollowup(followupNumber, customerName, businessName);
+  return raw.trim() || defaultFollowup(followupNumber, customerName, businessName);
 }
 
 function defaultFollowup(n: 1 | 2 | 3, name: string, businessName: string): string {
