@@ -54,14 +54,23 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
-  const { error } = await supabase
+  // .select('id') 拿回实际被删除的行：RLS 拦截时 PostgREST 删 0 行且不报错（静默失败），
+  // 必须向用户如实报错，不能假报删除成功
+  const { data, error } = await supabase
     .from('quotes')
     .delete()
     .eq('id', params.id)
-    .eq('account_id', user.id);
+    .eq('account_id', user.id)
+    .select('id');
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+  if (!data || data.length === 0) {
+    return NextResponse.json(
+      { ok: false, error: 'Quote not found or could not be deleted. Please refresh and try again.' },
+      { status: 404 }
+    );
   }
   return NextResponse.json({ ok: true });
 }

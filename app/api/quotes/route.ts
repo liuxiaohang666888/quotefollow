@@ -38,9 +38,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'rate limited: too many quotes in a minute' }, { status: 429 });
   }
 
-  // 防白嫖：免费账号（无有效订阅）限制报价总数，管理员豁免
   const admin = createAdminClient();
-  const { data: acc } = await admin.from('accounts').select('paypal_subscription_id').eq('id', user.id).maybeSingle();
+
+  // 自愈：账号行缺失（注册中断导致"半截账号"）时自动补建，避免下方 insert 报 FK 23503
+  let acc = (await admin.from('accounts').select('paypal_subscription_id').eq('id', user.id).maybeSingle()).data;
+  if (!acc) {
+    const { data: created, error: accErr } = await admin
+      .from('accounts')
+      .upsert({ id: user.id, email: user.email ?? '', followup_email: 'follow@voxalo.top' }, { onConflict: 'id' })
+      .select('paypal_subscription_id')
+      .single();
+    if (accErr) console.error('[quotes] account self-heal failed:', accErr);
+    acc = created ?? acc;
+  }
+
+  // 防白嫖：免费账号（无有效订阅）限制报价总数，管理员豁免
   const isAdmin = isAdminEmail(user.email);
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {

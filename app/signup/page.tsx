@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
+// useSearchParams 需要 Suspense 边界（Next.js 静态渲染要求）
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="auth-wrap"><div className="auth-card" style={{ textAlign: 'center' }}>Loading…</div></div>}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
@@ -13,6 +22,11 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // PayPal 订阅成功后跳转过来会带 ?sub=I-xxxx，必须透传保存，否则付费客户会被当成免费版
+  const rawSub = searchParams.get('sub');
+  const paypalSub = rawSub && /^I-[A-Za-z0-9]+$/.test(rawSub) ? rawSub : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,23 +57,37 @@ export default function SignupPage() {
       return;
     }
 
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        businessName,
-        email,
-        followupEmail: 'follow@voxalo.top',
-        paypalSubscriptionId: null,
-      }),
-    });
+    let savedViaApi = false;
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          businessName,
+          email,
+          followupEmail: 'follow@voxalo.top',
+          paypalSubscriptionId: null,
+        }),
+      });
+      const result = await res.json();
+      savedViaApi = !!result?.ok;
+    } catch {
+      savedViaApi = false;
+    }
 
-    const result = await res.json();
-    if (!result.ok) {
-      setError('Account created, but we could not save your details. Please contact support.');
-      setLoading(false);
-      return;
+    if (!savedViaApi) {
+      const { error: directErr } = await supabase
+        .from('accounts')
+        .upsert(
+          { id: userId, business_name: businessName, email, followup_email: 'follow@voxalo.top' },
+          { onConflict: 'id' }
+        );
+      if (directErr) {
+        setError('Account created, but we could not save your details. Please contact support.');
+        setLoading(false);
+        return;
+      }
     }
 
     // 注册成功，提示用户检查邮箱确认

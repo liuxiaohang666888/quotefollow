@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const quote of quotes || []) {
     // 决定发第几封：按 followup_count 0→1, 1→2, 2→3
@@ -44,6 +45,13 @@ export async function GET(req: NextRequest) {
 
     const { data: account } = await admin.from('accounts').select('*').eq('id', quote.account_id).single();
     if (!account) continue;
+
+    // 客户邮箱为空的报价无法发信：停掉后续跟进并计入 skipped，避免每天空转重试
+    if (!quote.customer_email) {
+      await admin.from('quotes').update({ next_followup_at: null }).eq('id', quote.id);
+      skipped++;
+      continue;
+    }
 
     const body = await generateFollowupBody(
       step,

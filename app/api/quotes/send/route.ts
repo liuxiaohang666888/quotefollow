@@ -38,7 +38,22 @@ export async function POST(req: NextRequest) {
 
   // 付费检查
   const admin = createAdminClient();
-  const { data: acc } = await admin.from('accounts').select('*').eq('id', user.id).maybeSingle();
+  let { data: acc } = await admin.from('accounts').select('*').eq('id', user.id).maybeSingle();
+
+  if (!acc) {
+    const { data: created, error: accErr } = await admin
+      .from('accounts')
+      .upsert(
+        { id: user.id, email: user.email ?? '', followup_email: 'follow@voxalo.top' },
+        { onConflict: 'id' }
+      )
+      .select()
+      .single();
+    if (accErr) {
+      console.error('[quotes/send] account self-heal failed:', accErr);
+    }
+    acc = created ?? acc;
+  }
   const isAdmin = isAdminEmail(user.email);
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
@@ -116,7 +131,11 @@ export async function POST(req: NextRequest) {
     if (qErr) {
       // 邮件已发但数据库写失败 → 记录错误但不回滚邮件
       console.error('[quotes/send] insert error:', qErr);
-      return NextResponse.json({ ok: false, error: 'Quote sent but failed to save. Please contact support.' }, { status: 500 });
+      const code = (qErr as { code?: string }).code ?? 'unknown';
+      return NextResponse.json(
+        { ok: false, error: `Quote sent but failed to save (code ${code}). Please contact support.` },
+        { status: 500 }
+      );
     }
 
     // 3. 记录发送的邮件

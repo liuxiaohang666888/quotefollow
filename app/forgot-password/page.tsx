@@ -16,7 +16,8 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voxalo.top'}/login`,
+      // 统一走 /auth/callback 换取会话，再落到重置密码页（/login 无法处理重置 token）
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voxalo.top'}/auth/callback?next=/reset-password`,
     });
     if (err) {
       setError(err.message);

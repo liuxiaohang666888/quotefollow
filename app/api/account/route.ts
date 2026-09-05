@@ -38,7 +38,13 @@ export async function PUT(req: NextRequest) {
     ? await admin.from('accounts').update(updates).eq('id', user.id).select().single()
     : await admin
         .from('accounts')
-        .insert({ id: user.id, ...updates })
+        .insert({
+          id: user.id,
+          // 补齐必填默认值：email 用于入站邮件匹配账户，followup_email 用于跟进发信
+          email: user.email ?? '',
+          followup_email: 'follow@voxalo.top',
+          ...updates,
+        })
         .select()
         .single();
 
