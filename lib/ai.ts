@@ -4,6 +4,11 @@ function getClient(): OpenAI {
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
     baseURL: process.env.OPENAI_BASE_URL || undefined,
+    // 硬超时 15s：AI 供应商挂死/排队（免费档低并发）时快速失败，
+    // 抛出的超时错误会被各调用点的 catch 捕获，走既有降级路径（正则解析/转人工/模板兜底）
+    timeout: 15000,
+    // 不自动重试：所有调用点都有降级兜底，快速失败比排队重试更稳
+    maxRetries: 0,
   });
 }
 

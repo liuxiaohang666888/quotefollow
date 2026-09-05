@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization');
   const expected = process.env.CRON_SECRET;
-  if (expected && auth !== `Bearer ${expected}`) {
+  // fail-closed：CRON_SECRET 未配置时直接拒绝（接口只做 count 查询，拒绝不影响数据）
+  if (!expected || auth !== `Bearer ${expected}`) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
