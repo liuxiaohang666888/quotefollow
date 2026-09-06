@@ -3,8 +3,8 @@
 // 部署：Cloudflare Dashboard → Email → Email Routing → 路由规则 → 发送到 Worker。
 // 需要把该域名接入 Cloudflare（DNS 托管），Email Routing 免费。
 // 注意：密钥从环境变量 INBOUND_SECRET 读取，须与 Vercel 的 INBOUND_WEBHOOK_SECRET 完全一致。
+// BACKEND_URL 从 wrangler.toml [vars] 注入，请勿在此修改。
 
-const BACKEND_URL = 'https://www.voxalo.top/api/webhooks/inbound';
 const MAX_RAW_BYTES = 900000;
 
 export default {
