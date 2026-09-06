@@ -33,41 +33,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
 
-  // 完整 MIME 解析
+  const rawMimeB64 = mail.raw_mime || '';
   let mime: ParsedMime | null = null;
-  if (mail.raw_mime) {
+
+  if (rawMimeB64) {
     try {
-      const decoded = Buffer.from(mail.raw_mime, 'base64').toString('latin1');
+      const decoded = Buffer.from(rawMimeB64, 'base64').toString('latin1');
       console.log('[inbound] raw_mime length:', decoded.length);
       mime = parseMimeMessage(decoded);
-      console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length);
+      console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length, 'parse_failed:', mime.parse_failed);
     } catch (e) {
       console.warn('[inbound] raw_mime parse failed:', e);
     }
   }
 
-  // 提取头部信息
   const fromRaw = mime?.headers['from'] || mail.From || '';
   const toRaw = mime?.headers['to'] || mail.To || '';
   const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
 
-  // 正文决策（多级 fallback，所有路径统一过 sanitizeMimeNoise 清洗）：
-  //   1) mime.text 解析成功 → 直接用；
-  //   2) mime.html → 剥离标签转纯文本；
-  //   3) 无 raw_mime（老版 Worker 未传）→ 用 Worker 的 text，
-  //      老版 text 可能是未解析的原始 MIME 垃圾，清洗后为空则 body 留空，绝不把垃圾入库。
   let plainText = '';
   if (mime) {
-    // mime.text 可能是空字符串（trim 后），需要检查是否有实际内容
-    if (mime.text) {
+    if (mime.text && !mime.text.includes('解析失败')) {
       plainText = mime.text;
-    } else if (mime.html) {
-      // html 存在但 text 为空，从 html 提取文本
+    } else if (mime.html && mime.html.length < 2000) {
       plainText = mime.html
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
         .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
+        .replace(/<\/(p|div|tr|h\d|li)>/gi, '\n')
         .replace(/<[^>]+>/g, ' ')
         .replace(/&nbsp;/gi, ' ')
         .replace(/&amp;/gi, '&')
@@ -78,11 +71,11 @@ export async function POST(req: NextRequest) {
         .trim();
     }
   }
+
   if (!plainText) {
     plainText = mail.text || mail.html || '';
   }
 
-  // 所有路径统一清洗：boundary / base64 块 / Content-* 头 / 残片
   const body = sanitizeMimeNoise(plainText)
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
@@ -92,33 +85,28 @@ export async function POST(req: NextRequest) {
   console.log('[inbound] final body length:', body.length);
   console.log('[inbound] final body preview:', body.slice(0, 200));
 
-  // 如果 body 仍为空，尝试从 raw_mime 中提取更多信息
-  if (!body && mail.raw_mime) {
-    console.warn('[inbound] body is empty after parsing, raw_mime was provided but parse failed');
+  if (!body) {
+    console.warn('[inbound] body is empty after parsing, saving raw MIME for debugging');
   }
 
-  // 提取 Message-ID
   const messageId = (mime?.headers['message-id'] || mail['Message-Id'] || '')
     .replace(/^<|>$/g, '')
     .trim();
 
-  // 提取 In-Reply-To
   const rawInReply = (mime?.headers['in-reply-to'] || mail['In-Reply-To'] || '')
     .split(',')[0]
     .trim();
   const inReplyTo = rawInReply.replace(/^<|>$/g, '');
 
-  // 提取邮箱
   const senderEmail = extractEmail(fromRaw);
   const followupEmail = extractEmail(toRaw);
 
   const admin = createAdminClient();
 
-  // ========== 情况 1：客户回复 ==========
   if (inReplyTo) {
     const baseId = inReplyTo.split('@')[0];
     console.log('[inbound] inReplyTo:', inReplyTo, 'baseId:', baseId);
-    
+
     const { data: msg } = await admin
       .from('messages')
       .select('quote_id, direction')
@@ -126,10 +114,9 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (msg) {
-      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, quoteId: msg.quote_id });
+      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg.quote_id });
     }
 
-    // 兜底
     const { data: fallbackQuote } = await admin
       .from('quotes')
       .select('id')
@@ -140,11 +127,10 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (fallbackQuote) {
-      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, quoteId: fallbackQuote.id });
+      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: fallbackQuote.id });
     }
   }
 
-  // ========== 情况 2：新报价邮件 ==========
   if (messageId && (await isDuplicateMessage(admin, messageId))) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
@@ -194,6 +180,7 @@ export async function POST(req: NextRequest) {
       quote_date: quoteDate.toISOString().slice(0, 10),
       source_subject: subject,
       source_body: body.slice(0, 5000),
+      source_raw_mime: rawMimeB64.slice(0, 50000),
       next_followup_at: scheduleForDay(quoteDate, 1).toISOString(),
     })
     .select()
@@ -209,6 +196,7 @@ export async function POST(req: NextRequest) {
     direction: 'in',
     subject,
     body: body.slice(0, 5000),
+    raw_mime: rawMimeB64.slice(0, 50000),
     message_id: messageId,
     in_reply_to: '',
   });
@@ -223,9 +211,10 @@ async function handleCustomerReply(args: {
   senderEmail: string;
   subject: string;
   body: string;
+  rawMimeB64: string;
   quoteId: string;
 }) {
-  const { admin, messageId, senderEmail, subject, body, quoteId } = args;
+  const { admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId } = args;
 
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
   if (!quote) {
@@ -234,6 +223,7 @@ async function handleCustomerReply(args: {
       direction: 'in',
       subject,
       body: body.slice(0, 5000),
+      raw_mime: rawMimeB64.slice(0, 50000),
       message_id: messageId,
       in_reply_to: '',
     });
@@ -253,11 +243,13 @@ async function handleCustomerReply(args: {
     direction: 'in',
     subject,
     body: body.slice(0, 5000),
+    raw_mime: rawMimeB64.slice(0, 50000),
     message_id: messageId,
     in_reply_to: '',
   });
 
-  const ai = await autoReply(quote.customer_name, body, account?.business_info || {});
+  const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
+  const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
 
   let notificationText = `Customer ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}).`;
 
@@ -281,10 +273,10 @@ async function handleCustomerReply(args: {
   if (ai.is_hot) {
     notificationText += '\n🔥 HOT LEAD — customer seems ready to book. Jump on this now!';
   }
-  if (ai.needs_human) {
+  if (ai.needs_human || !body) {
     const replyPreview = body
       ? body.slice(0, 1000)
-      : '(客户回复内容为空，请检查原始邮件)';
+      : '(客户回复内容为空，已保存原始邮件原文供检查)';
     notificationText += `\n⚠️ Needs human attention. Customer's reply:\n\n${replyPreview}`;
   }
 

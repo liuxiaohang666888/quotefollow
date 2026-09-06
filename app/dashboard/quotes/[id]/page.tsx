@@ -17,6 +17,7 @@ interface Quote {
   next_followup_at: string | null;
   source_subject: string;
   source_body: string;
+  source_raw_mime?: string;
   created_at: string;
 }
 
@@ -191,7 +192,7 @@ export default function QuoteDetailPage() {
             <div className="msg in">
               <div className="h">Subject: {quote.source_subject || '—'}</div>
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {displayBody(quote.source_body) || 'No body captured.'}
+                {displayBody(quote.source_body) || (quote.source_raw_mime ? '(解析失败，已保存原始邮件原文)' : 'No body captured.')}
               </pre>
             </div>
           </div>

@@ -2,6 +2,7 @@ export interface ParsedMime {
   headers: Record<string, string>;
   text: string;
   html: string;
+  parse_failed?: boolean;
 }
 
 interface MimePart {
@@ -143,7 +144,7 @@ function collectParts(headers: Record<string, string>, body: string, out: MimePa
   const ctRaw = headers['content-type'] || '';
   const ct = ctRaw.toLowerCase();
   const bm = ctRaw.match(/boundary\s*=\s*"([^"]+)"|boundary\s*=\s*([^;\s]+)/i);
-  if (ct.startsWith('multipart/') && bm && depth < 6) {
+  if (ct.startsWith('multipart/') && bm && depth < 10) {
     const boundary = (bm[1] || bm[2] || '').trim();
     if (!boundary) {
       out.push({ headers, body });
@@ -160,33 +161,53 @@ function collectParts(headers: Record<string, string>, body: string, out: MimePa
 }
 
 function htmlToText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, ' ')
-    .replace(/<img[^>]*src=["']?[^"'>]*javascript:[^"'>]*["']?[^>]*>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n\s+/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  if (!html) return '';
+  try {
+    let text = html
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<iframe[\s\S]*?<\/iframe>/gi, ' ')
+      .replace(/<img[^>]*src=["']?[^"'>]*javascript:[^"'>]*["']?[^>]*>/gi, ' ')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|tr|h\d|li|td|th)>/gi, '\n')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num)))
+      .replace(/&#[xX]([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+    let inTag = false;
+    const result: string[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '<') {
+        inTag = true;
+        continue;
+      }
+      if (c === '>') {
+        inTag = false;
+        continue;
+      }
+      if (!inTag) {
+        result.push(c);
+      }
+    }
+    text = result.join('');
+    text = text.replace(/[ \t]+/g, ' ')
+      .replace(/\n\s+/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return text;
+  } catch {
+    return '';
+  }
 }
 
-// 清洗落入正文的 MIME 噪声（boundary 分隔线 / MIME 头 / 连续 base64 块 / preamble 提示行）。
-// 用于两条防线：
-//   1) 后端降级路径：老版 Worker 未传 raw_mime 时，text 字段可能是未解析的原始 MIME；
-//   2) 最终兜底：body 入库前统一过一遍，保证数据库不再进新垃圾。
 export function sanitizeMimeNoise(input: string): string {
   if (!input) return input || '';
-  // 快速路径：不含任何 MIME 特征时原样返回，零成本
   if (
     !/NextPart|mimepart/i.test(input) &&
     !/^Content-[\w-]+\s*:/im.test(input) &&
@@ -214,12 +235,40 @@ export function sanitizeMimeNoise(input: string): string {
       b64Run++;
       continue;
     }
-    // base64 块中间夹着被换行截断的短残片行（如 "LSo"），一并剔除
     if (b64Run > 0 && B64_FRAG.test(t)) continue;
     b64Run = 0;
     out.push(raw);
   }
   return out.join('\n');
+}
+
+function tryDecodePart(p: MimePart): string | null {
+  const ctHeader = p.headers['content-type'] || 'text/plain';
+  const ct = ctHeader.toLowerCase();
+  const cte = (p.headers['content-transfer-encoding'] || '').toLowerCase().trim();
+  const csMatch = ctHeader.match(/charset\s*=\s*"?([^";\s]+)"?/i);
+  const charset = csMatch ? csMatch[1] : 'utf-8';
+
+  if (!ct.startsWith('text/') && !ct.startsWith('message/')) return null;
+  if (ct.startsWith('text/') && ct.includes('calendar')) return null;
+
+  try {
+    let bytes: Buffer;
+    if (cte.includes('base64')) {
+      const cleaned = p.body.replace(/[^A-Za-z0-9+/=\n\r]/g, '');
+      if (cleaned.length === 0) return null;
+      bytes = Buffer.from(cleaned, 'base64');
+    } else if (cte.includes('quoted-printable')) {
+      bytes = decodeQpBytes(p.body);
+    } else {
+      bytes = Buffer.from(p.body, 'latin1');
+    }
+    const decoded = decodeCharset(bytes, charset);
+    const trimmed = decoded.trim();
+    return trimmed || null;
+  } catch {
+    return null;
+  }
 }
 
 export function parseMimeMessage(rawLatin1: string): ParsedMime {
@@ -229,28 +278,13 @@ export function parseMimeMessage(rawLatin1: string): ParsedMime {
 
   let text = '';
   let html = '';
+  let parseFailed = false;
+
   for (const p of parts) {
-    const ctHeader = p.headers['content-type'] || 'text/plain';
-    const ct = ctHeader.toLowerCase();
-    const cte = (p.headers['content-transfer-encoding'] || '').toLowerCase().trim();
-    const csMatch = ctHeader.match(/charset\s*=\s*"?([^";\s]+)"?/i);
-    const charset = csMatch ? csMatch[1] : 'utf-8';
-    if (!ct.startsWith('text/') && !ct.startsWith('message/')) continue;
-    if (ct.startsWith('text/') && ct.includes('calendar')) continue;
+    const decoded = tryDecodePart(p);
+    if (!decoded) continue;
 
-    let bytes: Buffer;
-    if (cte.includes('base64')) {
-      // base64 解码前先清理非 base64 字符（换行、空格等）
-      const cleaned = p.body.replace(/[^A-Za-z0-9+/=]/g, '');
-      if (cleaned.length === 0) continue;
-      bytes = Buffer.from(cleaned, 'base64');
-    } else if (cte.includes('quoted-printable')) {
-      bytes = decodeQpBytes(p.body);
-    } else {
-      bytes = Buffer.from(p.body, 'latin1');
-    }
-    const decoded = decodeCharset(bytes, charset);
-
+    const ct = (p.headers['content-type'] || '').toLowerCase();
     if (ct.startsWith('text/html')) {
       if (!html) html = decoded;
     } else if (!text) {
@@ -259,21 +293,15 @@ export function parseMimeMessage(rawLatin1: string): ParsedMime {
     if (text && html) break;
   }
 
-  // 如果 text 为空但有 html，从 html 提取文本
   if (!text && html) {
     text = htmlToText(html);
   }
-  
-  // 兜底：如果仍然为空，尝试从所有 parts 中提取非空内容
+
   if (!text && !html && parts.length > 0) {
-    for (const p of parts) {
-      const ct = (p.headers['content-type'] || '').toLowerCase();
-      if (ct.startsWith('text/')) {
-        text = p.body.trim();
-        if (text) break;
-      }
-    }
+    parseFailed = true;
+    text = '(解析失败：无法从邮件中提取文本内容)';
+    html = rawLatin1.slice(0, 5000);
   }
-  
-  return { headers, text: text.trim(), html };
+
+  return { headers, text: text.trim(), html, parse_failed: parseFailed };
 }
