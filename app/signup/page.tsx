@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 // useSearchParams 需要 Suspense 边界（Next.js 静态渲染要求）
@@ -21,7 +21,6 @@ function SignupForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // PayPal 订阅成功后跳转过来会带 ?sub=I-xxxx，必须透传保存，否则付费客户会被当成免费版

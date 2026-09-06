@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: cd quotefollow-work && npm ci
+
+      - name: TypeScript check
+        run: cd quotefollow-work && npx tsc --noEmit --skipLibCheck
+
+      - name: Lint
+        run: cd quotefollow-work && npx eslint .
+
+      - name: Security audit
+        run: cd quotefollow-work && npm audit --audit-level=high || true
+
+      - name: Build
+        run: cd quotefollow-work && npm run build

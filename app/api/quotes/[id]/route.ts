@@ -8,7 +8,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
@@ -40,7 +40,8 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    console.error('[quotes/delete] error:', error.code);
+    return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
   }
   return NextResponse.json({ ok: true, quote: data });
 }
@@ -50,7 +51,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 

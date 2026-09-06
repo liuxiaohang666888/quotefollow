@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '@/lib/mime';
-import { parseQuoteEmail, autoReply, generateFollowupBody } from '@/lib/ai';
+import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
 
@@ -107,14 +107,25 @@ export async function POST(req: NextRequest) {
     const baseId = inReplyTo.split('@')[0];
     console.log('[inbound] inReplyTo:', inReplyTo, 'baseId:', baseId);
 
-    const { data: msg } = await admin
+    // 修复 SQL 注入：用参数化查询替代字符串拼接
+    const { data: msg1 } = await admin
       .from('messages')
       .select('quote_id, direction')
-      .or(`message_id.eq.${inReplyTo},message_id.eq.${baseId}`)
+      .eq('message_id', inReplyTo)
       .maybeSingle();
 
-    if (msg) {
-      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg.quote_id });
+    if (msg1) {
+      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg1.quote_id });
+    }
+
+    const { data: msg2 } = await admin
+      .from('messages')
+      .select('quote_id, direction')
+      .eq('message_id', baseId)
+      .maybeSingle();
+
+    if (msg2) {
+      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg2.quote_id });
     }
 
     const { data: fallbackQuote } = await admin

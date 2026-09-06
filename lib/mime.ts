@@ -253,18 +253,24 @@ function tryDecodePart(p: MimePart): string | null {
   if (ct.startsWith('text/') && ct.includes('calendar')) return null;
 
   try {
-    let bytes: Buffer;
+    let result: string;
     if (cte.includes('base64')) {
       const cleaned = p.body.replace(/[^A-Za-z0-9+/=\n\r]/g, '');
       if (cleaned.length === 0) return null;
-      bytes = Buffer.from(cleaned, 'base64');
+      const bytes = Buffer.from(cleaned, 'base64');
+      result = decodeCharset(bytes, charset);
     } else if (cte.includes('quoted-printable')) {
-      bytes = decodeQpBytes(p.body);
+      const bytes = decodeQpBytes(p.body);
+      result = decodeCharset(bytes, charset);
+    } else if (charset.toLowerCase() === 'utf-8') {
+      // 无 transfer encoding + UTF-8：body 已经是正确字符串
+      result = p.body;
     } else {
-      bytes = Buffer.from(p.body, 'latin1');
+      // 无 transfer encoding + 非 UTF-8：body 是 latin1 bytes
+      const bytes = Buffer.from(p.body, 'latin1');
+      result = decodeCharset(bytes, charset);
     }
-    const decoded = decodeCharset(bytes, charset);
-    const trimmed = decoded.trim();
+    const trimmed = result.trim();
     return trimmed || null;
   } catch {
     return null;

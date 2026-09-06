@@ -5,12 +5,30 @@ import { sendEmail } from '@/lib/resend';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const respondWindow = 30_000;
+const respondMax = 3;
+const respondLog = new Map<string, number[]>();
+
+function isRespondRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const arr = (respondLog.get(ip) || []).filter((t) => now - t < respondWindow);
+  if (arr.length >= respondMax) return true;
+  arr.push(now);
+  respondLog.set(ip, arr);
+  return false;
+}
+
 // 客户在公开报价页点「接受 / 婉拒」
 // 安全：quote id 是 uuid 不可枚举；只能对状态为 following/replied 的报价生效一次。
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (isRespondRateLimited(ip)) {
+    return NextResponse.json({ ok: false, error: 'too many requests, slow down' }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const decision = body?.decision; // 'accept' | 'decline'
 
@@ -34,12 +52,6 @@ export async function POST(
     return NextResponse.json({ ok: false, error: 'already decided' }, { status: 409 });
   }
 
-  const { data: account } = await admin
-    .from('accounts')
-    .select('*')
-    .eq('id', quote.account_id)
-    .maybeSingle();
-
   const newStatus = decision === 'accept' ? 'won' : 'lost';
 
   // 更新报价状态 + 停止自动跟进
@@ -55,8 +67,8 @@ export async function POST(
     subject: decision === 'accept' ? 'Customer accepted quote (via link)' : 'Customer declined quote (via link)',
     body:
       decision === 'accept'
-        ? 'The customer clicked “Accept” on the public quote page. Great — follow up to confirm scheduling!'
-        : 'The customer clicked “Decline” on the public quote page. No further follow-ups will be sent.',
+        ? 'The customer clicked "Accept" on the public quote page. Great — follow up to confirm scheduling!'
+        : 'The customer clicked "Decline" on the public quote page. No further follow-ups will be sent.',
     message_id: '',
     in_reply_to: '',
   });
@@ -86,7 +98,7 @@ export async function POST(
     decision,
     message:
       decision === 'accept'
-        ? 'Thank you! We’ll be in touch shortly to confirm the details.'
+        ? 'Thank you! We\'ll be in touch shortly to confirm the details.'
         : 'Thanks for letting us know. Have a great day!',
   });
 }

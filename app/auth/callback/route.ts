@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${safeNext}`);

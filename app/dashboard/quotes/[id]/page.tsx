@@ -26,6 +26,7 @@ interface Message {
   direction: 'in' | 'out';
   subject: string;
   body: string;
+  raw_mime?: string;
   created_at: string;
 }
 
@@ -181,7 +182,7 @@ export default function QuoteDetailPage() {
                   {m.direction === 'in' ? '📥 From customer' : '📤 Sent by QuoteFollow'} · {fmt(m.created_at)}
                 </div>
                 <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {displayBody(m.body) || '(no message content)'}
+                  {displayBody(m.body) || (m.raw_mime ? '(解析失败，已保存原始邮件原文供检查)' : '(no message content)')}
                 </pre>
               </div>
             ))}

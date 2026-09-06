@@ -6,23 +6,53 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "vertical:create": "node scripts/vertical-create.mjs"
+    "vertical:create": "node scripts/vertical-create.mjs",
+    "analyze": "ANALYZE=true next build",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx eslint --fix",
+      "npx tsc --noEmit --skipLibCheck"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "overrides": {
+    "linkify-it": "^5.0.1",
+    "nodemailer": "^6.9.16",
+    "postcss": "^8.5.3"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.115.0",
     "@types/mailparser": "^3.4.6",
     "mailparser": "^3.7.1",
-    "next": "^14.2.15",
+    "next": "^16.3.4",
     "openai": "^4.77.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "^4.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@eslint/js": "^9.39.5",
+    "@next/bundle-analyzer": "^16.3.4",
+    "@next/eslint-plugin-next": "^16.3.4",
     "@types/node": "^20.16.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
-    "typescript": "^5.6.3"
+    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/parser": "^8.69.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.3.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.69.0"
   }
 }

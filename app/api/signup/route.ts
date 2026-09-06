@@ -83,14 +83,14 @@ export async function POST(req: NextRequest) {
       });
 
     if (insertError) {
-      console.error('[signup/api] account upsert failed:', insertError);
-      return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 });
+      console.error('[signup/api] account upsert failed:', insertError.code);
+      return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
     }
 
     console.log('[signup/api] account created successfully:', userId);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    console.error('[signup/api] unexpected error:', e);
-    return NextResponse.json({ ok: false, error: e?.message || 'Unknown error' }, { status: 500 });
+    console.error('[signup/api] unexpected error:', e?.code || e);
+    return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
   }
 }

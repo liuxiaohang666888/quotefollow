@@ -2,8 +2,10 @@ import { Resend } from 'resend';
 
 let _resend: Resend | null = null;
 
-function client(): Resend {
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!);
+function getClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('RESEND_API_KEY is not set');
+  if (!_resend) _resend = new Resend(apiKey);
   return _resend;
 }
 
@@ -14,9 +16,8 @@ export async function sendEmail(opts: {
   replyTo?: string;
   inReplyTo?: string;
   references?: string;
-  fromName?: string; // 自定义发件人名称，如 "Sparkle Clean Co."
+  fromName?: string;
 }) {
-  // 邮箱格式校验：防止错误邮箱浪费配额或报错
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(opts.to)) {
     console.error('[resend] invalid email format:', opts.to);
@@ -27,11 +28,12 @@ export async function sendEmail(opts: {
     throw new Error('Invalid replyTo format');
   }
 
-  const baseFrom = process.env.RESEND_FROM_EMAIL!;
-  const from = opts.fromName
-    ? `${opts.fromName} <${baseFrom.replace(/.*<(.+)>/, '$1').trim()}>`
-    : baseFrom;
-  return client().emails.send({
+  const baseFrom = process.env.RESEND_FROM_EMAIL;
+  if (!baseFrom) throw new Error('RESEND_FROM_EMAIL is not set');
+  const fromAddr = baseFrom.replace(/.*<(.+)>/, '$1').trim() || baseFrom;
+  const from = opts.fromName ? `${opts.fromName} <${fromAddr}>` : baseFrom;
+
+  return getClient().emails.send({
     from,
     to: opts.to,
     subject: opts.subject,

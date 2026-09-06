@@ -28,7 +28,7 @@ function isRateLimited(userId: string): boolean {
 
 // 发送报价邮件给客户 + 自动建档 + 安排跟进
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
@@ -99,14 +99,18 @@ export async function POST(req: NextRequest) {
   const businessName = acc?.business_name || 'Your business';
   const subject = `Quote: ${serviceType || 'our service'}${customerName ? ` for ${customerName}` : ''}`;
 
+  // 防止邮件头 CRLF 注入
+  const safeSubject = subject.replace(/[\r\n]/g, '');
+  const safeMessage = message.replace(/[\r\n]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
   const quoteDate = new Date();
 
   try {
     // 1. 发送报价邮件给客户
     const sentRes = await sendEmail({
       to: customerEmail,
-      subject,
-      text: message,
+      subject: safeSubject,
+      text: safeMessage,
       replyTo: acc?.followup_email || 'follow@voxalo.top',
       fromName: businessName,
     });
@@ -121,8 +125,8 @@ export async function POST(req: NextRequest) {
         amount,
         service_type: serviceType,
         quote_date: quoteDate.toISOString().slice(0, 10),
-        source_subject: subject,
-        source_body: message.slice(0, 5000),
+        source_subject: safeSubject,
+        source_body: safeMessage.slice(0, 5000),
         next_followup_at: scheduleForDay(quoteDate, 1).toISOString(),
       })
       .select()
@@ -142,8 +146,8 @@ export async function POST(req: NextRequest) {
     await admin.from('messages').insert({
       quote_id: quote.id,
       direction: 'out',
-      subject,
-      body: message.slice(0, 5000),
+      subject: safeSubject,
+      body: safeMessage.slice(0, 5000),
       message_id: sentRes.data?.id || '',
       in_reply_to: '',
     });

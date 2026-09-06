@@ -29,7 +29,7 @@ function isRateLimited(userId: string): boolean {
 // 手动创建报价：老板在后台粘贴报价邮件内容 → AI 解析 → 建档 → 安排跟进
 // 这是"邮件转发"之外的另一个入口，不依赖域名/邮件路由，今天即可用。
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    console.error('[quotes/create] error:', error.code);
+    return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, quote_id: quote.id });

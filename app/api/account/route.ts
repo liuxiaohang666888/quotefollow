@@ -1,53 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+﻿import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export const runtime = 'nodejs';
-
-// 读取/更新老板账号设置（业务信息、跟进邮箱、Slack、自动回复开关）
 export async function GET() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-
   const admin = createAdminClient();
-  const { data, error } = await admin.from('accounts').select('*').eq('id', user.id).maybeSingle();
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, account: data });
+
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: 'auth required' }, { status: 401 });
+  }
+
+  const { data, error } = await admin
+    .from('accounts')
+    .select('id, email, name, followup_email, company, created_at, updated_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[account] GET error:', error.code, error.message);
+    return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, data });
 }
 
-export async function PUT(req: NextRequest) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-
-  const body = await req.json();
-  const { business_name, followup_email, slack_webhook, business_info, auto_reply_enabled } = body || {};
-
-  const updates: Record<string, unknown> = {};
-  if (business_name !== undefined) updates.business_name = business_name;
-  if (slack_webhook !== undefined) updates.slack_webhook = slack_webhook;
-  if (business_info !== undefined) updates.business_info = business_info;
-  if (auto_reply_enabled !== undefined) updates.auto_reply_enabled = !!auto_reply_enabled;
-
-  // 用 admin client：行不存在则自动补建（防注册流程因邮箱确认未建行）
+export async function PUT(request: Request) {
   const admin = createAdminClient();
-  const { data: existing } = await admin.from('accounts').select('id').eq('id', user.id).maybeSingle();
 
-  const { data, error } = existing
-    ? await admin.from('accounts').update(updates).eq('id', user.id).select().single()
-    : await admin
-        .from('accounts')
-        .insert({
-          id: user.id,
-          // 补齐必填默认值：email 用于入站邮件匹配账户，followup_email 用于跟进发信
-          email: user.email ?? '',
-          followup_email: 'follow@voxalo.top',
-          ...updates,
-        })
-        .select()
-        .single();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: 'auth required' }, { status: 401 });
+  }
 
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, account: data });
+  const body = await request.json();
+  const { id, name, email, company, followup_email } = body;
+
+  if (!id || !email) {
+    return NextResponse.json({ ok: false, error: 'missing id or email' }, { status: 400 });
+  }
+
+  const { data, error } = await admin
+    .from('accounts')
+    .update({ name, email, company, followup_email, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[account] PUT error:', error.code, error.message);
+    return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, data });
 }
