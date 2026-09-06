@@ -57,23 +57,28 @@ export async function POST(req: NextRequest) {
   //   3) 无 raw_mime（老版 Worker 未传）→ 用 Worker 的 text，
   //      老版 text 可能是未解析的原始 MIME 垃圾，清洗后为空则 body 留空，绝不把垃圾入库。
   let plainText = '';
-  if (mime && mime.text) {
-    plainText = mime.text;
-  } else if (mime && mime.html) {
-    plainText = mime.html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<')
-      .replace(/&gt;/gi, '>')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  } else {
+  if (mime) {
+    // mime.text 可能是空字符串（trim 后），需要检查是否有实际内容
+    if (mime.text) {
+      plainText = mime.text;
+    } else if (mime.html) {
+      // html 存在但 text 为空，从 html 提取文本
+      plainText = mime.html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+  }
+  if (!plainText) {
     plainText = mail.text || mail.html || '';
   }
 
