@@ -279,7 +279,7 @@ async function handleCustomerReply(args: {
   if (ai.needs_human) {
     const replyPreview = body
       ? body.slice(0, 1000)
-      : '(no readable text could be parsed from this email — please check the original message)';
+      : '(客户回复内容为空，请检查原始邮件)';
     notificationText += `\n⚠️ Needs human attention. Customer's reply:\n\n${replyPreview}`;
   }
 

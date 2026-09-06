@@ -240,7 +240,10 @@ export function parseMimeMessage(rawLatin1: string): ParsedMime {
 
     let bytes: Buffer;
     if (cte.includes('base64')) {
-      bytes = Buffer.from(p.body.replace(/[^A-Za-z0-9+/=]/g, ''), 'base64');
+      // base64 解码前先清理非 base64 字符（换行、空格等）
+      const cleaned = p.body.replace(/[^A-Za-z0-9+/=]/g, '');
+      if (cleaned.length === 0) continue;
+      bytes = Buffer.from(cleaned, 'base64');
     } else if (cte.includes('quoted-printable')) {
       bytes = decodeQpBytes(p.body);
     } else {
@@ -256,6 +259,21 @@ export function parseMimeMessage(rawLatin1: string): ParsedMime {
     if (text && html) break;
   }
 
-  if (!text && html) text = htmlToText(html);
+  // 如果 text 为空但有 html，从 html 提取文本
+  if (!text && html) {
+    text = htmlToText(html);
+  }
+  
+  // 兜底：如果仍然为空，尝试从所有 parts 中提取非空内容
+  if (!text && !html && parts.length > 0) {
+    for (const p of parts) {
+      const ct = (p.headers['content-type'] || '').toLowerCase();
+      if (ct.startsWith('text/')) {
+        text = p.body.trim();
+        if (text) break;
+      }
+    }
+  }
+  
   return { headers, text: text.trim(), html };
 }

@@ -157,7 +157,7 @@ export default function QuoteDetailPage() {
                   {m.direction === 'in' ? '📥 From customer' : '📤 Sent by QuoteFollow'} · {fmt(m.created_at)}
                 </div>
                 <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {displayBody(m.body) || '(no readable text parsed from this email)'}
+                  {displayBody(m.body) || '(no message content)'}
                 </pre>
               </div>
             ))}
