@@ -64,31 +64,36 @@ export async function POST(req: NextRequest) {
   const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
 
   let plainText = '';
-  if (mime) {
-    if (mime.text && !mime.text.includes('解析失败')) {
-      plainText = mime.text;
-    } else if (mime.html && mime.html.length < 2000) {
-      plainText = mime.html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/(p|div|tr|h\d|li)>/gi, '\n')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/&amp;/gi, '&')
-        .replace(/&lt;/gi, '<')
-        .replace(/&gt;/gi, '>')
-        .replace(/[ \t]+/g, ' ')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-    }
+  if (mime && mime.text && !mime.parse_failed) {
+    plainText = mime.text;
+  } else if (mime && mime.html && mime.html.length > 0 && mime.html.length < 2000) {
+    plainText = mime.html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|tr|h\d|li)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    const trimmed = plainText.trim();
+    if (!trimmed) plainText = '';
   }
 
-  console.log('[inbound] plainText from mime:', plainText ? plainText.slice(0, 500) : 'NULL');
-  console.log('[inbound] plainText from fallback (mail.text/html):', (mail.text || mail.html || '').slice(0, 500));
+  console.log('[inbound] mime.text:', mime?.text ? mime.text.slice(0, 500) : 'NULL');
+  console.log('[inbound] mime.html:', mime?.html ? mime.html.slice(0, 300) : 'NULL');
+  console.log('[inbound] mime.parse_failed:', mime?.parse_failed);
+  console.log('[inbound] plainText after mime:', plainText ? plainText.slice(0, 500) : 'NULL');
+  console.log('[inbound] mail.text:', mail.text ? mail.text.slice(0, 500) : 'NULL');
+  console.log('[inbound] mail.html:', mail.html ? mail.html.slice(0, 300) : 'NULL');
 
   if (!plainText) {
     plainText = mail.text || mail.html || '';
+    console.log('[inbound] fallback to mail.text/html, plainText:', plainText ? plainText.slice(0, 500) : 'NULL');
   }
 
   const body = sanitizeMimeNoise(plainText)
