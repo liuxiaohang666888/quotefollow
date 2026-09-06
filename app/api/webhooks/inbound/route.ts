@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { parseMimeMessage, decodeRfc2047, ParsedMime } from '@/lib/mime';
+import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '@/lib/mime';
 import { parseQuoteEmail, autoReply, generateFollowupBody } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
@@ -51,14 +51,15 @@ export async function POST(req: NextRequest) {
   const toRaw = mime?.headers['to'] || mail.To || '';
   const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
 
-  // 提取正文 - 完整三级 fallback
+  // 正文决策（多级 fallback，所有路径统一过 sanitizeMimeNoise 清洗）：
+  //   1) mime.text 解析成功 → 直接用；
+  //   2) mime.html → 剥离标签转纯文本；
+  //   3) 无 raw_mime（老版 Worker 未传）→ 用 Worker 的 text，
+  //      老版 text 可能是未解析的原始 MIME 垃圾，清洗后为空则 body 留空，绝不把垃圾入库。
   let plainText = '';
   if (mime && mime.text) {
-    // 第一优先：MIME 解析的纯文本
     plainText = mime.text;
-    console.log('[inbound] using mime.text');
   } else if (mime && mime.html) {
-    // 第二优先：MIME 解析的 HTML（转为纯文本）
     plainText = mime.html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -69,21 +70,15 @@ export async function POST(req: NextRequest) {
       .replace(/&amp;/gi, '&')
       .replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>')
-      .replace(/\s+/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
-    console.log('[inbound] using mime.html -> text');
-  } else if (mail.text && !mail.text.includes('NextPart') && !mail.text.includes('boundary')) {
-    // 第三优先：Worker 传来的干净 text（不含 MIME 噪声）
-    plainText = mail.text;
-    console.log('[inbound] using mail.text (clean)');
   } else {
-    // 兜底
     plainText = mail.text || mail.html || '';
-    console.log('[inbound] using fallback text');
   }
 
-  // 标准化换行符
-  const body = plainText
+  // 所有路径统一清洗：boundary / base64 块 / Content-* 头 / 残片
+  const body = sanitizeMimeNoise(plainText)
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
@@ -272,7 +267,10 @@ async function handleCustomerReply(args: {
     notificationText += '\n🔥 HOT LEAD — customer seems ready to book. Jump on this now!';
   }
   if (ai.needs_human) {
-    notificationText += `\n⚠️ Needs human attention. Customer's reply:\n\n${body.slice(0, 1000)}`;
+    const replyPreview = body
+      ? body.slice(0, 1000)
+      : '(no readable text could be parsed from this email — please check the original message)';
+    notificationText += `\n⚠️ Needs human attention. Customer's reply:\n\n${replyPreview}`;
   }
 
   await notifyOwner(admin, account, notificationText, quote.id, subject);

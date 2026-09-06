@@ -180,6 +180,48 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+// 清洗落入正文的 MIME 噪声（boundary 分隔线 / MIME 头 / 连续 base64 块 / preamble 提示行）。
+// 用于两条防线：
+//   1) 后端降级路径：老版 Worker 未传 raw_mime 时，text 字段可能是未解析的原始 MIME；
+//   2) 最终兜底：body 入库前统一过一遍，保证数据库不再进新垃圾。
+export function sanitizeMimeNoise(input: string): string {
+  if (!input) return input || '';
+  // 快速路径：不含任何 MIME 特征时原样返回，零成本
+  if (
+    !/NextPart|mimepart/i.test(input) &&
+    !/^Content-[\w-]+\s*:/im.test(input) &&
+    !/MIME-Version\s*:/i.test(input)
+  ) {
+    return input;
+  }
+  const B64_LINE = /^[A-Za-z0-9+/]{30,}=*\s*$/;
+  const B64_FRAG = /^[A-Za-z0-9+/=]+\s*$/;
+  const out: string[] = [];
+  let b64Run = 0;
+  for (const raw of input.split(/\r?\n/)) {
+    const t = raw.trim();
+    if (/^-{2,}=?_?(NextPart|mimepart|Part)_/i.test(t)) {
+      b64Run = 0;
+      continue;
+    }
+    if (/^-{5,}[A-Za-z0-9_.=+-]{10,}$/.test(t)) {
+      b64Run = 0;
+      continue;
+    }
+    if (/^(Content-[\w-]+|MIME-Version)\s*:/i.test(t)) continue;
+    if (/^This is a multi-part message in MIME format\.?$/i.test(t)) continue;
+    if (B64_LINE.test(t)) {
+      b64Run++;
+      continue;
+    }
+    // base64 块中间夹着被换行截断的短残片行（如 "LSo"），一并剔除
+    if (b64Run > 0 && B64_FRAG.test(t)) continue;
+    b64Run = 0;
+    out.push(raw);
+  }
+  return out.join('\n');
+}
+
 export function parseMimeMessage(rawLatin1: string): ParsedMime {
   const { headers, body } = splitHeaders(rawLatin1);
   const parts: MimePart[] = [];

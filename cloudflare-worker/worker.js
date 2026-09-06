@@ -30,8 +30,13 @@ export default {
     }
 
     const subject = (headers['subject'] || '').trim() || '(no subject)';
-    
-    // 关键修复：不发送 stripHeaders 后的脏数据，而是发送 raw_mime 让后端完整解析
+
+    // multipart 邮件无法在 Worker 里可靠解析成纯文本：
+    // 简单 strip 只会留下 boundary / base64 噪声。正文交给后端解析 raw_mime，
+    // 因此 multipart 时 text 发空；纯 text/plain 邮件才输出可读文本。
+    const isMultipart = /multipart/i.test(headers['content-type'] || '');
+    const body = isMultipart ? '' : stripHeaders(text);
+
     await fetch(BACKEND_URL, {
       method: 'POST',
       headers: {
@@ -42,8 +47,8 @@ export default {
         From: headers['from']?.trim() || '',
         To: headers['to']?.trim() || '',
         Subject: subject,
-        text: '',  // 不发送 Worker 清洗过的 text（含 MIME 噪声）
-        raw_mime: rawB64,  // 发送完整原始邮件，让后端用 mailparser 正确解析
+        text: body,
+        raw_mime: rawB64,
         'Message-Id': (headers['message-id'] || '').trim(),
         'In-Reply-To': (headers['in-reply-to'] || '').trim(),
         References: (headers['references'] || '').trim(),

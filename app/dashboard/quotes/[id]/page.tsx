@@ -35,20 +35,56 @@ function fmt(iso: string): string {
   });
 }
 
-/**
- * HTML 转纯文本，用于 Dashboard 安全显示
- */
+// 老版本把未解析的原始 MIME（boundary / base64 / MIME 头）直接存进了数据库，
+// 这里在渲染层清洗，老脏数据也能正常显示。
+const B64_LINE = /^[A-Za-z0-9+/]{30,}=*$/;
+const B64_FRAG = /^[A-Za-z0-9+/=]+$/;
+function cleanMimeNoise(s: string): string {
+  if (!s) return '';
+  if (
+    !/NextPart|mimepart/i.test(s) &&
+    !/^Content-[\w-]+:/im.test(s) &&
+    !/MIME-Version:/i.test(s)
+  ) {
+    return s;
+  }
+  const out: string[] = [];
+  let b64Run = 0;
+  for (const line of s.split(/\r?\n/)) {
+    const t = line.trim();
+    if (/^-{2,}=?_?(NextPart|mimepart|Part)_/i.test(t)) { b64Run = 0; continue; }
+    if (/^-{5,}[A-Za-z0-9_.=+-]{10,}$/.test(t)) { b64Run = 0; continue; }
+    if (/^(Content-[\w-]+|MIME-Version):/i.test(t)) continue;
+    if (/^This is a multi-part message in MIME format\.?$/i.test(t)) continue;
+    if (B64_LINE.test(t)) { b64Run++; continue; }
+    // base64 块中间夹着被换行截断的短残片行（如 "LSo"），一并剔除
+    if (b64Run > 0 && B64_FRAG.test(t)) continue;
+    b64Run = 0;
+    out.push(line);
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// 渲染前统一清洗：先清 MIME 噪声，再剥 HTML 标签
+function displayBody(s: string): string {
+  return stripHtml(cleanMimeNoise(s || ''));
+}
+
+// HTML 转纯文本，用于 Dashboard 安全显示（老数据 body 里可能存了原始 HTML 标签）
 function stripHtml(html: string): string {
   if (!html) return '';
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
@@ -120,9 +156,8 @@ export default function QuoteDetailPage() {
                 <div className="h">
                   {m.direction === 'in' ? '📥 From customer' : '📤 Sent by QuoteFollow'} · {fmt(m.created_at)}
                 </div>
-                {/* 安全显示：HTML 转纯文本 */}
                 <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {stripHtml(m.body)}
+                  {displayBody(m.body) || '(no readable text parsed from this email)'}
                 </pre>
               </div>
             ))}
@@ -132,9 +167,8 @@ export default function QuoteDetailPage() {
             <h3>Original quote</h3>
             <div className="msg in">
               <div className="h">Subject: {quote.source_subject || '—'}</div>
-              {/* 安全显示：HTML 转纯文本 */}
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {stripHtml(quote.source_body) || 'No body captured.'}
+                {displayBody(quote.source_body) || 'No body captured.'}
               </pre>
             </div>
           </div>
