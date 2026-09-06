@@ -16,6 +16,17 @@ export async function sendEmail(opts: {
   references?: string;
   fromName?: string; // 自定义发件人名称，如 "Sparkle Clean Co."
 }) {
+  // 邮箱格式校验：防止错误邮箱浪费配额或报错
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(opts.to)) {
+    console.error('[resend] invalid email format:', opts.to);
+    throw new Error('Invalid email format');
+  }
+  if (opts.replyTo && !emailRegex.test(opts.replyTo)) {
+    console.error('[resend] invalid replyTo format:', opts.replyTo);
+    throw new Error('Invalid replyTo format');
+  }
+
   const baseFrom = process.env.RESEND_FROM_EMAIL!;
   const from = opts.fromName
     ? `${opts.fromName} <${baseFrom.replace(/.*<(.+)>/, '$1').trim()}>`

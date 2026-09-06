@@ -194,7 +194,19 @@ async function handleCustomerReply(args: {
   const { admin, messageId, senderEmail, subject, body, quoteId } = args;
 
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
-  if (!quote) return NextResponse.json({ ok: false, error: 'quote not found' }, { status: 404 });
+  if (!quote) {
+    // quote 找不到时仍然入库，避免邮件丢包
+    await admin.from('messages').insert({
+      quote_id: quoteId,
+      direction: 'in',
+      subject,
+      body: body.slice(0, 5000),
+      message_id: messageId,
+      in_reply_to: '',
+    });
+    console.warn('[inbound] quote not found, body stored without quote:', quoteId, 'sender:', senderEmail);
+    return NextResponse.json({ ok: true, quote_id: quoteId, handled_orphan: true });
+  }
 
   const { data: account } = await admin.from('accounts').select('*').eq('id', quote.account_id).single();
 

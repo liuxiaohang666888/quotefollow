@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 // ============ Vercel Cron：每天跑一次，找出该发跟进邮件的报价 ============
 // 用 vercel.json 里的 cron 配置触发（默认每天 14:00 UTC）。
-// 安全：Vercel Cron 自动带 Authorization: Bearer $CRON_SECRET；也支持 ?cron=secret 手动触发。
+// 安全：Vercel Cron 自动带 Authorization: Bearer token。
 // 注意：同一仓库部署了 6 个 Vercel 项目（共享同一数据库），cron 会在 6 个项目上同时触发本接口，
 // 因此每条报价发信前必须先通过"原子领取锁"抢占（见下方 claimed 更新），防止发 6 封重复邮件。
 
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     console.error('[cron] CRON_SECRET is not configured — rejecting (fail-closed)');
     return NextResponse.json({ ok: false, error: 'cron not configured' }, { status: 401 });
   }
-  if (auth !== `Bearer ${expected}` && req.nextUrl.searchParams.get('cron') !== expected) {
+  // 只允许 Header 鉴权，拒绝 URL query 参数
+  if (auth !== `Bearer ${expected}`) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

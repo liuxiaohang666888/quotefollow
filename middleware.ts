@@ -4,9 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://keydirdjkcjudfhqtdud.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_QOmFw19MwpfK1cMmjKfaHQ_2vm71C9q',
+    url,
+    key,
     {
       cookies: {
         getAll() {
