@@ -42,18 +42,38 @@ export async function POST(req: NextRequest) {
   let mime: ParsedMime | null = null;
   if (mail.raw_mime) {
     try {
-      mime = parseMimeMessage(Buffer.from(mail.raw_mime, 'base64').toString('latin1'));
+      const decoded = Buffer.from(mail.raw_mime, 'base64').toString('latin1');
+      console.log('[inbound] raw_mime length:', decoded.length, 'first 200:', decoded.substring(0, 200).replace(/\n/g, '\\n'));
+      mime = parseMimeMessage(decoded);
+      console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length);
     } catch (e) {
       console.warn('[inbound] raw_mime parse failed:', e);
     }
   }
 
+  // 优先使用 MIME 解析结果，兜底用 Worker 传来的 text/html
   const fromRaw = mime?.headers['from'] || mail.From || '';
   const toRaw = mime?.headers['to'] || mail.To || '';
   const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
-  const plainText = mime ? mime.text || mime.html : mail.text || mail.html || '';
+
+  // 关键修复：如果 MIME 解析成功但有 text，用 text；否则用 html；都空才 fallback
+  let plainText = '';
+  if (mime) {
+    plainText = mime.text || mime.html || '';
+    console.log('[inbound] using mime text:', plainText.substring(0, 100));
+  } else if (mail.text && !mail.text.includes('NextPart') && !mail.text.includes('boundary')) {
+    // mail.text 干净（不含 MIME 噪声）才用
+    plainText = mail.text;
+    console.log('[inbound] using mail.text (clean)');
+  } else {
+    // 兜底：mail.text 可能含乱码，至少去掉明显噪声
+    plainText = mail.text || mail.html || '';
+    console.log('[inbound] using fallback text, contains noise:', plainText.includes('NextPart'));
+  }
+
   const body = plainText
-    .replace(/\r\n/g, '\n')
+    .replace(/
+\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
