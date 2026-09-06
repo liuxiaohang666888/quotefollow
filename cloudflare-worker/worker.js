@@ -30,8 +30,8 @@ export default {
     }
 
     const subject = (headers['subject'] || '').trim() || '(no subject)';
-    const body = stripHeaders(text);
-
+    
+    // 关键修复：不发送 stripHeaders 后的脏数据，而是发送 raw_mime 让后端完整解析
     await fetch(BACKEND_URL, {
       method: 'POST',
       headers: {
@@ -42,8 +42,8 @@ export default {
         From: headers['from']?.trim() || '',
         To: headers['to']?.trim() || '',
         Subject: subject,
-        text: body,
-        raw_mime: rawB64,
+        text: '',  // 不发送 Worker 清洗过的 text（含 MIME 噪声）
+        raw_mime: rawB64,  // 发送完整原始邮件，让后端用 mailparser 正确解析
         'Message-Id': (headers['message-id'] || '').trim(),
         'In-Reply-To': (headers['in-reply-to'] || '').trim(),
         References: (headers['references'] || '').trim(),
@@ -65,17 +65,4 @@ function bufToB64(buf) {
     parts.push(bin);
   }
   return btoa(parts.join(''));
-}
-
-function stripHeaders(raw) {
-  const idx = raw.indexOf('\r\n\r\n');
-  const body = idx >= 0 ? raw.slice(idx + 4) : raw;
-  // 去掉 MIME 噪声，保留可读文本
-  return body
-    .replace(/Content-Type:[\s\S]*?\r\n\r\n/g, '')
-    .replace(/[ \t]+/g, ' ')
-    .split('\n')
-    .filter((l) => !l.startsWith('='))
-    .join('\n')
-    .slice(0, 8000);
 }
