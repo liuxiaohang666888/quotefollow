@@ -35,6 +35,23 @@ function fmt(iso: string): string {
   });
 }
 
+/**
+ * HTML 转纯文本，用于 Dashboard 安全显示
+ */
+function stripHtml(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export default function QuoteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -82,27 +99,6 @@ export default function QuoteDetailPage() {
     router.refresh();
   }
 
-  async function sendFollowupNow() {
-    setBusy(true);
-    setError('');
-    const res = await fetch(`/api/quotes/${id}/followup`, { method: 'POST' });
-    const json = await res.json();
-    if (!json.ok) { setError(json.error || 'Failed to send'); setBusy(false); return; }
-    await load();
-    setBusy(false);
-  }
-
-  async function copyPublicLink() {
-    const url = `${window.location.origin}/q/${id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setError('');
-      alert('Copied! Send this link to your customer:\n\n' + url + '\n\nThey can view the quote and accept/decline with one click.');
-    } catch {
-      prompt('Copy this link and send it to your customer:', url);
-    }
-  }
-
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
   if (!quote) return <p>Quote not found. <a href="/dashboard" style={{ color: '#2563eb' }}>Back to dashboard</a></p>;
 
@@ -124,7 +120,10 @@ export default function QuoteDetailPage() {
                 <div className="h">
                   {m.direction === 'in' ? '📥 From customer' : '📤 Sent by QuoteFollow'} · {fmt(m.created_at)}
                 </div>
-                <pre>{m.body}</pre>
+                {/* 安全显示：HTML 转纯文本 */}
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {stripHtml(m.body)}
+                </pre>
               </div>
             ))}
           </div>
@@ -133,7 +132,10 @@ export default function QuoteDetailPage() {
             <h3>Original quote</h3>
             <div className="msg in">
               <div className="h">Subject: {quote.source_subject || '—'}</div>
-              <pre>{quote.source_body || 'No body captured.'}</pre>
+              {/* 安全显示：HTML 转纯文本 */}
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {stripHtml(quote.source_body) || 'No body captured.'}
+              </pre>
             </div>
           </div>
         </div>
@@ -154,12 +156,6 @@ export default function QuoteDetailPage() {
           <div className="card">
             <h3>Actions</h3>
             <div className="actions">
-              <button className="btn sm blue" disabled={busy} onClick={copyPublicLink}>
-                🔗 Copy customer link
-              </button>
-              <button className="btn sm blue" disabled={busy} onClick={sendFollowupNow}>
-                ✉ Send follow-up now
-              </button>
               <button className="btn sm green" disabled={busy} onClick={() => setStatus('won')}>
                 ✓ Mark won
               </button>
@@ -174,8 +170,7 @@ export default function QuoteDetailPage() {
               </button>
             </div>
             <p style={{ fontSize: 13, color: '#6b7280', marginTop: 12 }}>
-              The customer link lets them accept or decline the quote in one click — no account needed.
-              Marking won or lost stops automatic follow-ups.
+              Marking a quote won or lost stops automatic follow-ups.
             </p>
           </div>
         </div>
