@@ -89,6 +89,9 @@ export async function POST(req: NextRequest) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+  console.log('[inbound] final body length:', body.length);
+  console.log('[inbound] final body preview:', body.slice(0, 200));
+
   // 如果 body 仍为空，尝试从 raw_mime 中提取更多信息
   if (!body && mail.raw_mime) {
     console.warn('[inbound] body is empty after parsing, raw_mime was provided but parse failed');
