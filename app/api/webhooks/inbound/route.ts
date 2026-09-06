@@ -117,6 +117,8 @@ export async function POST(req: NextRequest) {
   // ========== 情况 1：客户回复 ==========
   if (inReplyTo) {
     const baseId = inReplyTo.split('@')[0];
+    console.log('[inbound] inReplyTo:', inReplyTo, 'baseId:', baseId);
+    
     const { data: msg } = await admin
       .from('messages')
       .select('quote_id, direction')
