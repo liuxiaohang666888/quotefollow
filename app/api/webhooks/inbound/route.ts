@@ -8,12 +8,6 @@ import { scheduleForDay } from '@/lib/followup';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// ============ 入站邮件 Webhook ============
-// 两种来源都打到这里：
-//   A) Resend Inbound（官方 webhook payload）
-//   B) Cloudflare Email Routing → Worker → POST（Worker 已转成 Resend 兼容 payload）
-// 鉴权：X-Inbound-Secret header == INBOUND_WEBHOOK_SECRET
-
 interface InboundMail {
   From: string;
   To: string;
@@ -39,11 +33,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
 
+  // 完整 MIME 解析
   let mime: ParsedMime | null = null;
   if (mail.raw_mime) {
     try {
       const decoded = Buffer.from(mail.raw_mime, 'base64').toString('latin1');
-      console.log('[inbound] raw_mime length:', decoded.length, 'first 200:', decoded.substring(0, 200).replace(/\n/g, '\\n'));
+      console.log('[inbound] raw_mime length:', decoded.length);
       mime = parseMimeMessage(decoded);
       console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length);
     } catch (e) {
@@ -51,51 +46,68 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 优先使用 MIME 解析结果，兜底用 Worker 传来的 text/html
+  // 提取头部信息
   const fromRaw = mime?.headers['from'] || mail.From || '';
   const toRaw = mime?.headers['to'] || mail.To || '';
   const subject = mime ? decodeRfc2047(mime.headers['subject'] || '') : mail.Subject || '';
 
-  // 关键修复：如果 MIME 解析成功但有 text，用 text；否则用 html；都空才 fallback
+  // 提取正文 - 完整三级 fallback
   let plainText = '';
-  if (mime) {
-    plainText = mime.text || mime.html || '';
-    console.log('[inbound] using mime text:', plainText.substring(0, 100));
+  if (mime && mime.text) {
+    // 第一优先：MIME 解析的纯文本
+    plainText = mime.text;
+    console.log('[inbound] using mime.text');
+  } else if (mime && mime.html) {
+    // 第二优先：MIME 解析的 HTML（转为纯文本）
+    plainText = mime.html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|tr|h\d)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+    console.log('[inbound] using mime.html -> text');
   } else if (mail.text && !mail.text.includes('NextPart') && !mail.text.includes('boundary')) {
-    // mail.text 干净（不含 MIME 噪声）才用
+    // 第三优先：Worker 传来的干净 text（不含 MIME 噪声）
     plainText = mail.text;
     console.log('[inbound] using mail.text (clean)');
   } else {
-    // 兜底：mail.text 可能含乱码，至少去掉明显噪声
+    // 兜底
     plainText = mail.text || mail.html || '';
-    console.log('[inbound] using fallback text, contains noise:', plainText.includes('NextPart'));
+    console.log('[inbound] using fallback text');
   }
 
+  // 标准化换行符
   const body = plainText
-    .replace(/
-\n/g, '\n')
+    .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // 提取 Message-ID
   const messageId = (mime?.headers['message-id'] || mail['Message-Id'] || '')
     .replace(/^<|>$/g, '')
     .trim();
-  // In-Reply-To 可能带 < >，也可能多个引用；取第一个并剥掉尖括号
+
+  // 提取 In-Reply-To
   const rawInReply = (mime?.headers['in-reply-to'] || mail['In-Reply-To'] || '')
     .split(',')[0]
     .trim();
   const inReplyTo = rawInReply.replace(/^<|>$/g, '');
 
-  // 发件人 = 客户（老板是收件人 follow@domain）
+  // 提取邮箱
   const senderEmail = extractEmail(fromRaw);
   const followupEmail = extractEmail(toRaw);
 
   const admin = createAdminClient();
 
-  // ========== 情况 1：这是客户对跟进邮件的回复（In-Reply-To 命中我们发过的邮件） ==========
+  // ========== 情况 1：客户回复 ==========
   if (inReplyTo) {
-    // Resend 生成的 Message-ID 形如 <{apiId}@resend.dev>，我们入库存的是 apiId，
-    // 所以既匹配完整值也匹配 @ 前的 id。
     const baseId = inReplyTo.split('@')[0];
     const { data: msg } = await admin
       .from('messages')
@@ -107,7 +119,7 @@ export async function POST(req: NextRequest) {
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, quoteId: msg.quote_id });
     }
 
-    // 兜底：In-Reply-To 没匹配上时，用发件人邮箱找最近的报价（status 非 won/lost）
+    // 兜底
     const { data: fallbackQuote } = await admin
       .from('quotes')
       .select('id')
@@ -122,15 +134,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ========== 情况 2：老板转发来的新报价邮件 ==========
-  // 幂等：同一封原始邮件重复投递（webhook 重试）时跳过，防止重复建档
+  // ========== 情况 2：新报价邮件 ==========
   if (messageId && (await isDuplicateMessage(admin, messageId))) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  // 找老板账号：优先按发件人邮箱（= 注册邮箱）精确匹配。
-  // 所有垂直共享入站邮箱 follow@voxalo.top，多账户下按 To 无法区分；
-  // 按 From 匹配不到时再按 To（followup_email）兜底（兼容老数据/单账户）。
   let account: Record<string, any> | null = null;
 
   if (senderEmail) {
@@ -141,7 +149,6 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle();
     if (senderErr) {
-      // email 列可能尚未创建（未跑 003 migration）→ 降级到 To 匹配
       console.warn('[inbound] sender lookup skipped:', senderErr.message);
     } else if (bySender) {
       account = bySender;
@@ -163,10 +170,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
   }
 
-  // AI 解析报价 → 建档
   const parsed = await parseQuoteEmail(subject, body);
-
   const quoteDate = parsed.quote_date ? new Date(parsed.quote_date) : new Date();
+
   const { data: quote, error: qErr } = await admin
     .from('quotes')
     .insert({
@@ -188,7 +194,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'db error' }, { status: 500 });
   }
 
-  // 记录原始邮件
   await admin.from('messages').insert({
     quote_id: quote.id,
     direction: 'in',
@@ -202,7 +207,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, quote_id: quote.id });
 }
 
-// ========== 客户回复处理：自动回复 + 热单提醒 + 停止自动跟进 ==========
 async function handleCustomerReply(args: {
   admin: ReturnType<typeof createAdminClient>;
   messageId: string;
@@ -215,7 +219,6 @@ async function handleCustomerReply(args: {
 
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
   if (!quote) {
-    // quote 找不到时仍然入库，避免邮件丢包
     await admin.from('messages').insert({
       quote_id: quoteId,
       direction: 'in',
@@ -230,13 +233,11 @@ async function handleCustomerReply(args: {
 
   const { data: account } = await admin.from('accounts').select('*').eq('id', quote.account_id).single();
 
-  // 客户回复 → 停止自动跟进
   await admin
     .from('quotes')
     .update({ status: 'replied', next_followup_at: null })
     .eq('id', quoteId);
 
-  // 记录客户回复
   await admin.from('messages').insert({
     quote_id: quoteId,
     direction: 'in',
@@ -279,7 +280,6 @@ async function handleCustomerReply(args: {
   return NextResponse.json({ ok: true, quote_id: quoteId, is_hot: ai.is_hot, needs_human: ai.needs_human });
 }
 
-// ========== 通知老板（邮件 + 可选 Slack） ==========
 async function notifyOwner(
   admin: ReturnType<typeof createAdminClient>,
   account: any,
@@ -318,7 +318,6 @@ function extractEmail(header: string): string {
   return m ? m[0] : '';
 }
 
-// ========== 幂等检查：message_id 是否已入库 ==========
 async function isDuplicateMessage(
   admin: ReturnType<typeof createAdminClient>,
   messageId: string
