@@ -190,21 +190,43 @@ export default function QuoteDetailPage() {
           <div className="card">
             <h3>Actions</h3>
             <div className="actions">
-              <button className="btn sm green" disabled={busy} onClick={() => setStatus('won')}>
-                ✓ Mark won
+              <button 
+                className="btn sm green" 
+                disabled={busy || quote.status === 'won'} 
+                onClick={() => setStatus('won')}
+                title={quote.status === 'won' ? 'Already marked as won' : 'Mark as won'}
+              >
+                {quote.status === 'won' ? '✓ Won' : '✓ Mark won'}
               </button>
-              <button className="btn sm gray" disabled={busy} onClick={() => setStatus('replied')}>
-                ↻ Back to replied
+              <button 
+                className="btn sm gray" 
+                disabled={busy || quote.status === 'replied'} 
+                onClick={() => setStatus('replied')}
+                title={quote.status === 'replied' ? 'Already replied' : 'Mark as replied'}
+              >
+                {quote.status === 'replied' ? '↻ Replied' : '↻ Mark replied'}
               </button>
-              <button className="btn sm gray" disabled={busy} onClick={() => setStatus('lost')}>
-                ✕ Mark lost
+              <button 
+                className="btn sm gray" 
+                disabled={busy || quote.status === 'lost'} 
+                onClick={() => setStatus('lost')}
+                title={quote.status === 'lost' ? 'Already marked as lost' : 'Mark as lost'}
+              >
+                {quote.status === 'lost' ? '✕ Lost' : '✕ Mark lost'}
               </button>
-              <button className="btn sm red" disabled={busy} onClick={handleDelete}>
+              <button 
+                className="btn sm red" 
+                disabled={busy} 
+                onClick={handleDelete}
+                title="Delete this quote permanently"
+              >
                 Delete
               </button>
             </div>
             <p style={{ fontSize: 13, color: '#6b7280', marginTop: 12 }}>
-              Marking a quote won or lost stops automatic follow-ups.
+              {quote.status === 'won' && '✓ Quote marked as won — follow-ups stopped.'}
+              {quote.status === 'lost' && '✕ Quote marked as lost — follow-ups stopped.'}
+              {quote.status !== 'won' && quote.status !== 'lost' && 'Marking a quote won or lost stops automatic follow-ups.'}
             </p>
           </div>
         </div>
