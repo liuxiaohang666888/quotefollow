@@ -113,26 +113,49 @@ export default function QuoteDetailPage() {
   useEffect(() => { load(); }, [id]);
 
   async function setStatus(status: Quote['status']) {
+    if (busy) return;
     setBusy(true);
     setError('');
-    const res = await fetch(`/api/quotes/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    const json = await res.json();
-    if (!json.ok) { setError(json.error || 'Failed'); setBusy(false); return; }
-    await load();
-    setBusy(false);
+    // 乐观更新：立即显示状态变化
+    setQuote(prev => prev ? { ...prev, status } : null);
+    try {
+      const res = await fetch(`/api/quotes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (!json.ok) { 
+        setError(json.error || 'Failed'); 
+        await load(); // 失败时回滚
+      }
+    } catch (e) {
+      setError('Network error');
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleDelete() {
-    if (!confirm('Delete this quote and all its messages?')) return;
-    const res = await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
-    const json = await res.json();
-    if (!json.ok) { setError(json.error || 'Failed'); return; }
-    router.push('/dashboard');
-    router.refresh();
+    if (!confirm('Delete this quote and all its messages? This cannot be undone.')) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.ok) { 
+        setError(json.error || 'Failed'); 
+        setBusy(false);
+        return; 
+      }
+      // 删除成功，立即跳转
+      router.push('/dashboard');
+      router.refresh();
+    } catch (e) {
+      setError('Network error');
+      setBusy(false);
+    }
   }
 
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
