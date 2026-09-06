@@ -54,12 +54,17 @@ export default {
 
 function bufToB64(buf) {
   const bytes = new Uint8Array(buf);
-  let bin = '';
-  const CH = 0x8000;
-  for (let i = 0; i < bytes.length; i += CH) {
-    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  const CHUNK = 8192;
+  const parts = [];
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    const chunk = bytes.subarray(i, i + CHUNK);
+    let bin = '';
+    for (let j = 0; j < chunk.length; j++) {
+      bin += String.fromCharCode(chunk[j]);
+    }
+    parts.push(bin);
   }
-  return btoa(bin);
+  return btoa(parts.join(''));
 }
 
 function stripHeaders(raw) {
