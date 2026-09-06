@@ -36,12 +36,24 @@ export async function POST(req: NextRequest) {
   const rawMimeB64 = mail.raw_mime || '';
   let mime: ParsedMime | null = null;
 
+  // 调试：打印 Resend webhook 原始数据
+  console.log('[inbound] === MAIL OBJECT ===');
+  console.log('[inbound] mail.text:', mail.text ? mail.text.slice(0, 500) : 'NULL');
+  console.log('[inbound] mail.html:', mail.html ? mail.html.slice(0, 300) : 'NULL');
+  console.log('[inbound] mail.raw_mime length:', rawMimeB64.length);
+  console.log('[inbound] mail.From:', mail.From);
+  console.log('[inbound] mail.Subject:', mail.Subject);
+  console.log('[inbound] mail.To:', mail.To);
+
   if (rawMimeB64) {
     try {
       const decoded = Buffer.from(rawMimeB64, 'base64').toString('latin1');
-      console.log('[inbound] raw_mime length:', decoded.length);
+      console.log('[inbound] raw_mime decoded length:', decoded.length);
+      console.log('[inbound] raw_mime first 500 chars:', decoded.slice(0, 500));
       mime = parseMimeMessage(decoded);
       console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length, 'parse_failed:', mime.parse_failed);
+      console.log('[inbound] mime.text:', mime.text ? mime.text.slice(0, 500) : 'NULL');
+      console.log('[inbound] mime.html:', mime.html ? mime.html.slice(0, 300) : 'NULL');
     } catch (e) {
       console.warn('[inbound] raw_mime parse failed:', e);
     }
@@ -72,6 +84,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  console.log('[inbound] plainText from mime:', plainText ? plainText.slice(0, 500) : 'NULL');
+  console.log('[inbound] plainText from fallback (mail.text/html):', (mail.text || mail.html || '').slice(0, 500));
+
   if (!plainText) {
     plainText = mail.text || mail.html || '';
   }
@@ -83,7 +98,8 @@ export async function POST(req: NextRequest) {
     .trim();
 
   console.log('[inbound] final body length:', body.length);
-  console.log('[inbound] final body preview:', body.slice(0, 200));
+  console.log('[inbound] final body preview:', body.slice(0, 500));
+  console.log('[inbound] === END DEBUG ===');
 
   if (!body) {
     console.warn('[inbound] body is empty after parsing, saving raw MIME for debugging');

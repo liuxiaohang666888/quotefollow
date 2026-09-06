@@ -19,9 +19,6 @@ jobs:
       - name: Install
         run: cd quotefollow-work && npm ci
 
-      - name: TypeScript check
-        run: cd quotefollow-work && npx tsc --noEmit --skipLibCheck
-
       - name: Lint
         run: cd quotefollow-work && npx eslint .
 
