@@ -22,8 +22,9 @@ function isRespondRateLimited(ip: string): boolean {
 // 安全：quote id 是 uuid 不可枚举；只能对状态为 following/replied 的报价生效一次。
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   if (isRespondRateLimited(ip)) {
     return NextResponse.json({ ok: false, error: 'too many requests, slow down' }, { status: 429 });
@@ -40,7 +41,7 @@ export async function POST(
   const { data: quote, error } = await admin
     .from('quotes')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (error || !quote) {

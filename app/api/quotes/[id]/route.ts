@@ -3,11 +3,20 @@ import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
+// Next.js 15+/16：动态路由的 params 是 Promise，必须 await。
+// 老写法（同步解构）拿到的 id 是 undefined，传给 Supabase 会报
+// "invalid input syntax for type uuid: undefined"。
+async function getId(params: Promise<{ id: string }>): Promise<string> {
+  const { id } = await params;
+  return id;
+}
+
 // 更新报价状态（成交 / 流失 / 重新跟进等），用户从仪表盘操作
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const id = await getId(params);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
@@ -24,7 +33,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   if (status !== undefined) {
     updates.status = status;
-    // 成交后停止自动跟进
+    // 成交/流失后停止自动跟进
     if (status === 'won' || status === 'lost') updates.next_followup_at = null;
   }
   if (amount !== undefined) updates.amount = amount;
@@ -34,13 +43,13 @@ export async function PATCH(
   const { data, error } = await supabase
     .from('quotes')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('account_id', user.id)
     .select()
     .single();
 
   if (error) {
-    console.error('[quotes/delete] error:', error.code);
+    console.error('[quotes/patch] error:', error.code);
     return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
   }
   return NextResponse.json({ ok: true, quote: data });
@@ -49,8 +58,9 @@ export async function PATCH(
 // 删除报价
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const id = await getId(params);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
@@ -60,7 +70,7 @@ export async function DELETE(
   const { data, error } = await supabase
     .from('quotes')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('account_id', user.id)
     .select('id');
 

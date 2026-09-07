@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic';
 // 立即跟进：老板点按钮，立刻给该客户发下一封跟进邮件（不等自动排期）。
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
@@ -21,7 +22,7 @@ export async function POST(
   const { data: quote } = await supabase
     .from('quotes')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('account_id', user.id)
     .single();
   if (!quote) return NextResponse.json({ ok: false, error: 'quote not found' }, { status: 404 });
