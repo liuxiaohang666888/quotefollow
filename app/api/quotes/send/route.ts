@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
       direction: 'out',
       subject: safeSubject,
       body: safeMessage.slice(0, 5000),
-      message_id: sentRes.data?.id || '',
+      message_id: sentRes?.id || '',
       in_reply_to: '',
     });
 

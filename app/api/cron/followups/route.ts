@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           direction: 'out',
           subject,
           body: body.slice(0, 5000),
-          message_id: sentRes.data?.id || '',
+          message_id: sentRes?.id || '',
           in_reply_to: '',
         });
 

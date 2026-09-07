@@ -70,7 +70,7 @@ export async function POST(
       direction: 'out',
       subject,
       body,
-      message_id: sentRes.data?.id || '',
+      message_id: sentRes?.id || '',
       in_reply_to: '',
     });
 

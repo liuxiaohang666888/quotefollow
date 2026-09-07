@@ -292,7 +292,7 @@ async function handleCustomerReply(args: {
   let notificationText = `Customer ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}).`;
 
   if (ai.should_reply && ai.reply_body && account?.auto_reply_enabled !== false) {
-    await sendEmail({
+    const sent = await sendEmail({
       to: senderEmail,
       subject: `Re: ${subject}`,
       text: ai.reply_body,
@@ -303,7 +303,9 @@ async function handleCustomerReply(args: {
       direction: 'out',
       subject: `Re: ${subject}`,
       body: ai.reply_body,
-      message_id: '',
+      // 必须存 Resend 返回的邮件 id：客户回复时 In-Reply-To 指向它，
+      // 下次才能精确配对到这条消息（旧代码存''导致回复永远配不上）
+      message_id: sent?.id || '',
       in_reply_to: messageId,
     });
   }

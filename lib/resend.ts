@@ -17,7 +17,7 @@ export async function sendEmail(opts: {
   inReplyTo?: string;
   references?: string;
   fromName?: string;
-}) {
+}): Promise<{ id: string }> {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(opts.to)) {
     console.error('[resend] invalid email format:', opts.to);
@@ -33,7 +33,7 @@ export async function sendEmail(opts: {
   const fromAddr = baseFrom.replace(/.*<(.+)>/, '$1').trim() || baseFrom;
   const from = opts.fromName ? `${opts.fromName} <${fromAddr}>` : baseFrom;
 
-  return getClient().emails.send({
+  const result = await getClient().emails.send({
     from,
     to: opts.to,
     subject: opts.subject,
@@ -44,4 +44,7 @@ export async function sendEmail(opts: {
       ...(opts.references ? { References: opts.references } : {}),
     },
   });
+  // Resend 返回 { id } —— 这个 id 就是邮件的 Message-Id，
+  // 客户回复时 In-Reply-To 会指向它，必须存库才能配对
+  return { id: (result as { data?: { id?: string } })?.data?.id || (result as { id?: string })?.id || '' };
 }
