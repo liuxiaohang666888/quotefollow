@@ -162,27 +162,32 @@ export async function POST(req: NextRequest) {
     console.log('[inbound] inReplyTo:', inReplyTo, 'baseId:', baseId);
 
     // 修复 SQL 注入：用参数化查询替代字符串拼接
-    const { data: msg1 } = await admin
+    console.log('[inbound] querying messages by inReplyTo...');
+    const { data: msg1, error: err1 } = await admin
       .from('messages')
       .select('quote_id, direction')
       .eq('message_id', inReplyTo)
       .maybeSingle();
+    console.log('[inbound] msg1 query result:', msg1 ? 'found' : 'not found', 'error:', err1);
 
     if (msg1) {
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg1.quote_id });
     }
 
-    const { data: msg2 } = await admin
+    console.log('[inbound] querying messages by baseId...');
+    const { data: msg2, error: err2 } = await admin
       .from('messages')
       .select('quote_id, direction')
       .eq('message_id', baseId)
       .maybeSingle();
+    console.log('[inbound] msg2 query result:', msg2 ? 'found' : 'not found', 'error:', err2);
 
     if (msg2) {
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg2.quote_id });
     }
 
-    const { data: fallbackQuote } = await admin
+    console.log('[inbound] querying fallback quote for sender:', senderEmail);
+    const { data: fallbackQuote, error: err3 } = await admin
       .from('quotes')
       .select('id')
       .eq('customer_email', senderEmail)
@@ -190,12 +195,14 @@ export async function POST(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+    console.log('[inbound] fallback quote result:', fallbackQuote ? 'found' : 'not found', 'error:', err3);
 
     if (fallbackQuote) {
       await traceWrite('handled_reply_fallback', 'quote=' + fallbackQuote.id);
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: fallbackQuote.id });
     }
     // inReplyTo 存在但完全没配对上：不静默掉进新报价分支，直接记录并返回
+    console.log('[inbound] no match found, writing reply_unmatched trace');
     await traceWrite('reply_unmatched', 'inReplyTo=' + inReplyTo + ' no msg/no fallback quote');
     return NextResponse.json({ ok: true, handled: false, reason: 'reply could not be matched to a quote' });
   }
