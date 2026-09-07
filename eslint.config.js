@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import nextPlugin from '@next/eslint-plugin-next';
 
 export default tseslint.config(
-  { ignores: ['node_modules/', '.next/', 'scripts/', 'cloudflare-worker/', '**/*.mjs', '**/*.cjs'] },
+  { ignores: ['node_modules/', '.next/', 'scripts/', 'cloudflare-worker/', '**/*.mjs', '**/*.cjs', 'next.config.js', '*.config.js'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
