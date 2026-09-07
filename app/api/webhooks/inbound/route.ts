@@ -66,7 +66,10 @@ export async function POST(req: NextRequest) {
   let plainText = '';
   if (mime && mime.text && !mime.parse_failed) {
     plainText = mime.text;
-  } else if (mime && mime.html && mime.html.length > 0 && mime.html.length < 2000) {
+  } else if (mime && mime.html && mime.html.length > 0) {
+    // 不再限制 html 长度：QQ邮箱回复的 html 部分经常超过 2000 字符（带引用样式），
+    // 旧代码直接拒绝导致客户明明回了字却显示"回复为空"。
+    // 转成纯文本后只保留前 5000 字符即可。
     plainText = mime.html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -83,6 +86,9 @@ export async function POST(req: NextRequest) {
     const trimmed = plainText.trim();
     if (!trimmed) plainText = '';
   }
+
+  // mime.text 是解析失败的占位符时不能用
+  if (plainText.startsWith('(解析失败')) plainText = '';
 
   console.log('[inbound] mime.text:', mime?.text ? mime.text.slice(0, 500) : 'NULL');
   console.log('[inbound] mime.html:', mime?.html ? mime.html.slice(0, 300) : 'NULL');
