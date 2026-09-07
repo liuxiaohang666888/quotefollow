@@ -3,4 +3,8 @@ main = "worker.js"
 compatibility_date = "2024-01-01"
 
 [vars]
-BACKEND_URL = "https://voxalo.top/api/webhooks/inbound"
+# 必须用 www.voxalo.top！
+# 无www的 voxalo.top 对 POST 返回 308 跳转到 www，
+# Cloudflare Worker 的 fetch 跟随跨子域重定向时会剥掉 X-Inbound-Secret 头
+# → 后端 401 拒收 → "客户回复为空/收不到" 的隐形杀手
+BACKEND_URL = "https://www.voxalo.top/api/webhooks/inbound"
