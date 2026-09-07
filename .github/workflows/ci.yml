@@ -17,13 +17,10 @@ jobs:
           node-version: 20
 
       - name: Install
-        run: cd quotefollow-work && npm ci
+        run: npm ci
 
       - name: Lint
-        run: cd quotefollow-work && npx eslint .
-
-      - name: Security audit
-        run: cd quotefollow-work && npm audit --audit-level=high || true
+        run: npx eslint .
 
       - name: Build
-        run: cd quotefollow-work && npm run build
+        run: npm run build
