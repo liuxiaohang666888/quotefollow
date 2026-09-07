@@ -8,8 +8,9 @@ function getClient(): OpenAI {
   return new OpenAI({
     apiKey,
     baseURL: process.env.OPENAI_BASE_URL || undefined,
-    timeout: 15000,
-    maxRetries: 0,
+    timeout: 25000,
+    // DeepSeek 限流(429)/偶发超时时自动重试：2次退避重试，指数间隔
+    maxRetries: 2,
   });
 }
 
