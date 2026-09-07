@@ -33,6 +33,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
 
+  // 处理轨迹追踪：每个分支结束时写入 inbound_debug 表，替代看 Vercel 日志
+  let trace!: {
+    message_id: string; in_reply_to: string; sender_email: string;
+    followup_email: string; subject: string; body_len: number; raw_len: number;
+  };
+  const traceInit = (m: InboundMail, bodyLen: number, rawLen: number) => {
+    trace = {
+      message_id: (m['Message-Id'] || '').trim(),
+      in_reply_to: (m['In-Reply-To'] || '').trim(),
+      sender_email: (m.From || '').trim(),
+      followup_email: (m.To || '').trim(),
+      subject: (m.Subject || '').trim().slice(0, 200),
+      body_len: bodyLen,
+      raw_len: rawLen,
+    };
+  };
+  const traceWrite = async (result: string, detail?: string) => {
+    try {
+      const admin0 = createAdminClient();
+      await admin0.from('inbound_debug').insert({ ...trace, result, detail: (detail || '').slice(0, 500) });
+    } catch (e: any) {
+      console.error('[inbound] trace write failed:', e?.message || e);
+    }
+  };
+
   const rawMimeB64 = mail.raw_mime || '';
   let mime: ParsedMime | null = null;
 
@@ -116,6 +141,8 @@ export async function POST(req: NextRequest) {
     console.warn('[inbound] body is empty after parsing, saving raw MIME for debugging');
   }
 
+  traceInit(mail, body.length, rawMimeB64.length);
+
   const messageId = (mime?.headers['message-id'] || mail['Message-Id'] || '')
     .replace(/^<|>$/g, '')
     .trim();
@@ -165,11 +192,16 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (fallbackQuote) {
+      await traceWrite('handled_reply_fallback', 'quote=' + fallbackQuote.id);
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: fallbackQuote.id });
     }
+    // inReplyTo 存在但完全没配对上：不静默掉进新报价分支，直接记录并返回
+    await traceWrite('reply_unmatched', 'inReplyTo=' + inReplyTo + ' no msg/no fallback quote');
+    return NextResponse.json({ ok: true, handled: false, reason: 'reply could not be matched to a quote' });
   }
 
   if (messageId && (await isDuplicateMessage(admin, messageId))) {
+    await traceWrite('duplicate', 'message_id already exists');
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
@@ -201,6 +233,7 @@ export async function POST(req: NextRequest) {
 
   if (!account) {
     console.warn('[inbound] no account for followup email:', followupEmail, 'sender:', senderEmail);
+    await traceWrite('no_account', 'followup=' + followupEmail + ' sender=' + senderEmail);
     return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
   }
 
@@ -226,6 +259,7 @@ export async function POST(req: NextRequest) {
 
   if (qErr) {
     console.error('[inbound] insert quote error:', qErr);
+    await traceWrite('error_insert_quote', qErr.message);
     return NextResponse.json({ ok: false, error: 'db error' }, { status: 500 });
   }
 
@@ -240,6 +274,7 @@ export async function POST(req: NextRequest) {
   });
 
   console.log('[inbound] new quote created:', quote.id);
+  await traceWrite('new_quote', 'quote=' + quote.id);
   return NextResponse.json({ ok: true, quote_id: quote.id });
 }
 
