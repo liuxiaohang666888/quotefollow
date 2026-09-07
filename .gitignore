@@ -6,3 +6,4 @@ vercel
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+.mime-test*.cjs
