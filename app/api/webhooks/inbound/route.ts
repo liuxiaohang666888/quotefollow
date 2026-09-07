@@ -289,8 +289,13 @@ async function handleCustomerReply(args: {
 }) {
   const { admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId } = args;
 
+  console.log('[inbound] handleCustomerReply called:', { quoteId, senderEmail, subject, bodyLen: body.length });
+
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
+  console.log('[inbound] quote lookup:', quote ? 'found' : 'NOT FOUND', quoteId);
+
   if (!quote) {
+    console.warn('[inbound] quote not found, storing body only');
     await admin.from('messages').insert({
       quote_id: quoteId,
       direction: 'in',
@@ -300,18 +305,19 @@ async function handleCustomerReply(args: {
       message_id: messageId,
       in_reply_to: '',
     });
-    console.warn('[inbound] quote not found, body stored without quote:', quoteId, 'sender:', senderEmail);
     return NextResponse.json({ ok: true, quote_id: quoteId, handled_orphan: true });
   }
 
   const { data: account } = await admin.from('accounts').select('*').eq('id', quote.account_id).single();
+  console.log('[inbound] account lookup:', account ? 'found' : 'NOT FOUND', quote.account_id);
 
-  await admin
+  const updateResult = await admin
     .from('quotes')
     .update({ status: 'replied', next_followup_at: null })
     .eq('id', quoteId);
+  console.log('[inbound] quote update result:', JSON.stringify(updateResult));
 
-  await admin.from('messages').insert({
+  const insertResult = await admin.from('messages').insert({
     quote_id: quoteId,
     direction: 'in',
     subject,
@@ -320,6 +326,7 @@ async function handleCustomerReply(args: {
     message_id: messageId,
     in_reply_to: '',
   });
+  console.log('[inbound] message insert result:', JSON.stringify(insertResult));
 
   const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
   const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
