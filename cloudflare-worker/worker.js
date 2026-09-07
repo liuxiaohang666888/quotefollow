@@ -37,13 +37,20 @@ export default {
 
     // 只解析头部拿 From/To/Subject/Message-Id/In-Reply-To（正文交给后端解析 raw_mime）
     const headers = {};
-    const hdrRe = /^([!-9;-~]+):[ \t]*(.*)$/gm;
+    const hdrRe = /^([^
+\n:]+):\s*(.*)$/gmi;
     let m;
     while ((m = hdrRe.exec(text)) !== null) {
-      headers[m[1].toLowerCase()] = (headers[m[1].toLowerCase()] || '') + m[2] + ' ';
+      const key = m[1].trim().toLowerCase();
+      headers[key] = (headers[key] || '') + m[2].trim() + ' ';
     }
 
-    const subject = (headers['subject'] || '').trim() || '(no subject)';
+    // 兜底：如果正则没匹配到，尝试更宽松的解析
+    const looseFrom = (headers['from'] || text.match(/^From:\s*(.+)/im)?.[1]?.trim()) || '';
+    const looseTo = (headers['to'] || text.match(/^To:\s*(.+)/im)?.[1]?.trim()) || '';
+    const looseSubject = (headers['subject'] || text.match(/^Subject:\s*(.+)/im)?.[1]?.trim()) || '(no subject)';
+
+    const subject = looseSubject || '(no subject)';
     const isMultipart = /multipart/i.test(headers['content-type'] || '');
     const body = isMultipart ? '' : stripHeaders(text);
 
@@ -56,14 +63,14 @@ export default {
           'X-Inbound-Secret': secret,
         },
         body: JSON.stringify({
-          From: headers['from']?.trim() || '',
-          To: headers['to']?.trim() || '',
+          From: looseFrom,
+          To: looseTo,
           Subject: subject,
           text: body,
           raw_mime: rawB64,
           'Message-Id': (headers['message-id'] || '').trim(),
           'In-Reply-To': (headers['in-reply-to'] || '').trim(),
-          References: (headers['references'] || '').trim(),
+          'References': (headers['references'] || '').trim(),
         }),
       });
 
