@@ -61,24 +61,11 @@ export async function POST(req: NextRequest) {
   const rawMimeB64 = mail.raw_mime || '';
   let mime: ParsedMime | null = null;
 
-  // 调试：打印 Resend webhook 原始数据
-  console.log('[inbound] === MAIL OBJECT ===');
-  console.log('[inbound] mail.text:', mail.text ? mail.text.slice(0, 500) : 'NULL');
-  console.log('[inbound] mail.html:', mail.html ? mail.html.slice(0, 300) : 'NULL');
-  console.log('[inbound] mail.raw_mime length:', rawMimeB64.length);
-  console.log('[inbound] mail.From:', mail.From);
-  console.log('[inbound] mail.Subject:', mail.Subject);
-  console.log('[inbound] mail.To:', mail.To);
-
+  // 减少调试日志，生产环境保持简洁
   if (rawMimeB64) {
     try {
       const decoded = Buffer.from(rawMimeB64, 'base64').toString('latin1');
-      console.log('[inbound] raw_mime decoded length:', decoded.length);
-      console.log('[inbound] raw_mime first 500 chars:', decoded.slice(0, 500));
       mime = parseMimeMessage(decoded);
-      console.log('[inbound] mime parsed - text length:', mime.text?.length, 'html length:', mime.html?.length, 'parse_failed:', mime.parse_failed);
-      console.log('[inbound] mime.text:', mime.text ? mime.text.slice(0, 500) : 'NULL');
-      console.log('[inbound] mime.html:', mime.html ? mime.html.slice(0, 300) : 'NULL');
     } catch (e) {
       console.warn('[inbound] raw_mime parse failed:', e);
     }
@@ -168,26 +155,12 @@ export async function POST(req: NextRequest) {
       .select('quote_id, direction')
       .eq('message_id', inReplyTo)
       .maybeSingle();
-    console.log('[inbound] msg1 query result:', msg1 ? 'found' : 'not found', 'error:', err1);
-
     if (msg1) {
       return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg1.quote_id });
     }
 
-    console.log('[inbound] querying messages by baseId...');
-    const { data: msg2, error: err2 } = await admin
-      .from('messages')
-      .select('quote_id, direction')
-      .eq('message_id', baseId)
-      .maybeSingle();
-    console.log('[inbound] msg2 query result:', msg2 ? 'found' : 'not found', 'error:', err2);
-
-    if (msg2) {
-      return handleCustomerReply({ admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId: msg2.quote_id });
-    }
-
     console.log('[inbound] querying fallback quote for sender:', senderEmail);
-    const { data: fallbackQuote, error: err3 } = await admin
+    const { data: fallbackQuote } = await admin
       .from('quotes')
       .select('id')
       .eq('customer_email', senderEmail)
@@ -195,7 +168,6 @@ export async function POST(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    console.log('[inbound] fallback quote result:', fallbackQuote ? 'found' : 'not found', 'error:', err3);
 
     if (fallbackQuote) {
       await traceWrite('handled_reply_fallback', 'quote=' + fallbackQuote.id);
@@ -239,7 +211,6 @@ export async function POST(req: NextRequest) {
   }
 
   if (!account) {
-    console.warn('[inbound] no account for followup email:', followupEmail, 'sender:', senderEmail);
     await traceWrite('no_account', 'followup=' + followupEmail + ' sender=' + senderEmail);
     return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
   }
@@ -281,7 +252,6 @@ export async function POST(req: NextRequest) {
   });
 
   console.log('[inbound] new quote created:', quote.id);
-  await traceWrite('new_quote', 'quote=' + quote.id);
   return NextResponse.json({ ok: true, quote_id: quote.id });
 }
 
@@ -296,13 +266,9 @@ async function handleCustomerReply(args: {
 }) {
   const { admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId } = args;
 
-  console.log('[inbound] handleCustomerReply called:', { quoteId, senderEmail, subject, bodyLen: body.length });
-
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
-  console.log('[inbound] quote lookup:', quote ? 'found' : 'NOT FOUND', quoteId);
 
   if (!quote) {
-    console.warn('[inbound] quote not found, storing body only');
     await admin.from('messages').insert({
       quote_id: quoteId,
       direction: 'in',
@@ -333,7 +299,6 @@ async function handleCustomerReply(args: {
     message_id: messageId,
     in_reply_to: '',
   });
-  console.log('[inbound] message insert result:', JSON.stringify(insertResult));
 
   const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
   const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -35,27 +35,33 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState<{ followup_email: string; paypal_subscription_id: string | null } | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  useEffect(() => {
+  const loadQuotes = useCallback(async () => {
+    setLoading(true);
     const supabase = createClient();
-    (async () => {
-      const { data: q } = await supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setQuotes((q as Quote[]) || []);
-      const { data: acc } = await supabase
-        .from('accounts')
-        .select('followup_email, business_name, paypal_subscription_id')
-        .maybeSingle();
-      const accData = acc as { followup_email: string; paypal_subscription_id: string | null } | null;
-      setAccount(accData);
-      
-      setLoading(false);
-    })();
+    const { data: q } = await supabase
+      .from('quotes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setQuotes((q as Quote[]) || []);
+    setPage(1);
+    const { data: acc } = await supabase
+      .from('accounts')
+      .select('followup_email, business_name, paypal_subscription_id')
+      .maybeSingle();
+    setAccount(acc as any);
+    setLoading(false);
   }, []);
 
+  useEffect(() => {
+    loadQuotes();
+  }, [loadQuotes]);
+
   const filtered = quotes.filter((q) => filter === 'all' || q.status === filter);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const displayedQuotes = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -107,7 +113,7 @@ export default function DashboardPage() {
           <button
             key={f}
             className={`status-pill ${filter === f ? 'active' : ''}`}
-            onClick={() => setFilter(f)}
+            onClick={() => { setFilter(f); setPage(1); }}
           >
             {f === 'all' ? 'All' : STATUS_LABEL[f as Quote['status']]}
             {f !== 'all' && (
@@ -119,40 +125,63 @@ export default function DashboardPage() {
 
       {loading ? (
         <p style={{ color: '#6b7280' }}>Loading…</p>
-      ) : filtered.length === 0 ? (
+      ) : displayedQuotes.length === 0 ? (
         <div className="empty">
           <div className="big">{filter === 'all' ? 'No quotes yet' : 'Nothing here'}</div>
           <p>
             {filter === 'all'
-              ? 'Click “+ Add a quote” above and paste the email you sent a customer — we’ll read it, save it, and start the Day 1 / 3 / 7 follow-ups automatically.'
+              ? 'Click "+ Add a quote" above and paste the email you sent a customer - we will read it, save it, and start the Day 1 / 3 / 7 follow-ups automatically.'
               : 'Quotes in this status will show up here.'}
           </p>
         </div>
       ) : (
-        filtered.map((q) => (
-          <Link key={q.id} href={`/dashboard/quotes/${q.id}`}>
-            <div className="quote-card">
-              <div className="left">
-                <div className="name">
-                  {q.customer_name || q.customer_email || 'Unknown customer'}
+        <>
+          {displayedQuotes.map((q) => (
+            <Link key={q.id} href={`/dashboard/quotes/${q.id}`}>
+              <div className="quote-card">
+                <div className="left">
+                  <div className="name">
+                    {q.customer_name || q.customer_email || 'Unknown customer'}
+                  </div>
+                  <div className="meta">
+                    {q.service_type || 'Service not specified'}
+                    {' · '}Quoted {formatDate(q.quote_date)}
+                    {q.followup_count > 0 && <> · {q.followup_count} follow-up{q.followup_count > 1 ? 's' : ''}</>}
+                  </div>
                 </div>
-                <div className="meta">
-                  {q.service_type || 'Service not specified'}
-                  {' · '}Quoted {formatDate(q.quote_date)}
-                  {q.followup_count > 0 && <> · {q.followup_count} follow-up{q.followup_count > 1 ? 's' : ''} sent</>}
+                <div className="right">
+                  {q.amount !== null && q.amount > 0 && (
+                    <span className="amount">${q.amount}</span>
+                  )}
+                  <span className={`badge-status ${q.status}`}>
+                    {STATUS_LABEL[q.status]}
+                  </span>
                 </div>
               </div>
-              <div className="right">
-                {q.amount !== null && q.amount > 0 && (
-                  <span className="amount">${q.amount}</span>
-                )}
-                <span className={`badge-status ${q.status}`}>
-                  {STATUS_LABEL[q.status]}
-                </span>
-              </div>
+            </Link>
+          ))}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #e5e7eb', background: 'white', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}
+              >
+                Previous
+              </button>
+              <span style={{ padding: '8px 16px', color: '#6b7280' }}>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(p => p + 1)}
+                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #e5e7eb', background: 'white', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}
+              >
+                Next
+              </button>
             </div>
-          </Link>
-        ))
+          )}
+        </>
       )}
     </div>
   );

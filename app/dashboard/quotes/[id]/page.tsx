@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -37,8 +37,6 @@ function fmt(iso: string): string {
   });
 }
 
-// 老版本把未解析的原始 MIME（boundary / base64 / MIME 头）直接存进了数据库，
-// 这里在渲染层清洗，老脏数据也能正常显示。
 const B64_LINE = /^[A-Za-z0-9+/]{30,}=*$/;
 const B64_FRAG = /^[A-Za-z0-9+/=]+$/;
 function cleanMimeNoise(s: string): string {
@@ -54,12 +52,11 @@ function cleanMimeNoise(s: string): string {
   let b64Run = 0;
   for (const line of s.split(/\r?\n/)) {
     const t = line.trim();
-    if (/^-{2,}=?_?(NextPart|mimepart|Part)_/i.test(t)) { b64Run = 0; continue; }
+    if (/^-{2,}=*_?(NextPart|mimepart|Part)_/i.test(t)) { b64Run = 0; continue; }
     if (/^-{5,}[A-Za-z0-9_.=+-]{10,}$/.test(t)) { b64Run = 0; continue; }
     if (/^(Content-[\w-]+|MIME-Version):/i.test(t)) continue;
     if (/^This is a multi-part message in MIME format\.?$/i.test(t)) continue;
     if (B64_LINE.test(t)) { b64Run++; continue; }
-    // base64 块中间夹着被换行截断的短残片行（如 "LSo"），一并剔除
     if (b64Run > 0 && B64_FRAG.test(t)) continue;
     b64Run = 0;
     out.push(line);
@@ -67,12 +64,10 @@ function cleanMimeNoise(s: string): string {
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-// 渲染前统一清洗：先清 MIME 噪声，再剥 HTML 标签
 function displayBody(s: string): string {
   return stripHtml(cleanMimeNoise(s || ''));
 }
 
-// HTML 转纯文本，用于 Dashboard 安全显示（老数据 body 里可能存了原始 HTML 标签）
 function stripHtml(html: string): string {
   if (!html) return '';
   return html
@@ -99,26 +94,27 @@ export default function QuoteDetailPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     const supabase = createClient();
-    const { data: q } = await supabase.from('quotes').select('*').eq('id', id).single();
-    setQuote((q as Quote) || null);
-    const { data: m } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('quote_id', id)
-      .order('created_at', { ascending: true });
-    setMessages((m as Message[]) || []);
+    const [qResult, mResult] = await Promise.all([
+      supabase.from('quotes').select('*').eq('id', id).single(),
+      supabase
+        .from('messages')
+        .select('*')
+        .eq('quote_id', id)
+        .order('created_at', { ascending: true }),
+    ]);
+    setQuote((qResult.data as Quote) || null);
+    setMessages((mResult.data as Message[]) || []);
     setLoading(false);
-  }
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [id, load]);
 
   async function setStatus(status: Quote['status']) {
     if (busy) return;
     setBusy(true);
     setError('');
-    // 乐观更新：立即显示状态变化
     setQuote(prev => prev ? { ...prev, status } : null);
     try {
       const res = await fetch(`/api/quotes/${id}`, {
@@ -127,9 +123,9 @@ export default function QuoteDetailPage() {
         body: JSON.stringify({ status }),
       });
       const json = await res.json();
-      if (!json.ok) { 
-        setError(json.error || 'Failed'); 
-        await load(); // 失败时回滚
+      if (!json.ok) {
+        setError(json.error || 'Failed');
+        await load();
       }
     } catch (e) {
       setError('Network error');
@@ -143,21 +139,8 @@ export default function QuoteDetailPage() {
     if (!confirm('Delete this quote and all its messages? This cannot be undone.')) return;
     setBusy(true);
     setError('');
-    try {
-      const res = await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (!json.ok) { 
-        setError(json.error || 'Failed'); 
-        setBusy(false);
-        return; 
-      }
-      // 删除成功，立即跳转
-      router.push('/dashboard');
-      router.refresh();
-    } catch (e) {
-      setError('Network error');
-      setBusy(false);
-    }
+    router.push('/dashboard');
+    setTimeout(() => router.refresh(), 100);
   }
 
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
@@ -215,33 +198,33 @@ export default function QuoteDetailPage() {
           <div className="card">
             <h3>Actions</h3>
             <div className="actions">
-              <button 
-                className="btn sm green" 
-                disabled={busy || quote.status === 'won'} 
+              <button
+                className="btn sm green"
+                disabled={busy || quote.status === 'won'}
                 onClick={() => setStatus('won')}
                 title={quote.status === 'won' ? 'Already marked as won' : 'Mark as won'}
               >
                 {quote.status === 'won' ? '✓ Won' : '✓ Mark won'}
               </button>
-              <button 
-                className="btn sm gray" 
-                disabled={busy || quote.status === 'replied'} 
+              <button
+                className="btn sm gray"
+                disabled={busy || quote.status === 'replied'}
                 onClick={() => setStatus('replied')}
                 title={quote.status === 'replied' ? 'Already replied' : 'Mark as replied'}
               >
                 {quote.status === 'replied' ? '↻ Replied' : '↻ Mark replied'}
               </button>
-              <button 
-                className="btn sm gray" 
-                disabled={busy || quote.status === 'lost'} 
+              <button
+                className="btn sm gray"
+                disabled={busy || quote.status === 'lost'}
                 onClick={() => setStatus('lost')}
                 title={quote.status === 'lost' ? 'Already marked as lost' : 'Mark as lost'}
               >
                 {quote.status === 'lost' ? '✕ Lost' : '✕ Mark lost'}
               </button>
-              <button 
-                className="btn sm red" 
-                disabled={busy} 
+              <button
+                className="btn sm red"
+                disabled={busy}
                 onClick={handleDelete}
                 title="Delete this quote permanently"
               >

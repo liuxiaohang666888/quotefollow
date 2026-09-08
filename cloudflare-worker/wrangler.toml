@@ -1,6 +1,9 @@
-name = "quotefollow-worker"
+name = "flat-term-8bf2"
 main = "worker.js"
-compatibility_date = "2024-01-01"
+account_id = "629c3bf6e32c24bc00375435a50b56ec"
+compatibility_date = "2024-09-23"
+# 保留面板上已配置的变量/密钥，避免部署时被清掉
+keep_vars = true
 
 [vars]
 # 必须用 www.voxalo.top！
@@ -8,3 +11,7 @@ compatibility_date = "2024-01-01"
 # Cloudflare Worker 的 fetch 跟随跨子域重定向时会剥掉 X-Inbound-Secret 头
 # → 后端 401 拒收 → "客户回复为空/收不到" 的隐形杀手
 BACKEND_URL = "https://www.voxalo.top/api/webhooks/inbound"
+# 与 Vercel 后端的 INBOUND_WEBHOOK_SECRET 完全一致。
+# 说明：wrangler secret put 报 10053（该名字已被面板上的普通文本变量占用），
+# 所以这里直接用 [vars] 覆盖成正确值，效果一样（Worker 能读到 env.INBOUND_SECRET）
+INBOUND_SECRET = "qf-wb-vX8kLm2pRtZ4nQsY6hBcN9dF3jGw5eT7a"
