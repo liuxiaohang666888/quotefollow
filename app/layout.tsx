@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = getVerticalConfig();
   return {
     title: `${brand} — Never Lose a ${config.customerLabel} Again`,
-    description: `AI-powered quote follow-up for ${config.audience}. Automatically chases your quotes via email so you close more jobs.`,
+    description: `AI-powered quote follow-up for ${config.audience}. Automatically chases your quotes via email so you close more jobs. v2.1.3`,
   };
 }
 
