@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   const isAdmin = isAdminEmail(user.email);
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
-    const used = await countQuotesFor(admin, user.id);
+    const used = await countQuotesFor(admin, user.id, user.email);
     if (used >= FREE_QUOTA) {
       return NextResponse.json(
         { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },

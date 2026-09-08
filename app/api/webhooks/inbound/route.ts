@@ -222,14 +222,14 @@ export async function POST(req: NextRequest) {
   const accountIsPaid =
     !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
   if (!accountIsAdmin && !accountIsPaid) {
-    const used = await countQuotesFor(admin, account.id);
+    const used = await countQuotesFor(admin, account.id, account.email);
     if (used >= FREE_QUOTA) {
       await traceWrite('quota_exhausted', 'account=' + account.id + ' used=' + used);
       // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
       await notifyOwner(
         admin,
         account,
-        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($29/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/pricing`
+        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($29/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
       );
       return NextResponse.json({ ok: false, error: 'free quota exhausted' }, { status: 402 });
     }
