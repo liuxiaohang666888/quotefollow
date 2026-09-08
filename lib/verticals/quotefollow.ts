@@ -8,7 +8,7 @@ export const quotefollowConfig: VerticalConfig = {
   heroSub:
     'QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.',
   eyebrow: '',
-  audience: 'contractors & small business owners',
+  audience: 'small businesses, freelancers & solo pros',
   customerLabel: 'job',
   painPoints: [
     {
@@ -114,9 +114,9 @@ export const quotefollowConfig: VerticalConfig = {
     },
   ],
   story: {
-    intro: 'My mate runs a cleaning company.',
+    intro: 'My mate runs a one-person service business.',
     hook: 'Last quarter he sent out 47 quotes. Got replies from 12.',
-    business: 'He was too busy actually doing the cleaning jobs to follow up on the other 35.',
+    business: 'He was too busy actually doing the work to follow up on the other 35.',
     lossAmount: '$22,750',
     closing: 'Not because his prices were wrong. Not because his work was bad. Because he forgot to follow up.',
   },
