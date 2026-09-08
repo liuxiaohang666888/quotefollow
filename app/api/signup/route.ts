@@ -5,32 +5,38 @@ import { isValidPaypalSubscriptionId, verifyPaypalSubscription } from '@/lib/pay
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// 简易内存限流：防止脚本批量注册（Vercel 单实例够用，多实例时每个实例独立限流）
-const signupWindow = 60_000; // 60 秒
-const signupMax = 5; // 每 IP 每 60 秒最多 5 次
-const signupLog = new Map<string, number[]>();
+// 防重复注册：同一 IP 每 24 小时最多注册 1 次
+const ipWindow = 24 * 60 * 60 * 1000;
+const ipLog = new Map<string, number>();
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const arr = (signupLog.get(ip) || []).filter((t) => now - t < signupWindow);
-  if (arr.length >= signupMax) {
-    signupLog.set(ip, arr);
-    return true;
-  }
-  arr.push(now);
-  signupLog.set(ip, arr);
+// 防同一邮箱重复注册：同一邮箱最多注册 3 次
+const emailWindow = 24 * 60 * 60 * 1000;
+const emailLog = new Map<string, number[]>();
+
+function isIpRateLimited(ip: string): boolean {
+  const last = ipLog.get(ip) || 0;
+  if (Date.now() - last < ipWindow) return true;
+  ipLog.set(ip, Date.now());
   return false;
+}
+
+function isEmailRepeated(email: string): { blocked: boolean; count: number } {
+  const now = Date.now();
+  const times = (emailLog.get(email) || []).filter((t) => now - t < emailWindow);
+  emailLog.set(email, times);
+  if (times.length >= 3) return { blocked: true, count: times.length };
+  return { blocked: false, count: times.length };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. 防脚本批量注册（基础限流，服务端无真实 IP 时用 x-forwarded-for）
     const ip =
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       req.headers.get('x-real-ip') ||
       'unknown';
-    if (isRateLimited(ip)) {
-      return NextResponse.json({ ok: false, error: 'too many signup attempts, slow down' }, { status: 429 });
+
+    if (isIpRateLimited(ip)) {
+      return NextResponse.json({ ok: false, error: 'Please wait 24 hours before creating another account from this IP.' }, { status: 429 });
     }
 
     const body = await req.json();
@@ -40,8 +46,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 2. 免费注册：paypalSubscriptionId 可选，没有则走免费版（10 条报价上限）
-    // 如果提供了有效订阅 ID，再验证
+    // 检查同一邮箱是否频繁注册
+    const emailCheck = isEmailRepeated(email.toLowerCase());
+    if (emailCheck.blocked) {
+      return NextResponse.json({ ok: false, error: `This email has been used too many times (${emailCheck.count}). Try a different email.` }, { status: 429 });
+    }
+
+    // 验证 PayPal 订阅（如果提供了）
     if (paypalSubscriptionId) {
       if (!isValidPaypalSubscriptionId(paypalSubscriptionId)) {
         return NextResponse.json(
@@ -50,7 +61,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 服务端真验证（配了 PAYPAL_CLIENT_SECRET 时执行；没配则仅格式校验）
       const verify = await verifyPaypalSubscription(paypalSubscriptionId);
       if (!verify.ok) {
         return NextResponse.json({ ok: false, error: `Subscription verification failed: ${verify.reason}` }, { status: 402 });
@@ -59,17 +69,15 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // 3. 确认邮箱
+    // 确认邮箱
     const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
       email_confirm: true,
     });
     if (confirmError) {
       console.error('[signup/api] email confirm failed:', confirmError);
-      // 不阻断，继续
     }
 
-    // 5. 插入或更新账户
-    // email：老板注册邮箱，入站邮件按 From 精确匹配账户（多垂直共享数据库必需）
+    // 插入或更新账户
     const { error: insertError } = await admin
       .from('accounts')
       .upsert({
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
     }
 
-    console.log('[signup/api] account created successfully:', userId);
+    console.log('[signup/api] account created/updated:', userId);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error('[signup/api] unexpected error:', e?.code || e);
