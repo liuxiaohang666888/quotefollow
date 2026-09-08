@@ -57,17 +57,12 @@ export async function POST(req: NextRequest) {
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
     const FREE_QUOTA = 10;
-    // 防删号重注册：统计该邮箱所有历史账号的 quotes 总数
-    const { count: totalFromEmail } = await admin
+    // 防删号重注册：只按邮箱统计历史所有账号的quotes总数，避免双重计数
+    const { count: historicalCount } = await admin
       .from('quotes')
       .select('id', { count: 'exact', head: true })
       .eq('customer_email', user.email);
-    const { count: totalFromAccount } = await admin
-      .from('quotes')
-      .select('id', { count: 'exact', head: true })
-      .eq('account_id', user.id);
-    const historicalCount = (totalFromEmail ?? 0) + (totalFromAccount ?? 0);
-    if (historicalCount >= FREE_QUOTA) {
+    if ((historicalCount ?? 0) >= FREE_QUOTA) {
       return NextResponse.json(
         { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
         { status: 402 }

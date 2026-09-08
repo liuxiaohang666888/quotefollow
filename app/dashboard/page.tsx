@@ -34,19 +34,22 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string; paypal_subscription_id: string | null } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null } | null>(null);
+  const [quotaUsed, setQuotaUsed] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
   const loadQuotes = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
+
     const { data: q } = await supabase
       .from('quotes')
       .select('*')
       .order('created_at', { ascending: false });
     setQuotes((q as Quote[]) || []);
     setPage(1);
+
     const { data: acc } = await supabase
       .from('accounts')
       .select('followup_email, business_name, paypal_subscription_id')
@@ -59,6 +62,22 @@ export default function DashboardPage() {
     loadQuotes();
   }, [loadQuotes]);
 
+  // 查免费额度
+  useEffect(() => {
+    if (!account || account.paypal_subscription_id) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from('quotes').select('id', { count: 'exact', head: true }).eq('customer_email', user.email).then(({ count }) => {
+        setQuotaUsed(count ?? 0);
+      });
+    });
+  }, [account]);
+
+  const remaining = Math.max(0, 10 - quotaUsed);
+  const isFree = !account?.paypal_subscription_id;
+  const isExhausted = isFree && remaining === 0;
+
   const filtered = quotes.filter((q) => filter === 'all' || q.status === filter);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const displayedQuotes = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -67,11 +86,71 @@ export default function DashboardPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <h1>Your quotes</h1>
-        <Link href="/dashboard/new" className="btn" style={{ width: 'fit-content', padding: '10px 16px' }}>
+        <Link
+          href="/dashboard/new"
+          className="btn"
+          style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
+        >
           + Send a quote
         </Link>
       </div>
-      <p className="page-sub">
+
+      {/* 额度提示 */}
+      {isFree && (
+        <div style={{
+          marginTop: 12,
+          padding: '12px 16px',
+          borderRadius: 10,
+          background: isExhausted ? '#fef3c7' : '#f0fdf4',
+          border: `1px solid ${isExhausted ? '#f59e0b' : '#86efac'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}>
+          <span style={{ fontSize: 14, color: isExhausted ? '#92400e' : '#166534' }}>
+            {isExhausted
+              ? 'Free plan quota used up — '
+              : `Free plan: ${remaining} of 10 quotes remaining`}
+          </span>
+          {!isExhausted && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 120,
+                height: 6,
+                background: '#d1fae5',
+                borderRadius: 3,
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${Math.min(100, (quotaUsed / 10) * 100)}%`,
+                  height: '100%',
+                  background: '#22c55e',
+                  borderRadius: 3,
+                  transition: 'width 0.3s',
+                }} />
+              </div>
+              <span style={{ fontSize: 12, color: '#166534' }}>{quotaUsed}/10</span>
+            </div>
+          )}
+          {isExhausted && (
+            <Link href="/signup" style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#fff',
+              background: '#f59e0b',
+              padding: '6px 14px',
+              borderRadius: 8,
+              textDecoration: 'none',
+            }}>
+              Upgrade to Pro — $9/mo
+            </Link>
+          )}
+        </div>
+      )}
+
+      <p className="page-sub" style={{ marginTop: 12 }}>
         {account?.followup_email
           ? <>Forward or BCC every quote to <strong>{account.followup_email}</strong> and it appears here automatically — or click <strong>Add a quote</strong> to paste it in.</>
           : <>Click <strong>Add a quote</strong> and paste the email you sent a customer, or set up your follow-up inbox in <Link href="/dashboard/settings" style={{ color: '#2563eb' }}>Settings</Link>.</>}
