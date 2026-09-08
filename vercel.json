@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/subscription-check",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     }
   ],
   "buildCommand": "next build",
