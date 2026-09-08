@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
 // 硬编码兜底：优先读 env（方便以后通过 Vercel 面板替换），空则使用下方固定值
@@ -24,6 +24,8 @@ export default function PayPalSubscribeButton({
   fallbackHref?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [sdkError, setSdkError] = useState(false);
   // 传入 planId 优先（如 yearly 专属计划），否则用默认订阅计划
   const activePlanId = planId || DEFAULT_PLAN_ID;
 
@@ -33,24 +35,34 @@ export default function PayPalSubscribeButton({
     const render = () => {
       if (!window.paypal || !containerRef.current) return;
       containerRef.current.innerHTML = '';
-      window.paypal
-        .Buttons({
-          style: {
-            shape: 'rect',
-            color: 'gold',
-            layout: 'vertical',
-            label: 'subscribe',
-          },
-          createSubscription: (data: any, actions: any) =>
-            actions.subscription.create({ plan_id: activePlanId }),
-          onApprove: (data: any) => {
-            // 付款成功后跳转到 signup 页面，带 subscription ID
-            const url = new URL('/signup', window.location.origin);
-            url.searchParams.set('sub', data.subscriptionID);
-            window.location.href = url.toString();
-          },
-        })
-        .render(containerRef.current);
+      try {
+        window.paypal
+          .Buttons({
+            style: {
+              shape: 'rect',
+              color: 'gold',
+              layout: 'vertical',
+              label: 'subscribe',
+            },
+            createSubscription: (data: any, actions: any) =>
+              actions.subscription.create({ plan_id: activePlanId }),
+            onApprove: (data: any) => {
+              // 付款成功后跳转到 signup 页面，带 subscription ID
+              const url = new URL('/signup', window.location.origin);
+              url.searchParams.set('sub', data.subscriptionID);
+              window.location.href = url.toString();
+            },
+            onError: (err: any) => {
+              console.error('[PayPalSubscribeButton] PayPal button error:', err);
+              setSdkError(true);
+            },
+          })
+          .render(containerRef.current);
+        setSdkLoaded(true);
+      } catch (err) {
+        console.error('[PayPalSubscribeButton] render error:', err);
+        setSdkError(true);
+      }
     };
 
     const existing = document.querySelector('script[data-paypal-sdk="qf"]');
@@ -58,9 +70,11 @@ export default function PayPalSubscribeButton({
       const s = document.createElement('script');
       s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription`;
       s.setAttribute('data-paypal-sdk', 'qf');
-      s.onload = render;
+      s.onload = () => setSdkLoaded(true);
+      s.onerror = () => setSdkError(true);
       document.body.appendChild(s);
     } else {
+      setSdkLoaded(true);
       render();
     }
 
@@ -75,6 +89,23 @@ export default function PayPalSubscribeButton({
       <a className="btn" href={fallbackHref || INVOICE_URL || '#'}>
         {label}
       </a>
+    );
+  }
+
+  // SDK 加载失败或超时（5秒），显示 fallback 按钮
+  if (sdkError) {
+    return (
+      <a className="btn" href={fallbackHref || INVOICE_URL} target="_blank" rel="noopener noreferrer">
+        {label}
+      </a>
+    );
+  }
+
+  if (!sdkLoaded) {
+    return (
+      <button className="btn" disabled style={{ opacity: 0.6 }}>
+        Loading PayPal…
+      </button>
     );
   }
 
