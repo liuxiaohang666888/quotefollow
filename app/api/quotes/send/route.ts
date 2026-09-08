@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
-import { isAdminEmail } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
 export const runtime = 'nodejs';
@@ -57,13 +57,8 @@ export async function POST(req: NextRequest) {
   const isAdmin = isAdminEmail(user.email);
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
-    const FREE_QUOTA = 10;
-    // 防删号重注册：只按邮箱统计历史所有账号的quotes总数，避免双重计数
-    const { count: historicalCount } = await admin
-      .from('quotes')
-      .select('id', { count: 'exact', head: true })
-      .eq('customer_email', user.email);
-    if ((historicalCount ?? 0) >= FREE_QUOTA) {
+    const used = await countQuotesFor(admin, user.id);
+    if (used >= FREE_QUOTA) {
       return NextResponse.json(
         { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
         { status: 402 }

@@ -4,6 +4,8 @@ import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '
 import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor } from '@/lib/paywall';
+import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -213,6 +215,24 @@ export async function POST(req: NextRequest) {
   if (!account) {
     await traceWrite('no_account', 'followup=' + followupEmail + ' sender=' + senderEmail);
     return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
+  }
+
+  // 防白嫖兜底：邮件转发入口同样受免费额度限制（此前完全没查，免费用户可无限建档）
+  const accountIsAdmin = isAdminEmail(account.email);
+  const accountIsPaid =
+    !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
+  if (!accountIsAdmin && !accountIsPaid) {
+    const used = await countQuotesFor(admin, account.id);
+    if (used >= FREE_QUOTA) {
+      await traceWrite('quota_exhausted', 'account=' + account.id + ' used=' + used);
+      // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
+      await notifyOwner(
+        admin,
+        account,
+        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($29/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/pricing`
+      );
+      return NextResponse.json({ ok: false, error: 'free quota exhausted' }, { status: 402 });
+    }
   }
 
   const parsed = await parseQuoteEmail(subject, body);

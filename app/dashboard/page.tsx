@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { FREE_QUOTA } from '@/lib/paywall';
 
 interface Quote {
   id: string;
@@ -68,13 +69,13 @@ export default function DashboardPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from('quotes').select('id', { count: 'exact', head: true }).eq('customer_email', user.email).then(({ count }) => {
+      supabase.from('quotes').select('id', { count: 'exact', head: true }).eq('account_id', user.id).then(({ count }) => {
         setQuotaUsed(count ?? 0);
       });
     });
   }, [account]);
 
-  const remaining = Math.max(0, 10 - quotaUsed);
+  const remaining = Math.max(0, FREE_QUOTA - quotaUsed);
   const isFree = !account?.paypal_subscription_id;
   const isExhausted = isFree && remaining === 0;
 
@@ -112,7 +113,7 @@ export default function DashboardPage() {
           <span style={{ fontSize: 14, color: isExhausted ? '#92400e' : '#166534' }}>
             {isExhausted
               ? 'Free plan quota used up — '
-              : `Free plan: ${remaining} of 10 quotes remaining`}
+              : `Free plan: ${remaining} of ${FREE_QUOTA} quotes remaining`}
           </span>
           {!isExhausted && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -124,14 +125,14 @@ export default function DashboardPage() {
                 overflow: 'hidden',
               }}>
                 <div style={{
-                  width: `${Math.min(100, (quotaUsed / 10) * 100)}%`,
+                  width: `${Math.min(100, (quotaUsed / FREE_QUOTA) * 100)}%`,
                   height: '100%',
                   background: '#22c55e',
                   borderRadius: 3,
                   transition: 'width 0.3s',
                 }} />
               </div>
-              <span style={{ fontSize: 12, color: '#166534' }}>{quotaUsed}/10</span>
+              <span style={{ fontSize: 12, color: '#166534' }}>{quotaUsed}/{FREE_QUOTA}</span>
             </div>
           )}
           {isExhausted && (
