@@ -7,7 +7,7 @@ export const quotefollowConfig: VerticalConfig = {
   gradientText: 'Stop ignoring it.',
   heroSub:
     'QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.',
-  eyebrow: 'For contractors & small business owners',
+  eyebrow: '',
   audience: 'contractors & small business owners',
   customerLabel: 'job',
   painPoints: [
