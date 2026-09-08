@@ -144,7 +144,7 @@ export default function DashboardPage() {
               borderRadius: 8,
               textDecoration: 'none',
             }}>
-              Upgrade to Pro — $9/mo
+              Upgrade to Pro — $29/mo
             </Link>
           )}
         </div>
