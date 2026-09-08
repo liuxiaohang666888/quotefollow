@@ -18,7 +18,7 @@ export const quotefollowConfig: VerticalConfig = {
       amount: '$14,200',
     },
     {
-      tag: 'Electrician · Melbourne',
+      tag: 'Freelance designer · Melbourne',
       quote: '"Client went with another guy because I took 4 days to get back to them."',
       loss: 'Lost revenue',
       amount: '$8,500',
