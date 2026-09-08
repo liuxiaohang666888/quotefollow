@@ -165,12 +165,12 @@ export default function NewQuotePage() {
                 <Link href="/dashboard" style={{ flex: 1, textAlign: 'center', padding: '12px 0', borderRadius: 8, border: '1px solid #e2e8f0', color: '#64748b', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
                   Go Back
                 </Link>
-                <Link href="/signup" style={{ flex: 1, textAlign: 'center', padding: '12px 0', borderRadius: 8, background: '#f59e0b', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
-                  Upgrade Now
-                </Link>
+                <div style={{ flex: 1 }}>
+                  <PayPalSubscribeButton label="Upgrade Now" />
+                </div>
               </div>
               <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', margin: 0 }}>
-                No credit card required · Cancel anytime
+                Secure payment via PayPal · Cancel anytime
               </p>
             </div>
           </div>
