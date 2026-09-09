@@ -5,12 +5,26 @@ import Link from 'next/link'
 
 export default function InvoiceHelperPage() {
   const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) {
-      alert('Thanks! I\'ll notify you when the tool is ready.')
-      setEmail('')
+    if (!email) return
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, product: 'invoice-helper' }),
+      })
+      if (res.ok) {
+        setStatus('done')
+        setEmail('')
+      } else {
+        setStatus('error')
+      }
+    } catch {
+      setStatus('error')
     }
   }
 
@@ -28,28 +42,39 @@ export default function InvoiceHelperPage() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12 max-w-2xl mx-auto">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Join the Waitlist</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Your email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@yourbusiness.com"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
+          {status === 'done' ? (
+            <div className="text-center py-6">
+              <p className="text-lg font-medium text-green-700 mb-2">You&apos;re on the list!</p>
+              <p className="text-gray-600">We&apos;ll email you when the tool is ready.</p>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Notify Me — $9/month (Early Access)
-            </button>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Your email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@yourbusiness.com"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
+              >
+                {status === 'loading' ? 'Joining...' : 'Notify Me — $9/month (Early Access)'}
+              </button>
+              {status === 'error' && (
+                <p className="text-sm text-red-600 text-center">Something went wrong. Please try again.</p>
+              )}
+            </form>
+          )}
           <p className="text-center text-sm text-gray-500 mt-4">
             No credit card needed. Cancel anytime.
           </p>
