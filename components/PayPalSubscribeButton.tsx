@@ -15,7 +15,7 @@ declare global {
 }
 
 export default function PayPalSubscribeButton({
-  label = 'Get Started — $29/mo',
+  label = 'Subscribe — $19/mo',
   planId,
   fallbackHref,
 }: {

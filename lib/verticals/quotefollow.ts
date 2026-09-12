@@ -4,12 +4,17 @@ export const quotefollowConfig: VerticalConfig = {
   brandName: 'QuoteFollow',
   brandSlug: 'quotefollow',
   tagline: 'You sent the quote.',
-  gradientText: 'Stop ignoring it.',
+  gradientText: 'Follow-ups that stop themselves.',
   heroSub:
-    'QuoteFollow reads your quote emails and follows up with your customers on auto-pilot — so you never lose another job to silence.',
+    'Send your quote or invoice as usual. QuoteFollow chases it politely — and the moment your client replies, it stops automatically. No nagging. No awkwardness. No lost jobs.',
   eyebrow: '',
   audience: 'small businesses, freelancers & solo pros',
   customerLabel: 'job',
+  trustBar: [
+    'Reads replies — pauses when your client answers',
+    'Works with any email — no CRM, no migration',
+    'Never touches your money — payment links go straight to you',
+  ],
   painPoints: [
     {
       tag: 'Plumber · Sydney',
@@ -24,13 +29,18 @@ export const quotefollowConfig: VerticalConfig = {
       amount: '$8,500',
     },
     {
-      tag: 'Builder · Brisbane',
-      quote: '"I meant to follow up, but by the time I remembered it was 2 weeks later."',
-      loss: 'Lost revenue',
-      amount: '$22,000',
+      tag: 'Cleaner · Houston',
+      quote: '"Cleaned the house, invoiced, then the client ghosted. Chasing $300 felt worse than doing the job."',
+      loss: 'Unpaid invoice',
+      amount: '$300',
     },
   ],
   features: [
+    {
+      iconKey: 'reply',
+      title: 'Stops when your client replies',
+      desc: 'The moment a client answers, follow-ups pause automatically. You take over the real conversation — never be the bot that keeps nagging someone who already paid.',
+    },
     {
       iconKey: 'chat',
       title: 'Smart follow-ups that sound like you',
@@ -39,7 +49,12 @@ export const quotefollowConfig: VerticalConfig = {
     {
       iconKey: 'clock',
       title: 'Smart timing',
-      desc: 'AI picks the best moment to follow up — when your customer is most likely to reply, not when you feel guilty.',
+      desc: 'Day 3 friendly nudge, Day 7 payment link, Day 14 final notice. Sent when your customer is most likely to reply.',
+    },
+    {
+      iconKey: 'bell',
+      title: 'Instant alerts',
+      desc: 'Get notified the second a client replies or is ready to book. Strike while the iron is hot.',
     },
     {
       iconKey: 'flame',
@@ -48,45 +63,52 @@ export const quotefollowConfig: VerticalConfig = {
     },
     {
       iconKey: 'chart',
-      title: 'Win/loss analysis',
-      desc: "See what's working. Track your quote-to-job conversion rate and understand why you win (or lose) jobs.",
-    },
-    {
-      iconKey: 'reply',
-      title: 'AI auto-reply',
-      desc: 'Common questions about pricing, availability, and deposits get answered instantly — 24/7, even while you sleep.',
-    },
-    {
-      iconKey: 'bell',
-      title: 'Instant alerts',
-      desc: 'Get notified the second a customer is ready to book. Strike while the iron is hot.',
+      title: 'Never touches your money',
+      desc: 'Payment links go straight to your own PayPal. QuoteFollow never holds funds, never stores cards, takes no cut.',
     },
   ],
   howItWorks: [
     {
       num: '01',
-      title: 'Send your quote as usual',
+      title: 'Send your quote or invoice as usual',
       desc: 'Email, SMS, or just paste it into the dashboard. We don\'t care how you work — we adapt to you.',
     },
     {
       num: '02',
-      title: 'AI follows up at the right time',
-      desc: 'QuoteFollow reads your quote, saves it, and sends smart follow-ups when it matters most — not too early, not too late.',
+      title: 'QuoteFollow follows up politely',
+      desc: 'It reads your quote or invoice, saves it, and sends smart follow-ups on Day 1, 3, and 7 — not too early, not too late.',
     },
     {
       num: '03',
-      title: 'You only handle hot leads',
-      desc: 'FAQs get answered automatically. When a customer says "yes", you get an instant alert. That\'s the money part.',
+      title: 'Client replies? It stops. Instantly.',
+      desc: 'The moment your client answers, the sequence pauses and you get alerted. FAQs get answered automatically. You only handle real conversations.',
     },
   ],
+  autoStopSection: {
+    title: 'It knows when to shut up.',
+    columns: [
+      {
+        scenario: 'Client replies "I\'ll pay Friday"',
+        result: 'Follow-ups paused instantly. No bot keeps nagging. You look professional.',
+      },
+      {
+        scenario: 'Client goes silent',
+        result: 'The sequence keeps going politely: Day 3 friendly nudge, Day 7 payment link, Day 14 final notice.',
+      },
+      {
+        scenario: 'Client asks a question',
+        result: 'You get alerted, the bot stays out of the way for real conversations.',
+      },
+    ],
+  },
   faq: [
     {
-      q: 'How does QuoteFollow know I sent a quote?',
-      a: 'You can forward quote emails to your unique inbox address, or paste them directly into the dashboard. Either way, we read and archive every quote automatically.',
+      q: 'What happens when a customer replies?',
+      a: 'Follow-ups stop immediately — automatically. QuoteFollow reads your inbox, so the moment your client answers, the sequence pauses and you take over. You\'ll never be the bot that keeps nagging someone who already paid.',
     },
     {
-      q: 'What happens when a customer replies?',
-      a: 'Any reply goes straight into your dashboard. You\'ll see whether it\'s positive, negative, or needs a response — and you\'ll get an instant alert if they say "yes".',
+      q: 'How does QuoteFollow know I sent a quote?',
+      a: 'You can forward quote or invoice emails to your unique inbox address, or paste them directly into the dashboard. Either way, we read and archive everything automatically.',
     },
     {
       q: 'Will the customer know it\'s automated?',
@@ -101,16 +123,20 @@ export const quotefollowConfig: VerticalConfig = {
       a: 'The AI handles common questions about pricing, availability, and process. For anything complex, it flags it for you and you can step in directly.',
     },
     {
+      q: 'Do you hold my money or store my clients\' cards?',
+      a: 'No. QuoteFollow sends payment links that go straight to your own PayPal. We never touch your funds, never store cards, and take no cut of your money.',
+    },
+    {
       q: 'Is my data secure?',
       a: 'Your data is encrypted and stored securely. We never sell or share your information. You can delete your account and all data at any time.',
     },
     {
       q: 'How much does it cost?',
-      a: '$29/month for the Professional plan. That\'s less than one lost job. Cancel anytime — no contracts, no hidden fees.',
+      a: 'Free to start with 3 clients. Early bird first month is $9, then $19/month — less than one lost job. Cancel anytime, no contracts, no hidden fees.',
     },
     {
       q: 'When will I see results?',
-      a: 'Most users see their first recovered job within 2 weeks. The Day 1 follow-up alone can re-engage customers who went silent.',
+      a: 'Most users see their first recovered job within 2 weeks. The Day 3 follow-up alone can re-engage customers who went silent.',
     },
   ],
   story: {
@@ -121,7 +147,7 @@ export const quotefollowConfig: VerticalConfig = {
     closing: 'Not because his prices were wrong. Not because his work was bad. Because he forgot to follow up.',
   },
   pricing: {
-    monthly: 29,
+    monthly: 19,
     currency: 'USD',
   },
   footer: {

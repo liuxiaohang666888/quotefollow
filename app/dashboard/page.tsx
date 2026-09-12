@@ -21,7 +21,7 @@ type Filter = 'all' | 'following' | 'replied' | 'won' | 'lost';
 
 const STATUS_LABEL: Record<Quote['status'], string> = {
   following: 'Following up',
-  replied: 'Replied',
+  replied: 'Client replied — paused',
   won: 'Won',
   lost: 'Lost',
 };
@@ -145,7 +145,7 @@ export default function DashboardPage() {
               borderRadius: 8,
               textDecoration: 'none',
             }}>
-              Upgrade to Pro — $29/mo
+              Upgrade to Pro — $19/mo
             </Link>
           )}
         </div>

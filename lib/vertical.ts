@@ -40,6 +40,11 @@ export interface FAQ {
   a: string;
 }
 
+export interface AutoStopColumn {
+  scenario: string;
+  result: string;
+}
+
 export interface VerticalConfig {
   brandName: string;
   brandSlug: string;
@@ -49,6 +54,11 @@ export interface VerticalConfig {
   eyebrow: string;
   audience: string;
   customerLabel: string;
+  trustBar?: string[];
+  autoStopSection?: {
+    title: string;
+    columns: AutoStopColumn[];
+  };
   painPoints: PainPoint[];
   features: Feature[];
   howItWorks: Step[];

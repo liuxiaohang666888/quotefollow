@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
       await notifyOwner(
         admin,
         account,
-        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($29/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
+        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($19/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
       );
       return NextResponse.json({ ok: false, error: 'free quota exhausted' }, { status: 402 });
     }
@@ -323,7 +323,7 @@ async function handleCustomerReply(args: {
   const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
   const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
 
-  let notificationText = `Customer ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}).`;
+  let notificationText = `✅ Client ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}).\n⏸ Follow-ups PAUSED automatically — the sequence has stopped. Take it from here.`;
 
   if (ai.should_reply && ai.reply_body && account?.auto_reply_enabled !== false) {
     const sent = await sendEmail({

@@ -80,6 +80,15 @@ export default function LandingPage() {
         <p className="eyebrow">{config.eyebrow}</p>
         <h1>{config.tagline} <span className="gradient">{config.gradientText}</span></h1>
         <p className="hero-sub">{config.heroSub}</p>
+        {config.trustBar && config.trustBar.length > 0 && (
+          <div className="hero-trustbar">
+            {config.trustBar.map((item, i) => (
+              <span className="trustbar-item" key={i}>
+                <span className="trustbar-check">✓</span> {item}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="hero-actions">
           <Link href="/signup" className="btn">
             Get started free
@@ -184,6 +193,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Auto-stop section (differentiation) */}
+      {config.autoStopSection && (
+        <section className="autostop-section">
+          <p className="eyebrow">The difference</p>
+          <h2>{config.autoStopSection.title}</h2>
+          <div className="autostop-grid">
+            {config.autoStopSection.columns.map((col, i) => (
+              <div className={`autostop-card autostop-card-${i}`} key={i}>
+                <p className="autostop-scenario">{col.scenario}</p>
+                <p className="autostop-result">{col.result}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* How it works */}
       <section className="steps-section">
         <p className="eyebrow">How it works</p>
@@ -275,7 +300,7 @@ export default function LandingPage() {
             <div className="pricing-features">
               <div className="pricing-feature">
                 <span className="check">✓</span>
-                <span>Up to 10 quotes</span>
+                <span>Up to 3 clients</span>
               </div>
               <div className="pricing-feature">
                 <span className="check">✓</span>
@@ -336,7 +361,7 @@ export default function LandingPage() {
               <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-4K331824R0057415LNKATF4A" target="_blank" rel="noopener noreferrer">
                 Subscribe — ${config.pricing.monthly}/month via PayPal
               </a>
-              <p className="pricing-guarantee">No credit card required · Cancel anytime</p>
+              <p className="pricing-guarantee">Early bird: first month $9 · Cancel anytime</p>
             </div>
           </div>
         </div>

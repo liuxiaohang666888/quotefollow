@@ -256,7 +256,7 @@ export default function DemoPreview() {
             padding: '12px 28px', borderRadius: 999,
             fontWeight: 700, fontSize: 15, textDecoration: 'none',
           }}>
-            Get Started — $29/mo →
+            Get Started — $19/mo →
           </a>
         </div>
 

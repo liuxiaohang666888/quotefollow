@@ -146,15 +146,15 @@ export default function NewQuotePage() {
                 <span style={{ color: '#10b981', fontWeight: 600 }}>$0/mo</span>
               </div>
               <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
-                Up to 10 quotes · Basic follow-ups
+                Up to 3 clients · Basic follow-ups
               </div>
               <div style={{ height: 1, background: '#e2e8f0', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span><strong>Pro Plan</strong></span>
-                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 18 }}>$29/mo</span>
+                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 18 }}>$19/mo</span>
               </div>
               <ul style={{ fontSize: 13, color: '#475569', margin: '8px 0 0', paddingLeft: 18 }}>
-                <li>Unlimited quotes</li>
+                <li>Unlimited clients — quotes & invoices</li>
                 <li>Custom follow-up inbox</li>
                 <li>AI-powered auto-replies</li>
                 <li>Cancel anytime</li>
