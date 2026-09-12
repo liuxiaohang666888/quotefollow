@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
 // 硬编码兜底：优先读 env（方便以后通过 Vercel 面板替换），空则使用下方固定值
-const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-4K331824R0057415LNKATF4A';
+const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-5DN937607C181825LNKSPLWI';
 const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAxyItsTaXijHpq8NBvrle3h6xOpEJ9vc1nl_OvLlwnfe_OoFH8Uz3tGTs9x-p-nI88xGGROfurcvVyig';
-const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-4K331824R0057415LNKATF4A';
+const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI';
 
 declare global {
   interface Window {

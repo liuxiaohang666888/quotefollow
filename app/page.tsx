@@ -358,7 +358,7 @@ export default function LandingPage() {
             </div>
             <div className="pricing-cta">
               <PayPalSubscribeButton label={`Subscribe — $${config.pricing.monthly}/month`} />
-              <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-4K331824R0057415LNKATF4A" target="_blank" rel="noopener noreferrer">
+              <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI" target="_blank" rel="noopener noreferrer">
                 Subscribe — ${config.pricing.monthly}/month via PayPal
               </a>
               <p className="pricing-guarantee">Early bird: first month $9 · Cancel anytime</p>
