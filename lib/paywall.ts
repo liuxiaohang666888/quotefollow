@@ -10,7 +10,8 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 }
 
 // 免费额度：所有创建报价的入口（手动粘贴/发送报价/邮件转发）都必须用这一个常量
-export const FREE_QUOTA = 4;
+// 定稿口径：免费档 = 3 个客户（落地页/signup/dashboard 全部按 3 说，别再加倍数）
+export const FREE_QUOTA = 3;
 
 // 额度统计必须按 account_id（报价归属于账号），绝不能按 customer_email（那是客户的邮箱）。
 // 兜底：优先按邮箱关联统计（防删号重注册换新账号ID绕过额度），join 失败自动回退按账号ID统计。

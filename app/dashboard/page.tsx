@@ -112,9 +112,23 @@ export default function DashboardPage() {
         }}>
           <span style={{ fontSize: 14, color: isExhausted ? '#92400e' : '#166534' }}>
             {isExhausted
-              ? 'Free plan quota used up — '
-              : `Free plan: ${remaining} of ${FREE_QUOTA} quotes remaining`}
+              ? 'Free plan quota used up (3 clients) — '
+              : `Free plan: ${remaining} of ${FREE_QUOTA} clients remaining`}
           </span>
+          {!isExhausted && (
+            <Link
+              href="/signup"
+              style={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: '#166534',
+                textDecoration: 'underline',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Unlimited — $19/mo (first month $9)
+            </Link>
+          )}
           {!isExhausted && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
