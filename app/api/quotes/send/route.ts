@@ -67,12 +67,14 @@ export async function POST(req: NextRequest) {
   }
 
   let body: {
-    customer_name: string;
-    customer_email: string;
-    service_type: string;
-    amount: number | null;
-    message: string;
-  };
+      customer_name: string;
+      customer_email: string;
+      service_type: string;
+      amount: number | null;
+      message: string;
+      require_deposit?: boolean;
+      deposit_amount?: number | null;
+    };
   try {
     body = await req.json();
   } catch {
@@ -83,7 +85,10 @@ export async function POST(req: NextRequest) {
   const customerEmail = (body.customer_email || '').trim().toLowerCase();
   const serviceType = (body.service_type || '').trim();
   const amount = typeof body.amount === 'number' && body.amount > 0 ? body.amount : null;
-  const message = (body.message || '').trim();
+    const requireDeposit = !!body.require_deposit;
+    const depositAmount = (requireDeposit && typeof body.deposit_amount === 'number' && body.deposit_amount > 0) ? body.deposit_amount : null;
+
+    const message = (body.message || '').trim();
 
   if (!customerEmail) {
     return NextResponse.json({ ok: false, error: 'Customer email is required' }, { status: 400 });

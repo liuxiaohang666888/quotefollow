@@ -14,6 +14,8 @@ export default function NewQuotePage() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [serviceType, setServiceType] = useState('');
   const [amount, setAmount] = useState('');
+  const [requireDeposit, setRequireDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
   const [message, setMessage] = useState('');
 
   // Paste mode
@@ -25,24 +27,26 @@ export default function NewQuotePage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   async function handleCompose(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setShowUpgradeModal(false);
-    if (!customerEmail) { setError('Customer email is required.'); return; }
-    if (!message.trim()) { setError('Write a quote message first.'); return; }
-    setLoading(true);
-    try {
-      const res = await fetch('/api/quotes/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: customerName,
-          customer_email: customerEmail,
-          service_type: serviceType,
-          amount: amount ? parseFloat(amount) : null,
-          message: message,
-        }),
-      });
+      e.preventDefault();
+      setError('');
+      setShowUpgradeModal(false);
+      if (!customerEmail) { setError('Customer email is required.'); return; }
+      if (!message.trim()) { setError('Write a quote message first.'); return; }
+      setLoading(true);
+      try {
+        const res = await fetch('/api/quotes/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: customerName,
+            customer_email: customerEmail,
+            service_type: serviceType,
+            amount: amount ? parseFloat(amount) : null,
+            message: message,
+            require_deposit: requireDeposit,
+            deposit_amount: requireDeposit ? parseFloat(depositAmount) : null,
+          }),
+        });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setLoading(false);
@@ -234,28 +238,40 @@ export default function NewQuotePage() {
               required
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="field">
-              <label>Service type</label>
-              <input
-                type="text"
-                value={serviceType}
-                onChange={(e) => setServiceType(e.target.value)}
-                placeholder="e.g. House cleaning"
-              />
-            </div>
-            <div className="field">
-              <label>Amount ($)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="e.g. 450"
-              />
-            </div>
-          </div>
+          <div className="field">
+                      <label>Amount ($)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="e.g. 450"
+                      />
+                    </div>
+                    <div className="field">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={requireDeposit}
+                          onChange={(e) => setRequireDeposit(e.target.checked)}
+                        />
+                        Require deposit to lock booking
+                      </label>
+                    </div>
+                    {requireDeposit && (
+                      <div className="field">
+                        <label>Deposit amount ($)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          placeholder="e.g. 150"
+                        />
+                      </div>
+                    )}
           <div className="field">
             <label>Quote message <span style={{ color: '#ef4444' }}>*</span></label>
             <textarea
