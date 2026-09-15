@@ -41,9 +41,7 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [exportOpen, setExportOpen] = useState(false);
-
-  // Auto-generate referral code if missing
-  useEnsureReferralCode();
+  const { referral_code: storedCode } = useEnsureReferralCode();
 
   const loadQuotes = useCallback(async () => {
     setLoading(true);
@@ -249,13 +247,13 @@ export default function DashboardPage() {
                       <p style={{ fontSize: 13, color: '#818cf8', margin: 0 }}>Share your link. When someone subscribes, you both get 1 month free.</p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
-                        Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{account?.referral_code ? `voxalo.top/signup?ref=${account.referral_code}` : 'Loading...'}</code>
-                      </span>
-                      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => {
-                        const url = `https://www.voxalo.top/signup?ref=${account?.referral_code}`;
-                        navigator.clipboard.writeText(url).then(() => alert('Link copied!'));
-                      }}>Copy link</button>
+      <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
+        Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{storedCode ? `voxalo.top/signup?ref=${storedCode}` : 'Loading...'}</code>
+      </span>
+      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => {
+        if (!storedCode) return;
+        navigator.clipboard.writeText(`https://www.voxalo.top/signup?ref=${storedCode}`).then(() => alert('Link copied!'));
+      }}>{storedCode ? 'Copy link' : 'Loading...'}</button>
                       <Link href="/dashboard/refer" className="btn" style={{ padding: '8px 16px', fontSize: 13, background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--fg)' }}>View stats</Link>
                     </div>
                   </div>
