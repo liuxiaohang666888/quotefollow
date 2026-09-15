@@ -316,93 +316,232 @@ export default function LandingPage() {
           <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
             Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Get started free</a>
           </p>
+                  </div>
+                </section>
+
+                {/* Resources / SEO Articles */}
+      <section className="resources-section" style={{ marginTop: 80, marginBottom: 80 }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 24px' }}>
+          <p className="eyebrow">Resources</p>
+          <h2>Learn how to get paid faster</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 32 }}>
+            {[
+              {
+                title: 'How to chase unpaid invoices without being awkward',
+                summary: 'The exact email templates and timing that work — without feeling like a debt collector.',
+                link: 'https://medium.com/@voxalo/how-to-chase-unpaid-invoices-without-being-awkward'
+              },
+              {
+                title: 'Client ghosted you? Here\'s the exact follow-up sequence',
+                summary: 'Day 1, Day 3, Day 7 — the exact emails that get replies without burning bridges.',
+                link: 'https://medium.com/@voxalo/client-ghosted-follow-up-sequence'
+              },
+              {
+                title: 'Freelancer payment checklist: 7 things to do before you start work',
+                summary: 'The checklist that prevents 90% of payment problems before they happen.',
+                link: 'https://medium.com/@voxalo/freelancer-payment-checklist'
+              }
+            ].map((article, i) => (
+              <a key={i} href={article.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ 
+                  background: 'white', 
+                  borderRadius: 16, 
+                  padding: 24, 
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                }}>
+                  <h3 style={{ margin: '0 0 12px', fontSize: 18, lineHeight: 1.4 }}>{article.title}</h3>
+                  <p style={{ color: '#6b7280', fontSize: 15, lineHeight: 1.6, flex: 1, marginBottom: 20 }}>{article.summary}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#2563eb', fontWeight: 600 }}>Read article →</span>
+                    <span style={{ color: '#9ca3af', fontSize: 13 }}>5 min read</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="pricing-section" id="pricing">
+      {/* Refer & Earn */}
+      <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
+          <p className="eyebrow">Refer & Earn</p>
+          <h2>Recommend QuoteFollow. Get free months.</h2>
+          <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
+            Share your link. When someone subscribes, you both get 1 month free.
+          </p>
+          <div style={{ background: 'white', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24 }}>
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Your referral link</label>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <input 
+                  type="text" 
+                  value="https://voxalo.top/signup?ref=USER_ID" 
+                  readOnly
+                  style={{ 
+                                      flex: 1, 
+                                      padding: '14px 16px', 
+                                      borderRadius: 8, 
+                                      border: '1px solid #e5e7eb', 
+                                      fontSize: 15,
+                                      background: '#f9fafb',
+                                      fontFamily: 'monospace',
+                                    }} 
+                                  />
+                <button className="btn" style={{ padding: '14px 24px', whiteSpace: 'nowrap' }}>
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
+              <div style={{ textAlign: 'center', padding: '0 24px', borderRight: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
+                <div style={{ color: '#6b7280', fontSize: 14 }}>Referred</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '0 24px' }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
+                <div style={{ color: '#6b7280', fontSize: 14 }}>Free months</div>
+              </div>
+            </div>
+            <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>
+              Share your link in emails, Slack, LinkedIn, or DMs. Works for anyone — freelancers, agencies, contractors.
+            </p>
+          </div>
+          <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
+            Want to earn 20% recurring commission? <a href="/affiliate" style={{ color: '#2563eb', fontWeight: 600 }}>Become an affiliate →</a>
+          </p>
+        </div>
+      </section>
+
+            {/* Pricing */}
+            <section className="pricing-section" id="pricing">
         <p className="eyebrow">Pricing</p>
         <h2>Simple pricing</h2>
         <p className="pricing-sub">Free to start. Upgrade when you outgrow it.</p>
-        <div className="pricing-grid">
-          <div className="pricing-card free">
-            <div className="pricing-header">
-              <div className="pricing-name">Free</div>
-              <div className="pricing-badge">Start here</div>
-            </div>
-            <div className="pricing-price">
-              <span className="pricing-amount">$0</span>
-              <span className="pricing-period">forever</span>
-            </div>
-            <div className="pricing-features">
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Up to 3 clients</span>
+        <div className="pricing-grid">                <div className="pricing-card free">
+                  <div className="pricing-header">
+                    <div className="pricing-name">Free</div>
+                    <div className="pricing-badge">Start here</div>
+                  </div>
+                  <div className="pricing-price">
+                    <span className="pricing-amount">$0</span>
+                    <span className="pricing-period">forever</span>
+                  </div>
+                  <div className="pricing-features">
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Up to 3 clients</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>AI quote reading & dashboard</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Day 1 / 3 / 7 follow-ups</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>AI auto-reply to common questions</span>
+                    </div>
+                  </div>
+                  <div className="pricing-cta">
+                    <Link href="/signup" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
+                      Get started free
+                    </Link>
+                  </div>
+                </div>
+                <div className="pricing-card">
+                  <div className="pricing-header">
+                    <div className="pricing-name">Solo</div>
+                    <div className="pricing-badge">Most popular</div>
+                  </div>
+                  <div className="pricing-price">
+                    <span className="pricing-amount">$19</span>
+                    <span className="pricing-period">/ month</span>
+                  </div>
+                  <div className="pricing-features">
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Unlimited quotes & invoices</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Your own follow-up inbox</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>AI quote reading & dashboard</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Precise follow-ups (Day 1, 3, 7)</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>AI answers common questions</span>
+                    </div>
+                    <div className="pricing-feature">
+                      <span className="check">✓</span>
+                      <span>Cancel anytime</span>
+                    </div>
+                  </div>
+                  <div className="pricing-cta">
+                    <PayPalSubscribeButton label={`Subscribe — $9 first month, then $19/mo`} />
+                    <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI" target="_blank" rel="noopener noreferrer">
+                      Subscribe — $19/month via PayPal (first month $9)
+                    </a>
+                    <p className="pricing-guarantee">Early bird: first month $9 · Cancel anytime</p>
+                  </div>
+                </div>
+                <div className="pricing-card">
+                  <div className="pricing-header">
+                    <div className="pricing-name">Pro</div>
+                    <div className="pricing-badge">For growing teams</div>
+                  </div>
+                  <div className="pricing-price">
+                    <span className="pricing-amount">$49</span>
+                    <span className="pricing-period">/ month</span>
+                  </div>
+                  <div className="pricing-features">
+                    <div className="pricing-feature"><span className="check">✓</span><span>Everything in Solo</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>API access + webhooks</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Custom email templates</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Advanced analytics & reports</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Priority email support</span></div>
+                  </div>
+                  <div className="pricing-cta">
+                    <a className="btn" href="/signup?plan=pro" style={{ width: '100%', justifyContent: 'center' }}>Upgrade to Pro — $49/mo</a>
+                    <p className="pricing-guarantee">Cancel anytime · No contract</p>
+                  </div>
+                </div>
+                <div className="pricing-card">
+                  <div className="pricing-header">
+                    <div className="pricing-name">Business</div>
+                    <div className="pricing-badge">For teams</div>
+                  </div>
+                  <div className="pricing-price">
+                    <span className="pricing-amount">$99</span>
+                    <span className="pricing-period">/ month</span>
+                  </div>
+                  <div className="pricing-features">
+                    <div className="pricing-feature"><span className="check">✓</span><span>Everything in Pro</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Team seats (up to 3 users)</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Audit logs & activity feed</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Priority phone + email support</span></div>
+                    <div className="pricing-feature"><span className="check">✓</span><span>Custom onboarding & training</span></div>
+                  </div>
+                  <div className="pricing-cta">
+                    <a className="btn" href="/signup?plan=business" style={{ width: '100%', justifyContent: 'center' }}>Contact sales — $99/mo</a>
+                    <p className="pricing-guarantee">Custom onboarding · Cancel anytime</p>
+                  </div>
+                </div>
               </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>AI quote reading & dashboard</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Day 1 / 3 / 7 follow-ups</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>AI auto-reply to common questions</span>
-              </div>
-            </div>
-            <div className="pricing-cta">
-              <Link href="/signup" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
-                Get started free
-              </Link>
-            </div>
-          </div>
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <div className="pricing-name">Professional</div>
-              <div className="pricing-badge">Most popular</div>
-            </div>
-            <div className="pricing-price">
-              <span className="pricing-amount">${config.pricing.monthly}</span>
-              <span className="pricing-period">{config.pricing.currency} / month</span>
-            </div>
-            <div className="pricing-features">
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Unlimited quotes & customers</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Your own follow-up inbox</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>AI quote reading & dashboard</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Precise follow-ups (Day 1, 3, 7)</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>AI answers common questions</span>
-              </div>
-              <div className="pricing-feature">
-                <span className="check">✓</span>
-                <span>Cancel anytime</span>
-              </div>
-            </div>
-            <div className="pricing-cta">
-              <PayPalSubscribeButton label={`Subscribe — $9 first month, then $19/mo`} />
-              <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI" target="_blank" rel="noopener noreferrer">
-                Subscribe — $19/month via PayPal (first month $9)
-              </a>
-              <p className="pricing-guarantee">Early bird: first month $9 · Cancel anytime</p>
-            </div>
-          </div>
-        </div>
-      </section>
+            </section>
 
       {/* FAQ */}
       <section className="faq-section">

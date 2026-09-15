@@ -163,9 +163,28 @@ export default function DashboardPage() {
             </Link>
           )}
         </div>
-      )}
+              )}
 
-      <p className="page-sub" style={{ marginTop: 12 }}>
+              {/* Refer & Earn */}
+              {isFree && (
+                <div style={{ marginTop: 24, padding: '20px 24px', background: '#f0f9ff', borderRadius: 12, border: '1px solid #93c5fd' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ flex: 1, minWidth: 280 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>Refer & Earn</p>
+                      <p style={{ fontSize: 13, color: '#1e3a8a', margin: 0 }}>Share your link. When someone subscribes, you both get 1 month free.</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, color: '#1e3a8a', fontWeight: 500 }}>
+                        Your link: <code style={{ background: '#e0e7ff', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>voxalo.top/signup?ref=YOUR_CODE</code>
+                      </span>
+                      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }}>Copy link</button>
+                      <Link href="/dashboard/refer" className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}>View stats</Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="page-sub" style={{ marginTop: 12 }}>
         {account?.followup_email
           ? <>Forward or BCC every quote to <strong>{account.followup_email}</strong> and it appears here automatically — or click <strong>Add a quote</strong> to paste it in.</>
           : <>Click <strong>Add a quote</strong> and paste the email you sent a customer, or set up your follow-up inbox in <Link href="/dashboard/settings" style={{ color: '#2563eb' }}>Settings</Link>.</>}

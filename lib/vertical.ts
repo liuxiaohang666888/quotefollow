@@ -73,6 +73,16 @@ export interface VerticalConfig {
   pricing: {
     monthly: number;
     currency: string;
+    tiers?: {
+      id: string;
+      name: string;
+      price: number;
+      period: string;
+      features: string[];
+      cta: string;
+      badge: string;
+      isPopular?: boolean;
+    }[];
   };
   footer: {
     supportEmail: string;
