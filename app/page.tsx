@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
+import PayPalSubscribeButton, { PLAN_PRO_ID, PLAN_BUSINESS_ID } from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
 import { getVerticalConfig, getBrandName } from '@/lib/vertical';
 
@@ -515,7 +515,10 @@ export default function LandingPage() {
                     <div className="pricing-feature"><span className="check">✓</span><span>Priority email support</span></div>
                   </div>
                   <div className="pricing-cta">
-                    <a className="btn" href="/signup?plan=pro" style={{ width: '100%', justifyContent: 'center' }}>Upgrade to Pro — $49/mo</a>
+                    <PayPalSubscribeButton label="Upgrade to Pro — $49/mo" planId={PLAN_PRO_ID} fallbackHref={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} />
+                    <a className="btn btn-fallback" href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} target="_blank" rel="noopener noreferrer">
+                      Subscribe — $49/month via PayPal
+                    </a>
                     <p className="pricing-guarantee">Cancel anytime · No contract</p>
                   </div>
                 </div>
@@ -536,7 +539,10 @@ export default function LandingPage() {
                     <div className="pricing-feature"><span className="check">✓</span><span>Custom onboarding & training</span></div>
                   </div>
                   <div className="pricing-cta">
-                    <a className="btn" href="/signup?plan=business" style={{ width: '100%', justifyContent: 'center' }}>Contact sales — $99/mo</a>
+                    <PayPalSubscribeButton label="Upgrade to Business — $99/mo" planId={PLAN_BUSINESS_ID} fallbackHref={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_BUSINESS_ID}`} />
+                    <a className="btn btn-fallback" href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_BUSINESS_ID}`} target="_blank" rel="noopener noreferrer">
+                      Subscribe — $99/month via PayPal
+                    </a>
                     <p className="pricing-guarantee">Custom onboarding · Cancel anytime</p>
                   </div>
                 </div>
