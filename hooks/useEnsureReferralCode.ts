@@ -13,17 +13,26 @@ export function useEnsureReferralCode(): { referral_code: string | null; loading
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { setLoading(false); return; }
+    
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user) { setLoading(false); return; }
+      
       try {
         const res = await fetch('/api/user/referral-code', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: { id: user.id } }),
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ user: { id: session.user.id } }),
         });
+        
         if (res.ok) {
           const data = await res.json();
           setReferralCode(data.referral_code || null);
+        } else {
+          const err = await res.json();
+          console.error('Referral code API error:', res.status, err);
         }
       } catch (e) {
         console.error('Referral code ensure error:', e);
