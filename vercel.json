@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/subscription-check",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/monthly-report",
+      "schedule": "0 9 1 * *"
     }
   ],
   "buildCommand": "next build",

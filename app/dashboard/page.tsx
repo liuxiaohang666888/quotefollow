@@ -86,15 +86,25 @@ export default function DashboardPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h1>Your quotes</h1>
-        <Link
-          href="/dashboard/new"
-          className="btn"
-          style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
-        >
-          + Send a quote
-        </Link>
-      </div>
+              <h1>Your quotes</h1>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <a
+                  href="/api/export?format=csv&range=month"
+                  className="btn"
+                  style={{ width: 'fit-content', padding: '10px 16px', fontSize: 14 }}
+                  download
+                >
+                  Export CSV
+                </a>
+                <Link
+                  href="/dashboard/new"
+                  className="btn"
+                  style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
+                >
+                  + Send a quote
+                </Link>
+              </div>
+            </div>
 
       {/* 额度提示 */}
       {isFree && (
