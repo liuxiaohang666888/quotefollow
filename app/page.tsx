@@ -320,51 +320,58 @@ export default function LandingPage() {
             </section>
 
                 {/* Resources / SEO Articles */}
-      <section className="resources-section" style={{ marginTop: 80, marginBottom: 80 }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 24px' }}>
-          <p className="eyebrow">Resources</p>
-          <h2>Learn how to get paid faster</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 32 }}>
-            {[
-              {
-                title: 'How to chase unpaid invoices without being awkward',
-                summary: 'The exact email templates and timing that work — without feeling like a debt collector.',
-                link: 'https://medium.com/@voxalo/how-to-chase-unpaid-invoices-without-being-awkward'
-              },
-              {
-                title: 'Client ghosted you? Here\'s the exact follow-up sequence',
-                summary: 'Day 1, Day 3, Day 7 — the exact emails that get replies without burning bridges.',
-                link: 'https://medium.com/@voxalo/client-ghosted-follow-up-sequence'
-              },
-              {
-                title: 'Freelancer payment checklist: 7 things to do before you start work',
-                summary: 'The checklist that prevents 90% of payment problems before they happen.',
-                link: 'https://medium.com/@voxalo/freelancer-payment-checklist'
-              }
-            ].map((article, i) => (
-              <a key={i} href={article.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div style={{ 
-                  background: 'white', 
-                  borderRadius: 16, 
-                  padding: 24, 
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                }}>
-                  <h3 style={{ margin: '0 0 12px', fontSize: 18, lineHeight: 1.4 }}>{article.title}</h3>
-                  <p style={{ color: '#6b7280', fontSize: 15, lineHeight: 1.6, flex: 1, marginBottom: 20 }}>{article.summary}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#2563eb', fontWeight: 600 }}>Read article →</span>
-                    <span style={{ color: '#9ca3af', fontSize: 13 }}>5 min read</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+                      <section className="resources-section" style={{ marginTop: 80, marginBottom: 80 }}>
+                        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 24px' }}>
+                          <p className="eyebrow">From the blog</p>
+                          <h2>Learn how to get paid faster</h2>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 32 }}>
+                            {[
+                              {
+                                title: 'I Lost $8,500 to Silent Clients — So I Built a Tool That Knows When to Shut Up',
+                                summary: 'How I stopped losing jobs to ghosted quotes and unpaid invoices (without becoming the annoying guy who spams reminders)',
+                                link: 'https://medium.com/@liuxiaohang529/i-lost-8-500-to-silent-clients-so-i-built-a-tool-that-knows-when-to-shut-up-5e617cc234a3'
+                              },
+                              {
+                                title: 'The Deposit Rule: How I Stopped Getting Ghosted by Clients Entirely',
+                                summary: 'Chasing unpaid invoices is a skill. Never needing to chase them is a better one.',
+                                link: 'https://medium.com/@liuxiaohang529/the-deposit-rule-how-i-stopped-getting-ghosted-by-clients-entirely-39ab1425755f'
+                              },
+                              {
+                                title: 'I Lost $14,000 Because I Forgot to Follow Up',
+                                summary: 'The true cost of letting quotes sit in silence — and the 3-touch system that fixed it.',
+                                link: 'https://medium.com/@liuxiaohang529/i-lost-14-000-because-i-forgot-to-follow-up-d696e578d789'
+                              }
+                            ].map((article, i) => (
+                              <a key={i} href={article.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <div style={{ 
+                                  background: 'var(--bg-glass)', 
+                                  border: '1px solid var(--border)',
+                                  borderRadius: 16, 
+                                  padding: 24, 
+                                  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  height: '100%',
+                                  transition: 'transform 0.2s, box-shadow 0.2s',
+                                  backdropFilter: 'blur(20px)',
+                                  WebkitBackdropFilter: 'blur(20px)',
+                                }}>
+                                  <h3 style={{ margin: '0 0 12px', fontSize: 18, lineHeight: 1.4 }}>{article.title}</h3>
+                                  <p style={{ color: '#6b7280', fontSize: 15, lineHeight: 1.6, flex: 1, marginBottom: 20 }}>{article.summary}</p>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <span style={{ color: '#2563eb', fontWeight: 600 }}>Read on Medium →</span>
+                                  </div>
+                                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 'auto' }}>
+                                    <p style={{ color: '#2563eb', fontWeight: 600, fontSize: 14, margin: 0, textAlign: 'center' }}>
+                                      Want this automated? <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Try QuoteFollow free →</a>
+                                    </p>
+                                  </div>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </section>
 
       {/* Refer & Earn */}
       <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
