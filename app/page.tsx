@@ -374,55 +374,56 @@ export default function LandingPage() {
                       </section>
 
       {/* Refer & Earn */}
-      <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-          <p className="eyebrow">Refer & Earn</p>
-          <h2>Recommend QuoteFollow. Get free months.</h2>
-          <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
-            Share your link. When someone subscribes, you both get 1 month free.
-          </p>
-          <div style={{ background: 'white', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24 }}>
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Your referral link</label>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <input 
-                  type="text" 
-                  value="https://voxalo.top/signup?ref=USER_ID" 
-                  readOnly
-                  style={{ 
-                                      flex: 1, 
-                                      padding: '14px 16px', 
-                                      borderRadius: 8, 
-                                      border: '1px solid #e5e7eb', 
-                                      fontSize: 15,
-                                      background: '#f9fafb',
-                                      fontFamily: 'monospace',
-                                    }} 
-                                  />
-                <button className="btn" style={{ padding: '14px 24px', whiteSpace: 'nowrap' }}>
-                  Copy
-                </button>
+            <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
+              <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
+                <p className="eyebrow">Refer & Earn</p>
+                <h2>Recommend QuoteFollow. Get free months.</h2>
+                <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
+                  Share your link. When someone subscribes, you both get 1 month free.
+                </p>
+                <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Your referral link</label>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <input
+                        type="text"
+                        value="https://voxalo.top/signup?ref=USER_ID"
+                        readOnly
+                        style={{
+                          flex: 1,
+                          padding: '14px 16px',
+                          borderRadius: 8,
+                          border: '1px solid var(--border)',
+                          fontSize: 15,
+                          background: 'var(--bg-glass)',
+                          color: 'var(--fg)',
+                          fontFamily: 'monospace',
+                        }}
+                      />
+                      <button className="btn" style={{ padding: '14px 24px', whiteSpace: 'nowrap' }}>
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
+                    <div style={{ textAlign: 'center', padding: '0 24px', borderRight: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
+                      <div style={{ color: '#6b7280', fontSize: 14 }}>Referred</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '0 24px' }}>
+                      <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
+                      <div style={{ color: '#6b7280', fontSize: 14 }}>Free months</div>
+                    </div>
+                  </div>
+                  <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>
+                    Share your link in emails, Slack, LinkedIn, or DMs. Works for anyone — freelancers, agencies, contractors.
+                  </p>
+                </div>
+                <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
+                  Want to earn 20% recurring commission? <a href="/affiliate" style={{ color: '#2563eb', fontWeight: 600 }}>Become an affiliate →</a>
+                </p>
               </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
-              <div style={{ textAlign: 'center', padding: '0 24px', borderRight: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
-                <div style={{ color: '#6b7280', fontSize: 14 }}>Referred</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: '0 24px' }}>
-                <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
-                <div style={{ color: '#6b7280', fontSize: 14 }}>Free months</div>
-              </div>
-            </div>
-            <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>
-              Share your link in emails, Slack, LinkedIn, or DMs. Works for anyone — freelancers, agencies, contractors.
-            </p>
-          </div>
-          <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
-            Want to earn 20% recurring commission? <a href="/affiliate" style={{ color: '#2563eb', fontWeight: 600 }}>Become an affiliate →</a>
-          </p>
-        </div>
-      </section>
+            </section>
 
             {/* Pricing */}
             <section className="pricing-section" id="pricing">

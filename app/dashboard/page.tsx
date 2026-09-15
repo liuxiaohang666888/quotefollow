@@ -226,23 +226,23 @@ export default function DashboardPage() {
               )}
 
               {/* Refer & Earn */}
-              {isFree && (
-                <div style={{ marginTop: 24, padding: '20px 24px', background: '#f0f9ff', borderRadius: 12, border: '1px solid #93c5fd' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                    <div style={{ flex: 1, minWidth: 280 }}>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>Refer & Earn</p>
-                      <p style={{ fontSize: 13, color: '#1e3a8a', margin: 0 }}>Share your link. When someone subscribes, you both get 1 month free.</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, color: '#1e3a8a', fontWeight: 500 }}>
-                        Your link: <code style={{ background: '#e0e7ff', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>voxalo.top/signup?ref=YOUR_CODE</code>
-                      </span>
-                      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }}>Copy link</button>
-                      <Link href="/dashboard/refer" className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}>View stats</Link>
-                    </div>
-                  </div>
-                </div>
-              )}
+                            {isFree && (
+                              <div style={{ marginTop: 24, padding: '20px 24px', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                                  <div style={{ flex: 1, minWidth: 280 }}>
+                                    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Refer & Earn</p>
+                                    <p style={{ fontSize: 13, color: 'var(--fg-dim)', margin: 0 }}>Share your link. When someone subscribes, you both get 1 month free.</p>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                                    <span style={{ fontSize: 13, color: 'var(--fg-dim)', fontWeight: 500 }}>
+                                      Your link: <code style={{ background: 'var(--bg-glass)', padding: '2px 6px', borderRadius: 4, fontSize: 12, border: '1px solid var(--border)' }}>voxalo.top/signup?ref=YOUR_CODE</code>
+                                    </span>
+                                    <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }}>Copy link</button>
+                                    <Link href="/dashboard/refer" className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}>View stats</Link>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
               <p className="page-sub" style={{ marginTop: 12 }}>
         {account?.followup_email
