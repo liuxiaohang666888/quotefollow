@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { FREE_QUOTA } from '@/lib/paywall';
+import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
 
 interface Quote {
   id: string;
@@ -40,6 +41,9 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [exportOpen, setExportOpen] = useState(false);
+
+  // Auto-generate referral code if missing
+  useEnsureReferralCode();
 
   const loadQuotes = useCallback(async () => {
     setLoading(true);
@@ -248,7 +252,10 @@ export default function DashboardPage() {
                       <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
                         Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{account?.referral_code ? `voxalo.top/signup?ref=${account.referral_code}` : 'Loading...'}</code>
                       </span>
-                      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }}>Copy link</button>
+                      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => {
+                        const url = `https://www.voxalo.top/signup?ref=${account?.referral_code}`;
+                        navigator.clipboard.writeText(url).then(() => alert('Link copied!'));
+                      }}>Copy link</button>
                       <Link href="/dashboard/refer" className="btn" style={{ padding: '8px 16px', fontSize: 13, background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--fg)' }}>View stats</Link>
                     </div>
                   </div>
