@@ -26,6 +26,7 @@ function SignupForm() {
   // PayPal 订阅成功后跳转过来会带 ?sub=I-xxxx，必须透传保存，否则付费客户会被当成免费版
   const rawSub = searchParams.get('sub');
   const paypalSub = rawSub && /^I-[A-Za-z0-9]+$/.test(rawSub) ? rawSub : null;
+  const refCode = searchParams.get('ref');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +68,7 @@ function SignupForm() {
           email,
           followupEmail: 'follow@voxalo.top',
           paypalSubscriptionId: paypalSub,
+          referralCode: refCode,
         }),
       });
       const result = await res.json();

@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isValidPaypalSubscriptionId, verifyPaypalSubscription } from '@/lib/paypal';
+import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// 防重复注册：同一 IP 每 24 小时最多注册 1 次
 const ipWindow = 24 * 60 * 60 * 1000;
 const ipLog = new Map<string, number>();
-
-// 防同一邮箱重复注册：同一邮箱最多注册 3 次
 const emailWindow = 24 * 60 * 60 * 1000;
 const emailLog = new Map<string, number[]>();
 
@@ -40,27 +38,21 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, businessName, email, followupEmail, paypalSubscriptionId } = body;
+    const { userId, businessName, email, followupEmail, paypalSubscriptionId, referralCode } = body;
 
     if (!userId || !email) {
       return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 检查同一邮箱是否频繁注册
     const emailCheck = isEmailRepeated(email.toLowerCase());
     if (emailCheck.blocked) {
       return NextResponse.json({ ok: false, error: `This email has been used too many times (${emailCheck.count}). Try a different email.` }, { status: 429 });
     }
 
-    // 验证 PayPal 订阅（如果提供了）
     if (paypalSubscriptionId) {
       if (!isValidPaypalSubscriptionId(paypalSubscriptionId)) {
-        return NextResponse.json(
-          { ok: false, error: 'Invalid subscription ID format. Must start with I-.' },
-          { status: 400 }
-        );
+        return NextResponse.json({ ok: false, error: 'Invalid subscription ID format. Must start with I-.' }, { status: 400 });
       }
-
       const verify = await verifyPaypalSubscription(paypalSubscriptionId);
       if (!verify.ok) {
         return NextResponse.json({ ok: false, error: `Subscription verification failed: ${verify.reason}` }, { status: 402 });
@@ -69,34 +61,63 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // 确认邮箱
-    const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
-      email_confirm: true,
-    });
-    if (confirmError) {
-      console.error('[signup/api] email confirm failed:', confirmError);
+    // Confirm email
+    await admin.auth.admin.updateUserById(userId, { email_confirm: true });
+
+    // Generate referral code for new user
+    const newReferralCode = 'QF-' + randomUUID().slice(0, 8).toUpperCase();
+
+    // Upsert account with referral code
+    const upsertData: any = {
+      id: userId,
+      business_name: businessName,
+      email,
+      followup_email: 'follow@voxalo.top',
+      paypal_subscription_id: paypalSubscriptionId,
+      referral_code: newReferralCode,
+    };
+    if (referralCode) {
+      upsertData.referred_by = referralCode; // This will be set after we look it up
     }
 
-    // 插入或更新账户
     const { error: insertError } = await admin
       .from('accounts')
-      .upsert({
-        id: userId,
-        business_name: businessName,
-        email,
-        followup_email: 'follow@voxalo.top',
-        paypal_subscription_id: paypalSubscriptionId,
-      }, {
-        onConflict: 'id',
-      });
+      .upsert(upsertData, { onConflict: 'id' });
 
     if (insertError) {
       console.error('[signup/api] account upsert failed:', insertError.code);
       return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
     }
 
+    // If referral code provided, look up referrer and create referral record
+    if (referralCode) {
+      const { data: referrer } = await admin
+        .from('accounts')
+        .select('id')
+        .eq('referral_code', referralCode)
+        .single();
+
+      if (referrer && referrer.id !== userId) {
+        // Create pending referral
+        await admin.from('referrals').insert({
+          referrer_id: referrer.id,
+          referred_id: userId,
+          status: 'pending',
+          free_months_granted: 0,
+        });
+
+        // Update referred_by field
+        await admin
+          .from('accounts')
+          .update({ referred_by: referrer.id })
+          .eq('id', userId);
+
+        console.log('[signup/api] referral recorded:', referrer.id, '->', userId);
+      }
+    }
+
     console.log('[signup/api] account created/updated:', userId);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, referralCode: newReferralCode });
   } catch (e: any) {
     console.error('[signup/api] unexpected error:', e?.code || e);
     return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });

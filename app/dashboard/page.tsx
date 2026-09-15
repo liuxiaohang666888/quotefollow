@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string } | null>(null);
   const [quotaUsed, setQuotaUsed] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
     const { data: acc } = await supabase
       .from('accounts')
-      .select('followup_email, business_name, paypal_subscription_id')
+      .select('followup_email, business_name, paypal_subscription_id, referral_code')
       .maybeSingle();
     setAccount(acc as any);
     setLoading(false);
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
-                        Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>voxalo.top/signup?ref=YOUR_CODE</code>
+                        Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{account?.referral_code ? `voxalo.top/signup?ref=${account.referral_code}` : 'Loading...'}</code>
                       </span>
                       <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }}>Copy link</button>
                       <Link href="/dashboard/refer" className="btn" style={{ padding: '8px 16px', fontSize: 13, background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--fg)' }}>View stats</Link>
