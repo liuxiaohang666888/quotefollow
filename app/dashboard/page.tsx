@@ -110,52 +110,52 @@ export default function DashboardPage() {
                                                 Export ▼
                                               </button>
                                               {exportOpen && (
-                                                <div id="export-menu" style={{
-                                                  position: 'absolute',
-                                                  top: '100%',
-                                                  right: 0,
-                                                  marginTop: 8,
-                                                  background: 'var(--bg-card)',
-                                                  border: '1px solid var(--border)',
-                                                  borderRadius: 8,
-                                                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                                                  zIndex: 100,
-                                                  minWidth: 180,
-                                                }}>
-                                                  <a
-                                                    href="/api/export?format=csv&range=week"
-                                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
-                                                    onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
-                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                                  >
-                                                    This week (CSV)
-                                                  </a>
-                                                  <a
-                                                    href="/api/export?format=csv&range=month"
-                                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
-                                                    onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
-                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                                  >
-                                                    This month (CSV)
-                                                  </a>
-                                                  <a
-                                                    href="/api/export?format=csv&range=quarter"
-                                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
-                                                    onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
-                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                                  >
-                                                    This quarter (CSV)
-                                                  </a>
-                                                  <a
-                                                    href="/api/export?format=csv&range=year"
-                                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
-                                                    onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
-                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                                  >
-                                                    This year (CSV)
-                                                  </a>
-                                                </div>
-                                              )}
+                                                                                              <div id="export-menu" style={{
+                                                                                                position: 'absolute',
+                                                                                                top: '100%',
+                                                                                                right: 0,
+                                                                                                marginTop: 8,
+                                                                                                background: '#0a0a0f',
+                                                                                                border: '1px solid var(--border)',
+                                                                                                borderRadius: 8,
+                                                                                                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                                                                                                zIndex: 100,
+                                                                                                minWidth: 180,
+                                                                                              }}>
+                                                                                                <a
+                                                                                                  href="/api/export?format=csv&range=week"
+                                                                                                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
+                                                                                                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                                                                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                                                >
+                                                                                                  This week (CSV)
+                                                                                                </a>
+                                                                                                <a
+                                                                                                  href="/api/export?format=csv&range=month"
+                                                                                                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
+                                                                                                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                                                                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                                                >
+                                                                                                  This month (CSV)
+                                                                                                </a>
+                                                                                                <a
+                                                                                                  href="/api/export?format=csv&range=quarter"
+                                                                                                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
+                                                                                                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                                                                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                                                >
+                                                                                                  This quarter (CSV)
+                                                                                                </a>
+                                                                                                <a
+                                                                                                  href="/api/export?format=csv&range=year"
+                                                                                                  style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14, color: 'var(--fg)' }}
+                                                                                                  onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                                                                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                                                >
+                                                                                                  This year (CSV)
+                                                                                                </a>
+                                                                                              </div>
+                                                                                            )}
                                             </div>
                                             <Link
                                               href="/dashboard/new"
