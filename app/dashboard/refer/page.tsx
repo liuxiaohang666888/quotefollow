@@ -15,8 +15,7 @@ export default function ReferPage() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/login';
-        return;
+        return; // Let middleware handle redirect
       }
 
       const { data: acc } = await supabase
