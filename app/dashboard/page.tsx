@@ -88,22 +88,72 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <h1>Your quotes</h1>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <a
-                  href="/api/export?format=csv&range=month"
-                  className="btn"
-                  style={{ width: 'fit-content', padding: '10px 16px', fontSize: 14 }}
-                  download
-                >
-                  Export CSV
-                </a>
-                <Link
-                  href="/dashboard/new"
-                  className="btn"
-                  style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
-                >
-                  + Send a quote
-                </Link>
-              </div>
+                              <div style={{ position: 'relative' }}>
+                                <button
+                                  className="btn"
+                                  style={{ width: 'fit-content', padding: '10px 16px', fontSize: 14 }}
+                                  onClick={() => document.getElementById('export-menu')?.classList.toggle('hidden')}
+                                >
+                                  Export ▼
+                                </button>
+                                <div id="export-menu" className="hidden" style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  right: 0,
+                                  marginTop: 8,
+                                  background: 'white',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: 8,
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                  zIndex: 50,
+                                  minWidth: 180,
+                                }}>
+                                  <a
+                                    href="/api/export?format=csv&range=week"
+                                    className="btn"
+                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
+                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    This week (CSV)
+                                  </a>
+                                  <a
+                                    href="/api/export?format=csv&range=month"
+                                    className="btn"
+                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
+                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    This month (CSV)
+                                  </a>
+                                  <a
+                                    href="/api/export?format=csv&range=quarter"
+                                    className="btn"
+                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
+                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    This quarter (CSV)
+                                  </a>
+                                  <a
+                                    href="/api/export?format=csv&range=year"
+                                    className="btn"
+                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
+                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    This year (CSV)
+                                  </a>
+                                </div>
+                              </div>
+                              <Link
+                                href="/dashboard/new"
+                                className="btn"
+                                style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
+                              >
+                                + Send a quote
+                              </Link>
+                            </div>
             </div>
 
       {/* 额度提示 */}

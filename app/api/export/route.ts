@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -16,114 +16,133 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const format = searchParams.get('format') || 'csv';
     const range = searchParams.get('range') || 'month';
-    const type = searchParams.get('type') || 'quotes';
 
-    // Calculate date range
+    let dateFilter = '';
     const now = new Date();
-    let startDate: Date;
-    switch (range) {
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'quarter':
-        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (range === 'week') {
+      dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (range === 'month') {
+      dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (range === 'quarter') {
+      dateFilter = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (range === 'year') {
+      dateFilter = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
     }
 
     // Fetch quotes
-    const { data: quotes, error: quotesError } = await supabase
+    let query = supabase
       .from('quotes')
-      .select(`
-        *,
-        scope_changes (
-          id,
-          description,
-          amount,
-          created_at
-        )
-      `)
+      .select('*')
       .eq('account_id', user.id)
-      .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false });
 
-    if (quotesError) throw quotesError;
+    if (dateFilter) {
+      query = query.gte('created_at', dateFilter);
+    }
 
-    // Fetch messages for follow-up stats
-    const { data: messages } = await supabase
+    const { data: quotes, error } = await query;
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Fetch scope changes
+    const { data: scopeChanges } = await supabase
+      .from('scope_changes')
+      .select('*, quotes!inner(account_id)')
+      .eq('quotes.account_id', user.id);
+
+    // Fetch followup logs
+    const { data: followups } = await supabase
       .from('messages')
-      .select('id, quote_id, direction, created_at, is_ai_generated')
-      .in('quote_id', quotes?.map(q => q.id) || [])
-      .eq('direction', 'outbound');
+      .select('*')
+      .eq('account_id', user.id)
+      .order('created_at', { ascending: false });
 
-    // Build CSV
-    const headers = [
-      'Quote ID',
-      'Customer Name',
-      'Customer Email',
-      'Service Type',
-      'Original Amount',
-      'Deposit Required',
-      'Deposit Amount',
-      'Deposit Status',
-      'Scope Changes Count',
-      'Scope Changes Total',
-      'Total Amount (with changes)',
-      'Status',
-      'Quote Date',
-      'Follow-ups Sent',
-      'Last Follow-up',
-      'Created At'
-    ];
-
-    const rows = quotes?.map(quote => {
-      const scopeChanges = quote.scope_changes || [];
-      const scopeChangesTotal = scopeChanges.reduce((sum: number, sc: any) => sum + (sc.amount || 0), 0);
-      const totalAmount = (quote.amount || 0) + scopeChangesTotal;
-      const quoteMessages = messages?.filter(m => m.quote_id === quote.id) || [];
-      const lastFollowup = quoteMessages.length > 0 
-        ? new Date(Math.max(...quoteMessages.map(m => new Date(m.created_at).getTime()))).toISOString()
-        : '';
-
-      return [
-        quote.id,
-        quote.customer_name,
-        quote.customer_email,
-        quote.service_type || '',
-        quote.amount || 0,
-        quote.require_deposit ? 'Yes' : 'No',
-        quote.deposit_amount || 0,
-        quote.deposit_status || 'unpaid',
-        scopeChanges.length,
-        scopeChangesTotal,
-        totalAmount,
-        quote.status,
-        quote.quote_date || '',
-        quoteMessages.length,
-        lastFollowup,
-        quote.created_at
-      ];
-    }) || [];
-
+    // Generate CSV
     if (format === 'csv') {
-      const csvContent = [headers.join(','), ...rows.map(row => 
-        row.map(cell => {
-          const str = String(cell ?? '');
-          return str.includes(',') || str.includes('"') || str.includes('\n') 
-            ? '"' + str.replace(/"/g, '""') + '"' 
-            : str;
-        }).join(',')
-      )].join('\n');
+      // Quotes CSV
+      const quotesHeaders = [
+        'Quote ID',
+        'Customer Name',
+        'Customer Email',
+        'Amount ($)',
+        'Status',
+        'Deposit Required',
+        'Deposit Amount ($)',
+        'Deposit Status',
+        'Created At',
+        'Sent At',
+        'Paid At',
+      ];
 
-      const filename = `quotefollow-${type}-${range}-${now.toISOString().split('T')[0]}.csv`;
-      return new NextResponse(csvContent, {
+      const quotesRows = quotes?.map(q => [
+        q.id,
+        q.customer_name,
+        q.customer_email,
+        q.amount?.toString() || '0',
+        q.status,
+        q.require_deposit ? 'Yes' : 'No',
+        q.deposit_amount?.toString() || '0',
+        q.deposit_status || 'N/A',
+        q.created_at,
+        q.sent_at || '',
+        q.paid_at || '',
+      ]) || [];
+
+      // Followups CSV
+      const followupHeaders = [
+        'Message ID',
+        'Quote ID',
+        'Type',
+        'Subject',
+        'Sent At',
+        'Status',
+      ];
+
+      const followupRows = followups?.map(m => [
+        m.id,
+        m.quote_id,
+        m.type,
+        m.subject || '',
+        m.sent_at || m.created_at,
+        m.status,
+      ]) || [];
+
+      // Scope changes CSV
+      const scopeHeaders = [
+        'Change ID',
+        'Quote ID',
+        'Description',
+        'Amount ($)',
+        'Created At',
+      ];
+
+      const scopeRows = scopeChanges?.map(s => [
+        s.id,
+        s.quote_id,
+        s.description,
+        s.amount.toString(),
+        s.created_at,
+      ]) || [];
+
+      const csv = [
+        '=== QUOTES ===',
+        quotesHeaders.join(','),
+        ...quotesRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+        '',
+        '=== FOLLOW-UPS ===',
+        followupHeaders.join(','),
+        ...followupRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+        '',
+        '=== SCOPE CHANGES ===',
+        scopeHeaders.join(','),
+        ...scopeRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      const filename = `quotefollow-export-${range}-${now.toISOString().split('T')[0]}.csv`;
+
+      return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="${filename}"`,
@@ -131,22 +150,17 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // JSON format
+    // JSON fallback
     return NextResponse.json({
-      data: rows.map((row, i) => {
-        const obj: Record<string, any> = {};
-        headers.forEach((h, idx) => { obj[h] = row[idx]; });
-        return obj;
-      }),
-      meta: {
-        total: rows.length,
-        range,
-        generatedAt: now.toISOString(),
-      },
+      quotes: quotes || [],
+      scopeChanges: scopeChanges || [],
+      followups: followups || [],
+      exportedAt: now.toISOString(),
+      range,
     });
 
-  } catch (error) {
-    console.error('Export error:', error);
+  } catch (e) {
+    console.error('Export error:', e);
     return NextResponse.json({ error: 'Export failed' }, { status: 500 });
   }
 }

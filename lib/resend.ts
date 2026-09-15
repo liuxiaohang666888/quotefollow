@@ -12,7 +12,8 @@ function getClient(): Resend {
 export async function sendEmail(opts: {
   to: string;
   subject: string;
-  text: string;
+  text?: string;
+  html?: string;
   replyTo?: string;
   inReplyTo?: string;
   references?: string;
@@ -34,16 +35,17 @@ export async function sendEmail(opts: {
   const from = opts.fromName ? `${opts.fromName} <${fromAddr}>` : baseFrom;
 
   const result = await getClient().emails.send({
-    from,
-    to: opts.to,
-    subject: opts.subject,
-    text: opts.text,
-    ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
-    headers: {
-      ...(opts.inReplyTo ? { 'In-Reply-To': opts.inReplyTo } : {}),
-      ...(opts.references ? { References: opts.references } : {}),
-    },
-  });
+      from,
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.text ?? (opts.html ? '' : ' '),
+      html: opts.html,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      headers: {
+        ...(opts.inReplyTo ? { 'In-Reply-To': opts.inReplyTo } : {}),
+        ...(opts.references ? { References: opts.references } : {}),
+      },
+    });
   // Resend 返回 { id } —— 这个 id 就是邮件的 Message-Id，
   // 客户回复时 In-Reply-To 会指向它，必须存库才能配对
   return { id: (result as { data?: { id?: string } })?.data?.id || (result as { id?: string })?.id || '' };
