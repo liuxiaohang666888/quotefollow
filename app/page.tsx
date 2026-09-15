@@ -314,7 +314,7 @@ export default function LandingPage() {
               />
               <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => {
                 const el = document.getElementById('email-results');
-                if (el) el.classList.toggle('qf-hidden');
+                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
               }}>
                 Generate 3 follow-up emails →
               </button>
