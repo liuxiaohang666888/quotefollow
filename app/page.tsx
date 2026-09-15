@@ -55,7 +55,11 @@ export default function LandingPage() {
   const brand = getBrandName();
 
   return (
-    <div className="landing">
+    <>
+      <style>{`
+        .qf-hidden { display: none !important; }
+      `}</style>
+      <div className="landing">
       <header className="landing-header">
         <div className="landing-header-inner">
           <div className="brand">
@@ -308,12 +312,15 @@ export default function LandingPage() {
                 placeholder="Days overdue"
                 style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
               />
-              <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => document.getElementById('email-results')?.classList.toggle('hidden')}>
+              <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => {
+                const el = document.getElementById('email-results');
+                if (el) el.classList.toggle('qf-hidden');
+              }}>
                 Generate 3 follow-up emails →
               </button>
             </div>
           </div>
-          <div id="email-results" className="hidden" style={{ textAlign: 'left', marginBottom: 24 }}>
+          <div id="email-results" style={{ textAlign: 'left', marginBottom: 24, display: 'none' }}>
             {[
               { day: 'Day 1', title: 'Friendly check-in', body: 'Hi [Client Name], just checking in on the invoice for ${amount}. Any questions or ready to move forward? No rush — just wanted to follow up.', tone: 'friendly' },
               { day: 'Day 3', title: 'Payment reminder', body: 'Hi [Client Name], following up on the outstanding invoice of ${amount}. It\'s now a few days past due. Please let me know if there\'s an issue or if you need an updated payment schedule.', tone: 'professional' },
@@ -616,6 +623,7 @@ export default function LandingPage() {
         </div>
         <p className="footer-copy">© 2026 {config.footer.copyright}. All rights reserved.</p>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
