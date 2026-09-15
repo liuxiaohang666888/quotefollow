@@ -283,41 +283,41 @@ export default function LandingPage() {
       </section>
 
       {/* Free tool section */}
-      <section className="free-tool-section" style={{ marginTop: 80, marginBottom: 80 }}>
-        <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-          <p className="eyebrow">Not ready yet?</p>
-          <h2>Steal our follow-up templates</h2>
-          <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
-            Input the amount and days overdue. Get 3 ready-to-send follow-up emails instantly.
-            No signup. No credit card. Just copy and send.
-          </p>
-          <div style={{ background: 'white', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400, margin: '0 auto' }}>
-              <input
-                type="text"
-                placeholder="Client name (optional)"
-                style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
-              />
-              <input
-                type="number"
-                placeholder="Invoice amount ($)"
-                style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
-              />
-              <input
-                type="number"
-                placeholder="Days overdue"
-                style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
-              />
-              <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }}>
-                Generate 3 follow-up emails →
-              </button>
-            </div>
-          </div>
-          <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
-            Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Get started free</a>
-          </p>
+            <section className="free-tool-section" style={{ marginTop: 80, marginBottom: 80 }}>
+              <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
+                <p className="eyebrow">Not ready yet?</p>
+                <h2>Steal our follow-up templates</h2>
+                <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
+                  Input the amount and days overdue. Get 3 ready-to-send follow-up emails instantly.
+                  No signup. No credit card. Just copy and send.
+                </p>
+                <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400, margin: '0 auto' }}>
+                    <input
+                      type="text"
+                      placeholder="Client name (optional)"
+                      style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Invoice amount ($)"
+                      style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Days overdue"
+                      style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
+                    />
+                    <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }}>
+                      Generate 3 follow-up emails →
+                    </button>
                   </div>
-                </section>
+                </div>
+                <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
+                  Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Get started free</a>
+                </p>
+              </div>
+            </section>
 
                 {/* Resources / SEO Articles */}
       <section className="resources-section" style={{ marginTop: 80, marginBottom: 80 }}>
