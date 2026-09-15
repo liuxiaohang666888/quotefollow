@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
 
   // signup 页面不需要 auth，任何人可以访问
   // 但我们需要在 signup 内部检查是否已付款（通过 ?sub= 参数）
+  // 登录页面也不需要 auth
 
   return supabaseResponse;
 }

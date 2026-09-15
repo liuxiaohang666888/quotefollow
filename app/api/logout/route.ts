@@ -9,5 +9,5 @@ export async function POST() {
   await cookieStore.delete('sb-quotefollow-auth-token');
   await cookieStore.delete('sb-quotefollow-refresh-token');
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.redirect(new URL('/login', 'https://www.voxalo.top'));
 }
