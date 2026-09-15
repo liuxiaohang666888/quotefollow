@@ -98,52 +98,52 @@ export default function DashboardPage() {
                                 </button>
                                 <div id="export-menu" className="hidden" style={{
                                   position: 'absolute',
-                                  top: '100%',
-                                  right: 0,
-                                  marginTop: 8,
-                                  background: 'white',
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: 8,
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                  zIndex: 50,
-                                  minWidth: 180,
-                                }}>
+                                                                    top: '100%',
+                                                                    right: 0,
+                                                                    marginTop: 8,
+                                                                    background: 'var(--bg-glass)',
+                                                                    border: '1px solid var(--border)',
+                                                                    borderRadius: 8,
+                                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                                                    zIndex: 50,
+                                                                    minWidth: 180,
+                                                                  }}>
                                   <a
-                                    href="/api/export?format=csv&range=week"
-                                    className="btn"
-                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
-                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
-                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                  >
-                                    This week (CSV)
-                                  </a>
-                                  <a
-                                    href="/api/export?format=csv&range=month"
-                                    className="btn"
-                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
-                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
-                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                  >
-                                    This month (CSV)
-                                  </a>
-                                  <a
-                                    href="/api/export?format=csv&range=quarter"
-                                    className="btn"
-                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
-                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
-                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                  >
-                                    This quarter (CSV)
-                                  </a>
-                                  <a
-                                    href="/api/export?format=csv&range=year"
-                                    className="btn"
-                                    style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
-                                    onMouseOver={e => e.currentTarget.style.background = '#f3f4f6'}
-                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                  >
-                                    This year (CSV)
-                                  </a>
+                                                                      href="/api/export?format=csv&range=week"
+                                                                      className="btn"
+                                                                      style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                                                      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                                                                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                    >
+                                                                      This week (CSV)
+                                                                    </a>
+                                                                    <a
+                                                                      href="/api/export?format=csv&range=month"
+                                                                      className="btn"
+                                                                      style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                                                      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                                                                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                    >
+                                                                      This month (CSV)
+                                                                    </a>
+                                                                    <a
+                                                                      href="/api/export?format=csv&range=quarter"
+                                                                      className="btn"
+                                                                      style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                                                      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                                                                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                    >
+                                                                      This quarter (CSV)
+                                                                    </a>
+                                                                    <a
+                                                                      href="/api/export?format=csv&range=year"
+                                                                      className="btn"
+                                                                      style={{ display: 'block', width: '100%', padding: '10px 16px', textAlign: 'left', borderRadius: 0, border: 'none', background: 'transparent', fontSize: 14 }}
+                                                                      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                                                                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                    >
+                                                                      This year (CSV)
+                                                                    </a>
                                 </div>
                               </div>
                               <Link
@@ -334,26 +334,26 @@ export default function DashboardPage() {
             </Link>
           ))}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #e5e7eb', background: 'white', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}
-              >
-                Previous
-              </button>
-              <span style={{ padding: '8px 16px', color: '#6b7280' }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                disabled={page === totalPages}
-                onClick={() => setPage(p => p + 1)}
-                style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #e5e7eb', background: 'white', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}
-              >
-                Next
-              </button>
-            </div>
-          )}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+                        <button
+                          disabled={page === 1}
+                          onClick={() => setPage(p => p - 1)}
+                          style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-glass)', color: 'var(--fg)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}
+                        >
+                          Previous
+                        </button>
+                        <span style={{ padding: '8px 16px', color: 'var(--fg-dim)' }}>
+                          Page {page} of {totalPages}
+                        </span>
+                        <button
+                          disabled={page === totalPages}
+                          onClick={() => setPage(p => p + 1)}
+                          style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-glass)', color: 'var(--fg)', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
         </>
       )}
     </div>

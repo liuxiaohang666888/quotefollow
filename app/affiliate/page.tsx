@@ -50,16 +50,16 @@ export default function AffiliatePage() {
 
   if (submitted) {
     return (
-      <div style={{ minHeight: '100vh', padding: '60px 24px', background: '#f8fafc' }}>
+      <div style={{ minHeight: '100vh', padding: '60px 24px', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px' }}>
           <Link href="/" style={{ color: '#2563eb', fontWeight: 600, marginBottom: 32, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             ← Back to QuoteFollow
           </Link>
 
-          <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: 48, background: '#f0fdf4', borderRadius: 16, border: '1px solid #86efac' }}>
+          <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: 48, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 16, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontSize: 28, marginBottom: 16 }}>Application submitted!</h2>
-            <p style={{ color: '#6b7280', fontSize: 18, lineHeight: 1.6, marginBottom: 24 }}>
+            <p style={{ color: 'var(--fg-dim)', fontSize: 18, lineHeight: 1.6, marginBottom: 24 }}>
               Thanks for applying. We&apos;ll review your application within 2-3 business days and get back to you via email.
             </p>
             <Link href="/" className="btn" style={{ display: 'inline-flex', justifyContent: 'center' }}>
@@ -72,7 +72,7 @@ export default function AffiliatePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '60px 24px', background: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', padding: '60px 24px', background: 'var(--bg)' }}>
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px' }}>
         <Link href="/" style={{ color: '#2563eb', fontWeight: 600, marginBottom: 32, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           ← Back to QuoteFollow
@@ -81,35 +81,35 @@ export default function AffiliatePage() {
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <p className="eyebrow">Become a Partner</p>
           <h1 style={{ fontSize: 42, lineHeight: 1.2, marginBottom: 16 }}>Earn 20% recurring commission</h1>
-          <p style={{ color: '#6b7280', fontSize: 18, maxWidth: 600, margin: '0 auto' }}>
+          <p style={{ color: 'var(--fg-dim)', fontSize: 18, maxWidth: 600, margin: '0 auto' }}>
             Recommend QuoteFollow to your audience. Earn 20% recurring commission for every paying customer you refer — for the lifetime of their subscription.
           </p>
         </div>
 
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 40, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 32 }}>
+          <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 16, padding: 40, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 32, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
             <h2 style={{ fontSize: 24, marginBottom: 8 }}>Join the QuoteFollow Affiliate Program</h2>
-            <p style={{ color: '#6b7280', marginBottom: 32 }}>
+            <p style={{ color: 'var(--fg-dim)', marginBottom: 32 }}>
               We&apos;re looking for creators, agencies, consultants, and educators who help freelancers and small businesses get paid. If that sounds like you, we&apos;d love to have you.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 32 }}>
-              <div style={{ textAlign: 'center', padding: '24px 16px', background: '#f0fdf4', borderRadius: 12, border: '1px solid #86efac' }}>
+              <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(34,197,94,0.1)', borderRadius: 12, border: '1px solid #22c55e' }}>
                 <div style={{ fontSize: 36, fontWeight: 700, color: '#22c55e', marginBottom: 8 }}>20%</div>
-                <div style={{ color: '#6b7280', fontSize: 14 }}>Recurring commission</div>
+                <div style={{ color: 'var(--fg-dim)', fontSize: 14 }}>Recurring commission</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '24px 16px', background: '#fef3c7', borderRadius: 12, border: '1px solid #f59e0b' }}>
+              <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(245,158,11,0.1)', borderRadius: 12, border: '1px solid #f59e0b' }}>
                 <div style={{ fontSize: 36, fontWeight: 700, color: '#f59e0b', marginBottom: 8 }}>Lifetime</div>
-                <div style={{ color: '#6b7280', fontSize: 14 }}>Commission duration</div>
+                <div style={{ color: 'var(--fg-dim)', fontSize: 14 }}>Commission duration</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '24px 16px', background: '#f0f9ff', borderRadius: 12, border: '1px solid #93c5fd' }}>
+              <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(37,99,235,0.1)', borderRadius: 12, border: '1px solid #2563eb' }}>
                 <div style={{ fontSize: 36, fontWeight: 700, color: '#2563eb', marginBottom: 8 }}>30 days</div>
-                <div style={{ color: '#6b7280', fontSize: 14 }}>Cookie window</div>
+                <div style={{ color: 'var(--fg-dim)', fontSize: 14 }}>Cookie window</div>
               </div>
             </div>
 
             <h3 style={{ fontSize: 18, marginBottom: 16 }}>Who we&apos;re looking for</h3>
-            <ul style={{ color: '#475569', lineHeight: 2, marginBottom: 32 }}>
+            <ul style={{ color: 'var(--fg-dim)', lineHeight: 2, marginBottom: 32 }}>
               <li>Creators & educators teaching freelancing/small business</li>
               <li>Agencies & consultants serving freelancers/SMBs</li>
               <li>Newsletter writers in business/freelance niche</li>
@@ -119,7 +119,7 @@ export default function AffiliatePage() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Full name *</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Full name *</label>
                 <input
                   type="text"
                   name="name"
@@ -127,12 +127,12 @@ export default function AffiliatePage() {
                   onChange={handleChange}
                   required
                   placeholder="John Doe"
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Company / Brand name *</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Company / Brand name *</label>
                 <input
                   type="text"
                   name="company"
@@ -140,12 +140,12 @@ export default function AffiliatePage() {
                   onChange={handleChange}
                   required
                   placeholder="Acme Agency / John Doe Consulting"
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Email address *</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Email address *</label>
                 <input
                   type="email"
                   name="email"
@@ -153,12 +153,12 @@ export default function AffiliatePage() {
                   onChange={handleChange}
                   required
                   placeholder="john@example.com"
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Website / Social profile *</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Website / Social profile *</label>
                 <input
                   type="url"
                   name="website"
@@ -166,18 +166,18 @@ export default function AffiliatePage() {
                   onChange={handleChange}
                   required
                   placeholder="https://yourwebsite.com or https://twitter.com/yourhandle"
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Monthly traffic / audience size *</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>Monthly traffic / audience size *</label>
                 <select
                   name="traffic"
                   value={formData.traffic}
                   onChange={handleChange}
                   required
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 >
                   <option value="">Select...</option>
                   <option value="1k-10k">1,000 - 10,000</option>
@@ -189,14 +189,14 @@ export default function AffiliatePage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>How will you promote QuoteFollow?</label>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--fg)' }}>How will you promote QuoteFollow?</label>
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
                   placeholder="e.g., I'll write a newsletter review, create a YouTube tutorial, share in my Slack community..."
-                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 16, fontFamily: 'inherit', lineHeight: 1.6 }}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, fontFamily: 'inherit', lineHeight: 1.6, background: 'var(--bg-glass)', color: 'var(--fg)' }}
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function AffiliatePage() {
               </button>
             </form>
 
-            <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 14, marginTop: 24 }}>
+            <p style={{ textAlign: 'center', color: 'var(--fg-dim)', fontSize: 14, marginTop: 24 }}>
               By submitting, you agree to our <a href="/terms" style={{ color: '#2563eb' }}>Terms of Service</a> and <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a>.
             </p>
           </div>

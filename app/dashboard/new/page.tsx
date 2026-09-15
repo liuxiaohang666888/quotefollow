@@ -100,7 +100,7 @@ export default function NewQuotePage() {
 
   return (
     <div>
-      <Link href="/dashboard" style={{ color: '#6b7280', fontSize: 14 }}>
+      <Link href="/dashboard" style={{ color: 'var(--fg-dim)', fontSize: 14 }}>
         ← Back to quotes
       </Link>
       <h1 style={{ marginTop: 12 }}>Send a quote</h1>
@@ -124,40 +124,46 @@ export default function NewQuotePage() {
           padding: 16,
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border)',
             borderRadius: 16,
             padding: '32px 28px',
             maxWidth: 440,
             width: '100%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
           }}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 48, marginBottom: 8 }}>⚡</div>
               <h2 style={{ margin: '0 0 8px', fontSize: 22 }}>Free Plan Limit Reached</h2>
-              <p style={{ color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
-                You&apos;ve used all <strong>10 free quotes</strong>.
+              <p style={{ color: 'var(--fg-dim)', margin: 0, lineHeight: 1.6 }}>
+                You&apos;ve used all <strong>3 free clients</strong>.
                 Upgrade to unlock unlimited quotes and more features.
               </p>
             </div>
             <div style={{
-              background: '#f8fafc',
+              background: 'var(--bg-glass)',
+              border: '1px solid var(--border)',
               borderRadius: 10,
               padding: 16,
               marginBottom: 20,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span>Free Plan</span>
                 <span style={{ color: '#10b981', fontWeight: 600 }}>$0/mo</span>
               </div>
-              <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: 'var(--fg-dim)', marginBottom: 12 }}>
                 Up to 3 clients · Basic follow-ups
               </div>
-              <div style={{ height: 1, background: '#e2e8f0', margin: '12px 0' }} />
+              <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span><strong>Pro Plan</strong></span>
                 <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 18 }}>$19/mo</span>
               </div>
-              <ul style={{ fontSize: 13, color: '#475569', margin: '8px 0 0', paddingLeft: 18 }}>
+              <ul style={{ fontSize: 13, color: 'var(--fg-dim)', margin: '8px 0 0', paddingLeft: 18 }}>
                 <li>Unlimited clients — quotes & invoices</li>
                 <li>Custom follow-up inbox</li>
                 <li>AI-powered auto-replies</li>
@@ -166,14 +172,14 @@ export default function NewQuotePage() {
             </div>
             <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
               <div style={{ display: 'flex', gap: 12 }}>
-                <Link href="/dashboard" style={{ flex: 1, textAlign: 'center', padding: '12px 0', borderRadius: 8, border: '1px solid #e2e8f0', color: '#64748b', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
+                <Link href="/dashboard" style={{ flex: 1, textAlign: 'center', padding: '12px 0', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--fg-dim)', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
                   Go Back
                 </Link>
                 <div style={{ flex: 1 }}>
                   <PayPalSubscribeButton label="Upgrade Now" />
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', margin: 0 }}>
+              <p style={{ fontSize: 12, color: 'var(--fg-dim)', textAlign: 'center', margin: 0 }}>
                 Secure payment via PayPal · Cancel anytime
               </p>
             </div>
@@ -182,7 +188,7 @@ export default function NewQuotePage() {
       )}
 
       {/* Mode toggle */}
-      <div className="mode-tabs" style={{ display: 'flex', gap: 0, marginTop: 20, marginBottom: 24, background: 'var(--bg-glass)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+      <div className="mode-tabs" style={{ display: 'flex', gap: 0, marginTop: 20, marginBottom: 24, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
         <button
           onClick={() => setMode('compose')}
           style={{
@@ -282,10 +288,12 @@ export default function NewQuotePage() {
                 width: '100%',
                 padding: 12,
                 borderRadius: 8,
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 fontFamily: 'inherit',
                 fontSize: 14,
                 lineHeight: 1.5,
+                background: 'var(--bg-glass)',
+                color: 'var(--fg)',
               }}
               placeholder={
                 'Hi John,\n\nHere is the quote for the move on March 12:\n- 2 bedroom apartment\n- $450\n\nLet me know if you have any questions!'
@@ -296,7 +304,7 @@ export default function NewQuotePage() {
           <button className="btn" type="submit" disabled={loading} style={{ width: 'fit-content' }}>
             {loading ? 'Sending…' : '✉ Send quote & start follow-ups'}
           </button>
-          <p style={{ fontSize: 13, color: '#6b7280', marginTop: -8 }}>
+          <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginTop: -8 }}>
             The quote email will be sent from your business name via our system. The customer can reply directly.
           </p>
         </form>
@@ -321,10 +329,12 @@ export default function NewQuotePage() {
                 width: '100%',
                 padding: 12,
                 borderRadius: 8,
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 fontFamily: 'inherit',
                 fontSize: 14,
                 lineHeight: 1.5,
+                background: 'var(--bg-glass)',
+                color: 'var(--fg)',
               }}
               placeholder={
                 'Hi John,\n\nHere is the quote for the move on March 12:\n- 2 bedroom apartment\n- $450\n\nLet me know if you have any questions!'
@@ -334,7 +344,7 @@ export default function NewQuotePage() {
           <button className="btn" type="submit" disabled={loading} style={{ width: 'fit-content' }}>
             {loading ? 'Reading email…' : 'Create quote & start follow-ups'}
           </button>
-          <p style={{ fontSize: 13, color: '#6b7280', marginTop: -8 }}>
+          <p style={{ fontSize: 13, color: 'var(--fg-dim)', marginTop: -8 }}>
             Already sent this quote? Paste it here and we&apos;ll parse it and start the follow-ups.
           </p>
         </form>
