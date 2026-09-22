@@ -28,10 +28,19 @@ interface ScopeChange {
   sent_at: string | null;
 }
 
+interface Message {
+  id: string;
+  direction: string; // 'in' = customer reply, 'out' = our follow-up / quote
+  subject: string | null;
+  body: string | null;
+  created_at: string;
+}
+
 export default function QuoteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [scopeChanges, setScopeChanges] = useState<ScopeChange[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDesc, setNewDesc] = useState('');
   const [newAmount, setNewAmount] = useState('');
@@ -43,12 +52,14 @@ export default function QuoteDetailPage() {
 
   const load = async () => {
     const supabase = createClient();
-    const [qRes, sRes] = await Promise.all([
+    const [qRes, sRes, mRes] = await Promise.all([
       supabase.from('quotes').select('*').eq('id', id).single(),
       supabase.from('scope_changes').select('*').eq('quote_id', id).order('created_at', { ascending: false }),
+      supabase.from('messages').select('id, direction, subject, body, created_at').eq('quote_id', id).order('created_at', { ascending: true }),
     ]);
     setQuote(qRes.data as Quote);
     setScopeChanges((sRes.data as ScopeChange[]) || []);
+    setMessages((mRes.data as Message[]) || []);
     setLoading(false);
   };
 
@@ -163,6 +174,52 @@ export default function QuoteDetailPage() {
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Total</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#f87171' }}>${totalPrice}</div>
         </div>
+      </div>
+
+      {/* Conversation Timeline */}
+      <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>Conversation</h3>
+
+        {messages.length === 0 && (
+          <p style={{ color: '#6b7280', fontSize: 14 }}>No messages yet.</p>
+        )}
+
+        {messages.map((m) => {
+          const isIn = m.direction === 'in';
+          return (
+            <div
+              key={m.id}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 8,
+                marginBottom: 8,
+                background: isIn ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.03)',
+                border: isIn ? '1px solid rgba(59,130,246,0.3)' : '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isIn ? '#60a5fa' : '#a5b4fc' }}>
+                  {isIn ? '💬 Customer replied' : '📧 You sent'}
+                </span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>
+                  {new Date(m.created_at).toLocaleString()}
+                </span>
+              </div>
+              {m.subject && (
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{m.subject}</div>
+              )}
+              <div style={{ fontSize: 14, whiteSpace: 'pre-wrap', color: 'var(--fg)' }}>
+                {m.body || '(no text content)'}
+              </div>
+            </div>
+          );
+        })}
+
+        {quote.status === 'replied' && (
+          <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, fontSize: 13, color: '#60a5fa' }}>
+            ⏸ Follow-ups paused automatically — the customer replied. Take it from here.
+          </div>
+        )}
       </div>
 
       {/* Scope Changes */}
