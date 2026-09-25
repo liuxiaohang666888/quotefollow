@@ -117,6 +117,19 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[signup/api] account created/updated:', userId);
+
+    // If this signup came with a paid subscription (?sub=), complete any pending referral
+    if (paypalSubscriptionId) {
+      try {
+        await fetch(`${new URL(req.url).origin}/api/referral/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        });
+      } catch (e) {
+        console.error('[signup/api] referral complete call failed');
+      }
+    }
     return NextResponse.json({ ok: true, referralCode: newReferralCode });
   } catch (e: any) {
     console.error('[signup/api] unexpected error:', e?.code || e);

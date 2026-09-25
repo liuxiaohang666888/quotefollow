@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import FeedbackBox from './FeedbackBox';
 
 interface Account {
   business_name: string;
@@ -192,6 +193,8 @@ export default function SettingsPage() {
           {saved && <span style={{ color: '#059669', fontSize: 14, fontWeight: 600 }}>✓ Saved</span>}
         </div>
       </form>
+
+      <FeedbackBox />
     </div>
   );
 }
