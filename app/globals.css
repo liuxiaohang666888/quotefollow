@@ -1572,6 +1572,48 @@ footer {
 }
 
 /* =========================================================================
+   MOBILE FIX — dashboard + auth + settings (applies site-wide)
+   ========================================================================= */
+@media (max-width: 640px) {
+  /* --- Dashboard top nav: no more clipped Log out --- */
+  .dash-nav { padding: 10px 0; }
+  .dash-nav .inner {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 0 14px;
+  }
+  .dash-nav .brand { font-size: 17px; flex-shrink: 0; }
+  .dash-nav nav { gap: 14px; order: 3; width: 100%; }
+  .dash-nav nav a { font-size: 13.5px; }
+  .dash-nav .logout { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+
+  /* --- Main content: use full width, smaller padding --- */
+  .dash-main { padding: 20px 14px 40px; }
+  .container { padding: 0 14px; }
+
+  h1 { font-size: 24px !important; }
+
+  /* --- Stats grid: 2 per row instead of squeezed 6 --- */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 12px; border-radius: 12px; }
+  .stat-value { font-size: 20px; }
+  .stat-label { font-size: 10.5px; }
+
+  /* --- Status filter pills: wrap + tap-friendly --- */
+  .status-pills { gap: 6px; margin-bottom: 16px; }
+  .status-pill { padding: 7px 12px; font-size: 12.5px; }
+
+  /* --- Quote cards: stack amount/badge under name --- */
+  .quote-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; }
+  .quote-card .right { width: 100%; justify-content: space-between; }
+  .quote-card .amount { font-size: 16px; }
+  .quote-card .meta { white-space: normal; }
+
+  /* --- Landing sections: tighter padding --- */
+  .compare-grid, .steps-grid, .story-section, .autostop-grid { grid-template-columns: 1fr; }
+}
+
+/* =========================================================================
    iOS 26-style glass overhaul — scoped to LANDING + PUBLIC pages only.
    Dashboard keeps its clean look. (applied last = wins)
    ========================================================================= */

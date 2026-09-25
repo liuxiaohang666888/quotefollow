@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { getBrandName, getVerticalConfig } from '@/lib/vertical';
 
@@ -10,6 +10,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description: `AI-powered quote follow-up for ${config.audience}. Automatically chases your quotes via email so you close more jobs. v2.1.3`,
   };
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
