@@ -302,30 +302,53 @@ async function handleCustomerReply(args: {
   }
 
   const { data: account } = await admin.from('accounts').select('*').eq('id', quote.account_id).single();
-  console.log('[inbound] account lookup:', account ? 'found' : 'NOT FOUND', quote.account_id);
+    console.log('[inbound] account lookup:', account ? 'found' : 'NOT FOUND', quote.account_id);
 
-  const updateResult = await admin
-    .from('quotes')
-    .update({ status: 'replied', next_followup_at: null })
-    .eq('id', quoteId);
-  console.log('[inbound] quote update result:', JSON.stringify(updateResult));
+    // --- 新逻辑：检测付款/拒绝关键词，决定状态（先跑，再更新） ---
+    const bodyLower = body.toLowerCase();
+    const PAID_KEYWORDS = ['paid', 'invoice paid', 'payment received', 'payment complete', 'already paid', '付款', '已付', '付完', '结清'];
+    const STOP_KEYWORDS = ['stop', 'unsubscribe', 'never contact', 'do not contact', 'remove me', 'opt out', '别再发', '不要再发', '停止', '退订'];
+    const REFUSAL_KEYWORDS = ['not interested', 'no thanks', 'no thank you', 'go away', 'leave me alone', 'dispute', '争议', '不需要', '没兴趣'];
 
-  const insertResult = await admin.from('messages').insert({
-    quote_id: quoteId,
-    direction: 'in',
-    subject,
-    body: body.slice(0, 5000),
-    raw_mime: rawMimeB64.slice(0, 50000),
-    message_id: messageId,
-    in_reply_to: '',
-  });
+    const isPaid = PAID_KEYWORDS.some(k => bodyLower.includes(k));
+    const isStop = STOP_KEYWORDS.some(k => bodyLower.includes(k));
+    const isRefusal = REFUSAL_KEYWORDS.some(k => bodyLower.includes(k));
 
-  const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
-  const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
+    let newStatus: 'paused' | 'paid' | 'stopped';
+    let notificationText: string;
 
-  let notificationText = `✅ Client ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}).\n⏸ Follow-ups PAUSED automatically — the sequence has stopped. Take it from here.`;
+    if (isPaid) {
+      newStatus = 'paid';
+      notificationText = `✅ Client ${quote.customer_name || senderEmail} confirmed PAYMENT for quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — payment received.`;
+    } else if (isStop || isRefusal) {
+      newStatus = 'stopped';
+      notificationText = `🛑 Client ${quote.customer_name || senderEmail} requested to stop contact (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — explicit refusal.`;
+    } else {
+      newStatus = 'paused';
+      notificationText = `✅ Client ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). ⏸ Follow-ups PAUSED — sequence paused. Resume manually when ready.`;
+    }
 
-  if (ai.should_reply && ai.reply_body && account?.auto_reply_enabled !== false) {
+    // 更新状态
+    const updateResult = await admin
+      .from('quotes')
+      .update({ status: newStatus, next_followup_at: null })
+      .eq('id', quoteId);
+    console.log('[inbound] quote status updated to:', newStatus);
+
+    const insertResult = await admin.from('messages').insert({
+      quote_id: quoteId,
+      direction: 'in',
+      subject,
+      body: body.slice(0, 5000),
+      raw_mime: rawMimeB64.slice(0, 50000),
+      message_id: messageId,
+      in_reply_to: '',
+    });
+
+    const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
+    const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
+
+    if (ai.should_reply && ai.reply_body && account?.auto_reply_enabled !== false) {
     const sent = await sendEmail({
       to: senderEmail,
       subject: `Re: ${subject}`,
