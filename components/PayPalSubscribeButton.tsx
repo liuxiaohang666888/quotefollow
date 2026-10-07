@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-5DN937607C181825LNKSPLWI';
 const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAxyItsTaXijHpq8NBvrle3h6xOpEJ9vc1nl_OvLlwnfe_OoFH8Uz3tGTs9x-p-nI88xGGROfurcvVyig';
 export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
-export const PLAN_BUSINESS_ID = process.env.NEXT_PUBLIC_PAYPAL_BUSINESS_PLAN_ID || 'P-3R344910YK5675157NKUP33I';
+export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || 'P-EARLYBIRD-PLN-ID';
+export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || 'P-YEARLY-PLN-ID';
 const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI';
 
 declare global {
@@ -17,7 +18,7 @@ declare global {
 }
 
 export default function PayPalSubscribeButton({
-  label = 'Subscribe — $9 first month, then $19/mo',
+  label = 'Start free trial — $49/mo',
   planId,
   fallbackHref,
 }: {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import PayPalSubscribeButton, { PLAN_PRO_ID, PLAN_BUSINESS_ID } from '@/components/PayPalSubscribeButton';
+import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
 import { getVerticalConfig, getBrandName } from '@/lib/vertical';
 
@@ -75,7 +75,7 @@ export default function LandingPage() {
             <Link href="#how-it-works" className="nav-link"> How it Works</Link>
             <Link href="#features" className="nav-link"> Features</Link>
             <Link href="/login" className="nav-link"> Log in</Link>
-            <Link href="/signup" className="btn btn-sm">Get started free</Link>
+            <Link href="/signup" className="btn btn-sm">Start free trial</Link>
           </nav>
         </div>
       </header>
@@ -95,14 +95,14 @@ export default function LandingPage() {
         )}
         <div className="hero-actions">
           <Link href="/signup" className="btn">
-            Get started free
+            Start free trial
             <span className="arrow">→</span>
           </Link>
           <Link href="/login" className="btn btn-ghost">
             Log in
           </Link>
         </div>
-        <p className="hero-trust">No credit card required · Cancel anytime</p>
+        <p className="hero-trust">14-day free trial · No credit card required · Cancel anytime</p>
         <p className="hero-tech">
           <span className="trust-badge">Powered by PayPal</span>
         </p>
@@ -252,7 +252,7 @@ export default function LandingPage() {
         <div className="preview-cta">
           <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
           <Link href="/signup" className="btn">
-            Get started free →
+            Start free trial →
           </Link>
         </div>
       </section>
@@ -336,7 +336,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
-            Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Get started free</a>
+            Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Start free trial</a>
           </p>
         </div>
       </section>
@@ -385,7 +385,7 @@ export default function LandingPage() {
                                   </div>
                                   <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 'auto' }}>
                                     <p style={{ color: '#2563eb', fontWeight: 600, fontSize: 14, margin: 0, textAlign: 'center' }}>
-                                      Want this automated? <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Try QuoteFollow free →</a>
+                                      Want this automated? <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Start free trial →</a>
                                     </p>
                                   </div>
                                 </div>
@@ -399,7 +399,7 @@ export default function LandingPage() {
             <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
               <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
                 <p className="eyebrow">Refer & Earn</p>
-                <h2>Recommend QuoteFollow. Get free months.</h2>
+                <h2>Recommend QuoteFollow. Both get 1 month free.</h2>
                 <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
                   Share your link. When someone subscribes, you both get 1 month free.
                 </p>
@@ -451,133 +451,34 @@ export default function LandingPage() {
             <section className="pricing-section" id="pricing">
         <p className="eyebrow">Pricing</p>
         <h2>Simple pricing</h2>
-        <p className="pricing-sub">Free to start. Upgrade when you outgrow it.</p>
-        <div className="pricing-grid">                <div className="pricing-card free">
-                  <div className="pricing-header">
-                    <div className="pricing-name">Free</div>
-                    <div className="pricing-badge">Start here</div>
-                  </div>
-                  <div className="pricing-price">
-                    <span className="pricing-amount">$0</span>
-                    <span className="pricing-period">forever</span>
-                  </div>
-                  <div className="pricing-features">
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Up to 3 clients</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>AI quote reading & dashboard</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Day 1 / 3 / 7 follow-ups</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>AI auto-reply to common questions</span>
-                    </div>
-                  </div>
-                  <div className="pricing-cta">
-                    <Link href="/signup" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
-                      Get started free
-                    </Link>
-                  </div>
-                </div>
-                <div className="pricing-card">
-                  <div className="pricing-header">
-                    <div className="pricing-name">Solo</div>
-                    <div className="pricing-badge">Most popular</div>
-                  </div>
-                  <div className="pricing-price">
-                    <span className="pricing-amount">$19</span>
-                    <span className="pricing-period">/ month</span>
-                  </div>
-                  <div className="pricing-features">
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Unlimited quotes & invoices</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Your own follow-up inbox</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>AI quote reading & dashboard</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Precise follow-ups (Day 1, 3, 7)</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>AI answers common questions</span>
-                    </div>
-                    <div className="pricing-feature">
-                      <span className="check">✓</span>
-                      <span>Cancel anytime</span>
-                    </div>
-                  </div>
-                  <div className="pricing-cta">
-                    <PayPalSubscribeButton label={`Subscribe — $9 first month, then $19/mo`} />
-                    <a className="btn btn-fallback" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-5DN937607C181825LNKSPLWI" target="_blank" rel="noopener noreferrer">
-                      Subscribe — $19/month via PayPal (first month $9)
-                    </a>
-                    <p className="pricing-guarantee">Early bird: first month $9 · Cancel anytime</p>
-                  </div>
-                </div>
-                <div className="pricing-card">
-                  <div className="pricing-header">
-                    <div className="pricing-name">Pro</div>
-                    <div className="pricing-badge">For growing teams</div>
-                  </div>
-                  <div className="pricing-price">
-                    <span className="pricing-amount">$49</span>
-                    <span className="pricing-period">/ month</span>
-                  </div>
-                  <div className="pricing-features">
-                    <div className="pricing-feature"><span className="check">✓</span><span>Everything in Solo</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>API access + webhooks</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Custom email templates</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Advanced analytics & reports</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Priority email support</span></div>
-                  </div>
-                  <div className="pricing-cta">
-                    <PayPalSubscribeButton label="Upgrade to Pro — $49/mo" planId={PLAN_PRO_ID} fallbackHref={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} />
-                    <a className="btn btn-fallback" href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} target="_blank" rel="noopener noreferrer">
-                      Subscribe — $49/month via PayPal
-                    </a>
-                    <p className="pricing-guarantee">Cancel anytime · No contract</p>
-                  </div>
-                </div>
-                <div className="pricing-card">
-                  <div className="pricing-header">
-                    <div className="pricing-name">Business</div>
-                    <div className="pricing-badge">For teams</div>
-                  </div>
-                  <div className="pricing-price">
-                    <span className="pricing-amount">$99</span>
-                    <span className="pricing-period">/ month</span>
-                  </div>
-                  <div className="pricing-features">
-                    <div className="pricing-feature"><span className="check">✓</span><span>Everything in Pro</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Team seats (up to 3 users)</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Audit logs & activity feed</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Priority phone + email support</span></div>
-                    <div className="pricing-feature"><span className="check">✓</span><span>Custom onboarding & training</span></div>
-                  </div>
-                  <div className="pricing-cta">
-                    <PayPalSubscribeButton label="Upgrade to Business — $99/mo" planId={PLAN_BUSINESS_ID} fallbackHref={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_BUSINESS_ID}`} />
-                    <a className="btn btn-fallback" href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_BUSINESS_ID}`} target="_blank" rel="noopener noreferrer">
-                      Subscribe — $99/month via PayPal
-                    </a>
-                    <p className="pricing-guarantee">Custom onboarding · Cancel anytime</p>
-                  </div>
-                </div>
+        <p className="pricing-sub">$49/month. 14-day free trial. No contracts.</p>
+        <div className="pricing-grid">
+          {config.pricing.tiers?.map((tier, i) => (
+            <div className={`pricing-card ${tier.isPopular ? 'popular' : ''}`} key={tier.id || i}>
+              <div className="pricing-header">
+                <div className="pricing-name">{tier.name}</div>
+                {tier.badge && <div className="pricing-badge">{tier.badge}</div>}
               </div>
-            </section>
+              <div className="pricing-price">
+                <span className="pricing-amount">${tier.price}</span>
+                <span className="pricing-period">{tier.period === 'month' ? '/ month' : tier.period}</span>
+              </div>
+              <div className="pricing-features">
+                {tier.features.map((feat, j) => (
+                  <div className="pricing-feature" key={j}>
+                    <span className="check">✓</span>
+                    <span>{feat}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="pricing-cta">
+                <PayPalSubscribeButton label={tier.cta || `Subscribe — $${tier.price}/mo`} />
+                <p className="pricing-guarantee">14-day free trial · Cancel anytime</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="faq-section">
@@ -605,10 +506,10 @@ export default function LandingPage() {
         <h2>Stop losing jobs to silence.</h2>
         <p>Join {config.audience} who never miss a follow-up again.</p>
         <Link href="/signup" className="btn btn-lg">
-          Get started free
+          Start free trial
           <span className="arrow">→</span>
         </Link>
-        <p className="final-cta-note">No credit card required · Cancel anytime</p>
+        <p className="final-cta-note">14-day free trial · No credit card required · Cancel anytime</p>
       </section>
 
       <footer className="footer">

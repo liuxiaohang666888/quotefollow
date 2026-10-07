@@ -73,6 +73,10 @@ export interface VerticalConfig {
   pricing: {
     monthly: number;
     currency: string;
+    earlyBirdPrice?: number;
+    earlyBirdLimit?: number;
+    trialDays?: number;
+    yearPrice?: number;
     tiers?: {
       id: string;
       name: string;
