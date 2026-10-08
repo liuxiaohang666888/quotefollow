@@ -73,7 +73,12 @@ export default function PayPalSubscribeButton({
       const s = document.createElement('script');
       s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription`;
       s.setAttribute('data-paypal-sdk', 'qf');
-      s.onload = () => setSdkLoaded(true);
+      s.onload = () => {
+        // Script loaded — render the button THEN flip state so the
+        // container div (always rendered now) is available for render()
+        setSdkLoaded(true);
+        render();
+      };
       s.onerror = () => setSdkError(true);
       document.body.appendChild(s);
     } else {
@@ -104,13 +109,13 @@ export default function PayPalSubscribeButton({
     );
   }
 
-  if (!sdkLoaded) {
-    return (
-      <button className="btn" disabled style={{ opacity: 0.6 }}>
-        Loading PayPal…
-      </button>
-    );
-  }
-
-  return <div ref={containerRef} className="paypal-subscribe" aria-label={label} />;
+  return (
+    <div ref={containerRef} className="paypal-subscribe" aria-label={label}>
+      {!sdkLoaded && !sdkError && (
+        <button className="btn" disabled style={{ opacity: 0.6 }}>
+          Loading PayPal…
+        </button>
+      )}
+    </div>
+  );
 }
