@@ -7,3 +7,4 @@ vercel
 next-env.d.ts
 .DS_Store
 .mime-test*.cjs
+.vercel
