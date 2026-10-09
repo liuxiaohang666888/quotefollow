@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import dynamic from 'next/dynamic';
 import './globals.css';
-import { Analytics } from '@vercel/analytics/next';
 import { getBrandName, getVerticalConfig } from '@/lib/vertical';
+
+const Analytics = dynamic(
+  () => import('@vercel/analytics/next').then((mod) => mod.Analytics),
+  { ssr: false }
+);
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrandName();
