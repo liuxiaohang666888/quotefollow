@@ -121,7 +121,8 @@ export async function POST(req: NextRequest) {
     // If this signup came with a paid subscription (?sub=), complete any pending referral
     if (paypalSubscriptionId) {
       try {
-        await fetch(`${new URL(req.url).origin}/api/referral/complete`, {
+        const cronSecret = process.env.CRON_SECRET;
+        await fetch(`${new URL(req.url).origin}/api/referral/complete${cronSecret ? `?secret=${encodeURIComponent(cronSecret)}` : ''}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId }),

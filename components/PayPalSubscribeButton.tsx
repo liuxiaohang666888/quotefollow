@@ -71,7 +71,7 @@ export default function PayPalSubscribeButton({
     const existing = document.querySelector('script[data-paypal-sdk="qf"]');
     if (!existing) {
       const s = document.createElement('script');
-      s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription`;
+      s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription&enable-funding=credit`;
       s.setAttribute('data-paypal-sdk', 'qf');
       s.onload = () => {
         // Script loaded — render the button THEN flip state so the

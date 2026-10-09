@@ -67,17 +67,9 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
     }
 
     if (!savedViaApi) {
-      const { error: directErr } = await supabase
-        .from('accounts')
-        .upsert(
-          { id: userId, business_name: businessName, email, followup_email: 'follow@voxalo.top', paypal_subscription_id: paypalSub },
-          { onConflict: 'id' }
-        );
-      if (directErr) {
-        setError('Account created, but we could not save your details. Please contact support.');
-        setLoading(false);
-        return;
-      }
+      setError('Account created, but we could not save your details. Please try again or contact support.');
+      setLoading(false);
+      return;
     }
 
     // 注册成功，提示用户检查邮箱确认
@@ -121,7 +113,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Create your account</h1>
-        <p className="sub">Free for up to 10 quotes. Upgrade anytime for unlimited.</p>
+        <p className="sub">Free for up to 3 clients. Upgrade anytime for unlimited.</p>
 
         {error && (
           <div className="error-box">{error}</div>

@@ -20,8 +20,14 @@ export async function verifyPaypalSubscription(subId: string): Promise<VerifyRes
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
+  // 🚨 生产环境下凭证缺失 = 验证失败（默认拒绝，防止白嫖）
+  // 开发环境下也返回失败，但提示 dev mode，方便排查
   if (!clientId || !clientSecret) {
-    return { ok: true, reason: 'format-only (server credentials not configured)' };
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[paypal] PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET not configured in production!');
+      return { ok: false, reason: 'paypal credentials not configured' };
+    }
+    return { ok: false, reason: 'dev mode: paypal credentials not configured' };
   }
 
   try {

@@ -199,7 +199,7 @@ export default function DashboardPage() {
                 whiteSpace: 'nowrap',
               }}
             >
-              Unlimited — $19/mo (first month $9)
+              Unlimited — $49/mo
             </Link>
           )}
           {!isExhausted && (
@@ -232,7 +232,7 @@ export default function DashboardPage() {
               borderRadius: 8,
               textDecoration: 'none',
             }}>
-              Upgrade to Pro — $19/mo
+              Upgrade to Pro — $49/mo
             </Link>
           )}
         </div>

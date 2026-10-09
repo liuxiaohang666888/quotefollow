@@ -100,9 +100,9 @@ export async function POST(req: NextRequest) {
   const businessName = acc?.business_name || 'Your business';
   const subject = `Quote: ${serviceType || 'our service'}${customerName ? ` for ${customerName}` : ''}`;
 
-  // 防止邮件头 CRLF 注入
+  // 防止邮件头 CRLF 注入（只处理 subject，body 是邮件正文不需要去掉换行）
   const safeSubject = subject.replace(/[\r\n]/g, '');
-  const safeMessage = message.replace(/[\r\n]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  const safeMessage = message.trim();
 
   const quoteDate = new Date();
 

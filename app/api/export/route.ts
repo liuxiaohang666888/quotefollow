@@ -52,11 +52,11 @@ export async function GET(req: NextRequest) {
       .select('*, quotes!inner(account_id)')
       .eq('quotes.account_id', user.id);
 
-    // Fetch followup logs
+    // Fetch followup logs (通过 quote 关联到 account)
     const { data: followups } = await supabase
       .from('messages')
-      .select('*')
-      .eq('account_id', user.id)
+      .select('*, quotes!inner(account_id)')
+      .eq('quotes.account_id', user.id)
       .order('created_at', { ascending: false });
 
     // Generate CSV
