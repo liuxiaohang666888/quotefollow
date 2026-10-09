@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
-const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-5DN937607C181825LNKSPLWI';
-const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAxyItsTaXijHpq8NBvrle3h6xOpEJ9vc1nl_OvLlwnfe_OoFH8Uz3tGTs9x-p-nI88xGGROfurcvVyig';
+const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
+const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
 export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || DEFAULT_PLAN_ID;
-const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || `https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${DEFAULT_PLAN_ID}`;
+const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-9RN20574BN6264401NKUP3CY';
 
 declare global {
   interface Window {
@@ -39,41 +39,25 @@ export default function PayPalSubscribeButton({
   useEffect(() => {
     if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
 
-    const renderButtons = () => {
+    const render = () => {
       if (!window.paypal || !containerRef.current) return;
       containerRef.current.innerHTML = '';
       try {
-        // 金色 PayPal 按钮
+        // 单次渲染：让 PayPal SDK 根据 enable-funding 自动决定显示金/蓝/黑 3 个按钮
         window.paypal.Buttons({
           style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
           createSubscription: (data: any, actions: any) =>
             actions.subscription.create({ plan_id: activePlanId }),
-          onApprove,
-          onError: () => setSdkError(true),
+          onApprove: (data: any) => {
+            const url = new URL('/signup', window.location.origin);
+            url.searchParams.set('sub', data.subscriptionID);
+            window.location.href = url.toString();
+          },
+          onError: (err: any) => {
+            console.error('[PayPalSubscribeButton] PayPal button error:', err);
+            setSdkError(true);
+          },
         }).render(containerRef.current);
-
-        // 蓝色 PayPal Credit 按钮
-        const creditContainer = document.createElement('div');
-        containerRef.current.appendChild(creditContainer);
-        window.paypal.Buttons({
-          style: { shape: 'rect', color: 'blue', layout: 'vertical', label: 'pay' },
-          createSubscription: (data: any, actions: any) =>
-            actions.subscription.create({ plan_id: activePlanId }),
-          onApprove,
-          onError: () => setSdkError(true),
-        }).render(creditContainer);
-
-        // 黑色 借记卡/信用卡 按钮
-        const cardContainer = document.createElement('div');
-        containerRef.current.appendChild(cardContainer);
-        window.paypal.Buttons({
-          style: { shape: 'rect', color: 'black', layout: 'vertical', label: 'checkout' },
-          createSubscription: (data: any, actions: any) =>
-            actions.subscription.create({ plan_id: activePlanId }),
-          onApprove,
-          onError: () => setSdkError(true),
-        }).render(cardContainer);
-
         setSdkLoaded(true);
       } catch (err) {
         console.error('[PayPalSubscribeButton] render error:', err);
