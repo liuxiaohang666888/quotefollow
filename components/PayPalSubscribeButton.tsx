@@ -74,7 +74,7 @@ export default function PayPalSubscribeButton({
       s.onload = () => {
         clearTimeout(timeout);
         setSdkLoaded(true);
-        renderButtons();
+        render();
       };
       s.onerror = () => {
         clearTimeout(timeout);
@@ -89,7 +89,7 @@ export default function PayPalSubscribeButton({
         if (window.paypal) {
           clearInterval(poll);
           setSdkLoaded(true);
-          renderButtons();
+          render();
         } else if (tries > 25) {
           clearInterval(poll);
           setSdkError(true);
