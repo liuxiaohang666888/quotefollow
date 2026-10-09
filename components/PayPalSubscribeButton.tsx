@@ -46,6 +46,7 @@ export default function PayPalSubscribeButton({
               color: 'gold',
               layout: 'vertical',
               label: 'subscribe',
+              funding: ['paylater', 'card'],
             },
             createSubscription: (data: any, actions: any) =>
               actions.subscription.create({ plan_id: activePlanId }),

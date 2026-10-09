@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
+import PayPalSubscribeButton, { PLAN_PRO_ID, PLAN_EARLY_BIRD_ID, PLAN_YEARLY_ID } from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
 import { getVerticalConfig, getBrandName } from '@/lib/vertical';
 
@@ -472,7 +472,10 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="pricing-cta">
-                <PayPalSubscribeButton label={tier.cta || `Subscribe — $${tier.price}/mo`} />
+                <PayPalSubscribeButton
+                  planId={tier.id === 'early-bird' ? PLAN_EARLY_BIRD_ID : tier.id === 'yearly' ? PLAN_YEARLY_ID : PLAN_PRO_ID}
+                  label={tier.cta || `Subscribe — $${tier.price}/mo`}
+                />
                 <p className="pricing-guarantee">14-day free trial · Cancel anytime</p>
               </div>
             </div>
