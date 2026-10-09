@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
       await notifyOwner(
         admin,
         account,
-        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($19/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
+        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
       );
       return NextResponse.json({ ok: false, error: 'free quota exhausted' }, { status: 402 });
     }

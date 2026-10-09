@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 
-export async function POST() {
-  // 简单的 keepalive 端点，防止 Heroku/Railway 等平台的空闲超时
+// keepalive：Vercel Cron 发 GET，外部监控服务可能发 POST/GET
+function handler() {
   return NextResponse.json({ ok: true, ts: new Date().toISOString() });
+}
+
+export async function GET() {
+  return handler();
+}
+
+export async function POST() {
+  return handler();
 }

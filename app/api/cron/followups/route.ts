@@ -4,15 +4,16 @@ import { generateFollowupBody } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { FREE_QUOTA, isAdminEmail } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // 每日定时：检查所有 pending 的 quote，到时间的发跟进邮件
 // 付费检查：免费用户只有 FREE_QUOTA 个 quote 能发跟进，超出的暂停
-export async function POST(req: Request) {
-  const secret = new URL(req.url).searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
+// 注意：Vercel Cron 发的是 GET，外部 cron 服务可能发 POST，两者都支持
+async function handler(req: Request) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
@@ -168,4 +169,12 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true, sent, skippedFree });
+}
+
+export async function GET(req: Request) {
+  return handler(req);
+}
+
+export async function POST(req: Request) {
+  return handler(req);
 }

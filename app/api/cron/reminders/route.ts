@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // 每日定时：检查逾期发票，发送催款提醒
-export async function POST(req: Request) {
-  const secret = new URL(req.url).searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
+// Vercel Cron 发 GET，外部 cron 发 POST，两者都支持
+async function handler(req: Request) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
@@ -106,4 +107,12 @@ ${account.business_name || '我们的团队'}`;
   }
 
   return NextResponse.json({ ok: true, sent });
+}
+
+export async function GET(req: Request) {
+  return handler(req);
+}
+
+export async function POST(req: Request) {
+  return handler(req);
 }
