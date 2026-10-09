@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
-// 硬编码 fallback：不读 env，防止 Vercel 环境变量覆盖错误值
-const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
-const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
+// 优先读 Vercel 环境变量，其次读 .env.local，最后 fallback 到新计划
+const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-5DN937607C181825LNKSPLWI';
+const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAxyItsTaXijHpq8NBvrle3h6xOpEJ9vc1nl_OvLlwnfe_OoFH8Uz3tGTs9x-p-nI88xGGROfurcvVyig';
 export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || DEFAULT_PLAN_ID;
