@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import dynamic from 'next/dynamic';
 import './globals.css';
 import { getBrandName, getVerticalConfig } from '@/lib/vertical';
-
-const Analytics = dynamic(
-  () => import('@vercel/analytics/next').then((mod) => mod.Analytics),
-  { ssr: false }
-);
+import AnalyticsWrapper from '@/components/AnalyticsWrapper';
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrandName();
@@ -34,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
-        <Analytics />
+        <AnalyticsWrapper />
       </body>
     </html>
   );
