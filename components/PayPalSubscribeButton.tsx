@@ -27,13 +27,19 @@ export default function PayPalSubscribeButton({
   fallbackHref?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState(false);
   // 传入 planId 优先（如 yearly 专属计划），否则用默认订阅计划
   const activePlanId = planId || DEFAULT_PLAN_ID;
 
+  // 先等 hydration 完成再渲染 PayPal 容器，避免 SSR/CSR 水合错误
   useEffect(() => {
-    if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !activePlanId || !CLIENT_ID || !containerRef.current) return;
 
     const render = () => {
       if (!window.paypal || !containerRef.current) return;
@@ -108,7 +114,7 @@ export default function PayPalSubscribeButton({
       }
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
-  }, [activePlanId]);
+  }, [mounted, activePlanId]);
 
   // 没配置订阅计划 → 回退到普通发票链接
   if (!activePlanId || !CLIENT_ID) {
@@ -121,6 +127,15 @@ export default function PayPalSubscribeButton({
 
   // SDK 加载失败或超时（5秒），显示 fallback 按钮
   if (sdkError) {
+    return (
+      <a className="btn" href={fallbackHref || INVOICE_URL} target="_blank" rel="noopener noreferrer">
+        {label}
+      </a>
+    );
+  }
+
+  // SSR / hydration 阶段不渲染 PayPal 容器，避免水合错误
+  if (!mounted) {
     return (
       <a className="btn" href={fallbackHref || INVOICE_URL} target="_blank" rel="noopener noreferrer">
         {label}
