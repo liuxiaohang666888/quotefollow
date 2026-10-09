@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isValidPaypalSubscriptionId, verifyPaypalSubscription } from '@/lib/paypal';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Complete pending referrals when a referred user becomes a paid subscriber.
 // —— 内部接口，只能被服务端调用（signup API / subscription-check cron）
-// —— 鉴权方式：CRON_SECRET (和其他 cron 接口一致)
+// —— 鉴权：复用 isCronAuthorized（与 cron 接口一致，CRON_SECRET 未设时放行）
 //
 // Body: { userId } — the user who just paid.
 export async function POST(req: NextRequest) {
-  // 🔒 鉴权：必须带正确的 secret（和 cron 接口使用同一个 CRON_SECRET）
-  const secret = new URL(req.url).searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
-    // 也允许通过 header 传递（更安全）
-    const headerSecret = req.headers.get('x-cron-secret');
-    if (headerSecret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-    }
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
   try {

@@ -6,7 +6,8 @@ import { NextRequest } from 'next/server';
 // 3. 服务端内部调用：x-cron-secret 头
 export function isCronAuthorized(req: NextRequest | Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
+  // CRON_SECRET 未配置时放行（不阻断定时任务）
+  if (!secret) return true;
 
   try {
     const url = new URL(req.url);
