@@ -27,13 +27,19 @@ export default function PayPalSubscribeButton({
   fallbackHref?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState(false);
   // 传入 planId 优先（如 yearly 专属计划），否则用默认订阅计划
   const activePlanId = planId || DEFAULT_PLAN_ID;
 
+  // 先等 hydration 完成再渲染 PayPal 容器，避免 SSR/CSR 水合错误
   useEffect(() => {
-    if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !activePlanId || !CLIENT_ID || !containerRef.current) return;
 
     const render = () => {
       if (!window.paypal || !containerRef.current) return;
@@ -76,8 +82,6 @@ export default function PayPalSubscribeButton({
       s.setAttribute('data-paypal-sdk', 'qf');
       s.onload = () => {
         clearTimeout(timeout);
-        // Script loaded — render the button THEN flip state so the
-        // container div (always rendered now) is available for render()
         setSdkLoaded(true);
         render();
       };
@@ -85,11 +89,9 @@ export default function PayPalSubscribeButton({
         clearTimeout(timeout);
         setSdkError(true);
       };
-      // SDK 5 秒没加载出来（PayPal 偶发抽风/网络问题）→ 显示 fallback 按钮
       timeout = setTimeout(() => setSdkError(true), 5000);
       document.body.appendChild(s);
     } else {
-      // 脚本标签已存在（同页另一个按钮实例插的）但 window.paypal 可能还没就绪，轮询等最多 5 秒
       let tries = 0;
       const poll = setInterval(() => {
         tries++;
@@ -112,7 +114,7 @@ export default function PayPalSubscribeButton({
       }
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
-  }, [activePlanId]);
+  }, [mounted, activePlanId]);
 
   // 没配置订阅计划 → 回退到普通发票链接
   if (!activePlanId || !CLIENT_ID) {
@@ -125,6 +127,15 @@ export default function PayPalSubscribeButton({
 
   // SDK 加载失败或超时（5秒），显示 fallback 按钮
   if (sdkError) {
+    return (
+      <a className="btn" href={fallbackHref || INVOICE_URL} target="_blank" rel="noopener noreferrer">
+        {label}
+      </a>
+    );
+  }
+
+  // SSR/ hydration 阶段不渲染 PayPal 容器，避免水合错误
+  if (!mounted) {
     return (
       <a className="btn" href={fallbackHref || INVOICE_URL} target="_blank" rel="noopener noreferrer">
         {label}
