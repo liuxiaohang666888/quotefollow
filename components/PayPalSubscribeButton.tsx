@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
-// 硬编码：不读 env，防止 Vercel 环境变量覆盖错误值
-const DEFAULT_PLAN_ID = 'P-9RN20574BN6264401NKUP3CY';
-const CLIENT_ID = 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
-export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
-export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || 'P-EARLYBIRD-PLN-ID';
-export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || 'P-YEARLY-PLN-ID';
-const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-9RN20574BN6264401NKUP3CY';
+// 硬编码 fallback：不读 env，防止 Vercel 环境变量覆盖错误值
+const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
+const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
+export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || DEFAULT_PLAN_ID;
+export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || DEFAULT_PLAN_ID;
+export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || DEFAULT_PLAN_ID;
+const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || `https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${DEFAULT_PLAN_ID}`;
 
 declare global {
   interface Window {
