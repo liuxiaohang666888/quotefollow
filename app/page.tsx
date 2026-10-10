@@ -472,7 +472,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="pricing-cta">
-                <PayPalSubscribeButton label={tier.cta || `Subscribe — $${tier.price}/mo`} />
+                <PayPalSubscribeButton planId={tier.planId} label={tier.cta || `Subscribe — $${tier.price}/mo`} />
                 <p className="pricing-guarantee">14-day free trial · Cancel anytime</p>
               </div>
             </div>

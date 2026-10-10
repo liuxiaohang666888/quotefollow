@@ -86,6 +86,7 @@ export interface VerticalConfig {
       cta: string;
       badge: string;
       isPopular?: boolean;
+      planId?: string;
     }[];
   };
   footer: {
