@@ -80,7 +80,7 @@ export default function PayPalSubscribeButton({
       const s = document.createElement('script');
       s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription&enable-funding=paylater%2Ccard`;
       s.setAttribute('data-paypal-sdk', 'qf');
-      s.crossOrigin = 'anonymous';
+      s.crossOrigin = null;
 
       s.onload = () => {
         let attempts = 0;
