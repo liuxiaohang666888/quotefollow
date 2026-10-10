@@ -28,22 +28,19 @@ export default function PayPalSubscribeButton({
   const activePlanId = planId || DEFAULT_PLAN_ID;
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState(false);
+  const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const onApprove = (data: any) => {
-    const url = new URL('/signup', window.location.origin);
-    url.searchParams.set('sub', data.subscriptionID);
-    window.location.href = url.toString();
-  };
+  const renderedRef = useRef(false);
 
   useEffect(() => {
     if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
+    if (renderedRef.current) return;
+    renderedRef.current = true;
 
-    const render = () => {
+    const renderButtons = () => {
       if (!window.paypal || !containerRef.current) return;
       containerRef.current.innerHTML = '';
       try {
-        // 单次渲染：让 PayPal SDK 根据 enable-funding 自动决定显示金/蓝/黑 3 个按钮
         window.paypal.Buttons({
           style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
           createSubscription: (data: any, actions: any) =>
@@ -59,51 +56,76 @@ export default function PayPalSubscribeButton({
           },
         }).render(containerRef.current);
         setSdkLoaded(true);
+        setLoading(false);
       } catch (err) {
         console.error('[PayPalSubscribeButton] render error:', err);
         setSdkError(true);
+        setLoading(false);
       }
     };
 
     const existing = document.querySelector('script[data-paypal-sdk="qf"]');
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const finish = (error: boolean) => {
+      if (timeout) clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+      if (error) setSdkError(true);
+      setLoading(false);
+    };
+
     if (!existing) {
       const s = document.createElement('script');
       s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription&enable-funding=paylater%2Ccard`;
       s.setAttribute('data-paypal-sdk', 'qf');
+      s.crossOrigin = 'anonymous';
+
       s.onload = () => {
-        clearTimeout(timeout);
-        setSdkLoaded(true);
-        render();
+        let attempts = 0;
+        interval = setInterval(() => {
+          attempts++;
+          if (window.paypal) {
+            if (interval) clearInterval(interval);
+            renderButtons();
+          } else if (attempts > 20) {
+            // SDK 脚本加载了但 paypal 对象没出现 → 校验失败（400 等）
+            finish(true);
+          }
+        }, 200);
       };
+
       s.onerror = () => {
-        clearTimeout(timeout);
-        setSdkError(true);
+        finish(true);
       };
-      timeout = setTimeout(() => setSdkError(true), 5000);
+
+      timeout = setTimeout(() => {
+        if (interval) clearInterval(interval);
+        finish(true);
+      }, 8000);
+
       document.body.appendChild(s);
     } else {
-      let tries = 0;
-      const poll = setInterval(() => {
-        tries++;
+      // SDK 已在页面中，直接尝试渲染
+      let attempts = 0;
+      interval = setInterval(() => {
+        attempts++;
         if (window.paypal) {
-          clearInterval(poll);
-          setSdkLoaded(true);
-          render();
-        } else if (tries > 25) {
-          clearInterval(poll);
-          setSdkError(true);
+          if (interval) clearInterval(interval);
+          renderButtons();
+        } else if (attempts > 25) {
+          finish(true);
         }
       }, 200);
-      timeout = poll as unknown as ReturnType<typeof setTimeout>;
+      timeout = setTimeout(() => {
+        if (interval) clearInterval(interval);
+        finish(true);
+      }, 8000);
     }
 
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-        clearInterval(timeout as unknown as ReturnType<typeof setInterval>);
-      }
-      if (containerRef.current) containerRef.current.innerHTML = '';
+      if (timeout) clearTimeout(timeout);
+      if (interval) clearInterval(interval);
     };
   }, [activePlanId]);
 
@@ -125,7 +147,7 @@ export default function PayPalSubscribeButton({
 
   return (
     <div ref={containerRef} className="paypal-subscribe" aria-label={label}>
-      {!sdkLoaded && !sdkError && (
+      {loading && !sdkError && (
         <button className="btn" disabled style={{ opacity: 0.6 }}>
           Loading PayPal…
         </button>
@@ -133,4 +155,3 @@ export default function PayPalSubscribeButton({
     </div>
   );
 }
-// trigger redeploy
