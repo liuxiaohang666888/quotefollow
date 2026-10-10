@@ -451,7 +451,7 @@ export default function LandingPage() {
             <section className="pricing-section" id="pricing">
         <p className="eyebrow">Pricing</p>
         <h2>Simple pricing</h2>
-        <p className="pricing-sub">$49/month. 14-day free trial. No contracts.</p>
+        <p className="pricing-sub">From $29/mo. 14-day free trial. Cancel anytime.</p>
         <div className="pricing-grid">
           {config.pricing.tiers?.map((tier, i) => (
             <div className={`pricing-card ${tier.isPopular ? 'popular' : ''}`} key={tier.id || i}>

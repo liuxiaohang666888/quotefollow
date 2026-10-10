@@ -148,7 +148,7 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         q: 'How much does it cost?',
-        a: '$49/month with a 14-day free trial. No hidden fees. Cancel anytime.',
+        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). 14-day free trial. No hidden fees. Cancel anytime.',
       },
       {
         q: 'When will I see results?',
