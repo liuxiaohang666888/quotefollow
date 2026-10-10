@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseQuoteEmail } from '@/lib/ai';
 import { scheduleForDay } from '@/lib/followup';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
 export const runtime = 'nodejs';
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const { data: created, error: accErr } = await admin
       .from('accounts')
       .upsert({ id: user.id, email: user.email ?? '', followup_email: 'follow@voxalo.top' }, { onConflict: 'id' })
-      .select('paypal_subscription_id')
+      .select('paypal_subscription_id, created_at')
       .single();
     if (accErr) console.error('[quotes] account self-heal failed:', accErr);
     acc = created ?? acc;
@@ -57,11 +57,11 @@ export async function POST(req: NextRequest) {
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
     const used = await countQuotesFor(admin, user.id, user.email);
-    if (used >= FREE_QUOTA) {
-      return NextResponse.json(
-        { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
-        { status: 402 }
-      );
+    if (used >= FREE_QUOTA || !isWithinTrialDays((acc as any)?.created_at)) {
+      const reason = used >= FREE_QUOTA
+        ? `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.`
+        : 'Your 14-day free trial has ended. Subscribe to continue using QuoteFollow.';
+      return NextResponse.json({ ok: false, error: reason }, { status: 402 });
     }
   }
 

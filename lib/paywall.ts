@@ -13,6 +13,17 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 // 定稿口径：免费档 = 3 个客户（落地页/signup/dashboard 全部按 3 说，别再加倍数）
 export const FREE_QUOTA = 3;
 
+// 免费试用期：14 天（与落地页 "14-day free trial" 文案对齐）
+// 试用期内仍受 FREE_QUOTA 客户数限制；注册满 14 天后无论额度多少都锁定付费
+export const TRIAL_DAYS = 14;
+
+export function isWithinTrialDays(createdAt: string | null | undefined): boolean {
+  if (!createdAt) return true; // 无创建时间不误杀
+  const created = new Date(createdAt).getTime();
+  if (Number.isNaN(created)) return true;
+  return Date.now() - created < TRIAL_DAYS * 24 * 60 * 60 * 1000;
+}
+
 // 额度统计必须按 account_id（报价归属于账号），绝不能按 customer_email（那是客户的邮箱）。
 // 兜底：优先按邮箱关联统计（防删号重注册换新账号ID绕过额度），join 失败自动回退按账号ID统计。
 export async function countQuotesFor(

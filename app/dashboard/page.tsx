@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { FREE_QUOTA } from '@/lib/paywall';
+import { FREE_QUOTA, TRIAL_DAYS } from '@/lib/paywall';
 import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
 
 interface Quote {
@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string; created_at: string | null } | null>(null);
   const [quotaUsed, setQuotaUsed] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
     const { data: acc } = await supabase
       .from('accounts')
-      .select('followup_email, business_name, paypal_subscription_id, referral_code')
+      .select('followup_email, business_name, paypal_subscription_id, referral_code, created_at')
       .maybeSingle();
     setAccount(acc as any);
     setLoading(false);
@@ -82,6 +82,17 @@ export default function DashboardPage() {
   const isFree = !account?.paypal_subscription_id;
   const isExhausted = isFree && remaining === 0;
 
+  // 14 天试用计时（与后端 lib/paywall.ts 的 TRIAL_DAYS 对齐）
+  const trialEndsAt = account?.created_at
+    ? new Date(new Date(account.created_at).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
+    : null;
+  const trialDaysLeft = trialEndsAt
+    ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : TRIAL_DAYS;
+  const isTrialOver = isFree && !!trialEndsAt && trialEndsAt.getTime() <= Date.now();
+  // 锁定态：额度用尽 或 试用过期，二选一即锁
+  const isLocked = isFree && (isExhausted || isTrialOver);
+
   const filtered = quotes.filter((q) => filter === 'all' || q.status === filter);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const displayedQuotes = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -100,6 +111,46 @@ export default function DashboardPage() {
 
   return (
     <div>
+      {/* 强制付款弹窗：锁定态不可关闭，阻断全部操作区 */}
+      {isLocked && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 16,
+        }}>
+          <div style={{
+            background: '#0a0a0f',
+            border: '1px solid var(--border)',
+            borderRadius: 16,
+            padding: '28px 32px',
+            maxWidth: 420,
+            width: '100%',
+            textAlign: 'center',
+          }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
+              {isTrialOver ? 'Your 14-day free trial has ended' : 'Free plan quota used up'}
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--fg-dim)', margin: '12px 0 20px', lineHeight: 1.6 }}>
+              {isTrialOver
+                ? 'You need an active subscription to keep using QuoteFollow.'
+                : `You've used all ${FREE_QUOTA} free clients. Upgrade to Pro to keep sending quotes and follow-ups.`}
+            </p>
+            <Link
+              href="/signup"
+              className="btn"
+              style={{ padding: '12px 24px', fontSize: 15, width: '100%' }}
+            >
+              Upgrade to Pro — $49/mo
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <h1>Your quotes</h1>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -162,7 +213,7 @@ export default function DashboardPage() {
                                             <Link
                                               href="/dashboard/new"
                                               className="btn"
-                                              style={{ width: 'fit-content', padding: '10px 16px', opacity: isExhausted ? 0.5 : 1, pointerEvents: isExhausted ? 'none' : 'auto' }}
+                                              style={{ width: 'fit-content', padding: '10px 16px', opacity: isLocked ? 0.5 : 1, pointerEvents: isLocked ? 'none' : 'auto' }}
                                             >
                                               + Send a quote
                                             </Link>
@@ -186,9 +237,11 @@ export default function DashboardPage() {
           <span style={{ fontSize: 14, color: isExhausted ? '#92400e' : '#166534' }}>
             {isExhausted
               ? 'Free plan quota used up (3 clients) — '
-              : `Free plan: ${remaining} of ${FREE_QUOTA} clients remaining`}
+              : isTrialOver
+                ? 'Your 14-day free trial has ended — '
+                : `Free plan: ${remaining} of ${FREE_QUOTA} clients remaining · ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left in trial`}
           </span>
-          {!isExhausted && (
+          {!isExhausted && !isTrialOver && (
             <Link
               href="/signup"
               style={{
@@ -202,7 +255,7 @@ export default function DashboardPage() {
               Unlimited — $49/mo
             </Link>
           )}
-          {!isExhausted && (
+          {!isExhausted && !isTrialOver && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 120,
@@ -222,7 +275,7 @@ export default function DashboardPage() {
               <span style={{ fontSize: 12, color: '#166534' }}>{quotaUsed}/{FREE_QUOTA}</span>
             </div>
           )}
-          {isExhausted && (
+          {isLocked && (
             <Link href="/signup" style={{
               fontSize: 13,
               fontWeight: 600,

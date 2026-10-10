@@ -4,7 +4,7 @@ import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '
 import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
 export const runtime = 'nodejs';
@@ -223,15 +223,18 @@ export async function POST(req: NextRequest) {
     !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
   if (!accountIsAdmin && !accountIsPaid) {
     const used = await countQuotesFor(admin, account.id, account.email);
-    if (used >= FREE_QUOTA) {
-      await traceWrite('quota_exhausted', 'account=' + account.id + ' used=' + used);
+    if (used >= FREE_QUOTA || !isWithinTrialDays(account.created_at)) {
+      await traceWrite(
+        'quota_exhausted',
+        'account=' + account.id + ' used=' + used + ' trial=' + String(account.created_at)
+      );
       // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
       await notifyOwner(
         admin,
         account,
-        `Free plan limit reached (${FREE_QUOTA} quotes). This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
+        `Free plan limit reached (${FREE_QUOTA} quotes) or 14-day trial ended. This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
       );
-      return NextResponse.json({ ok: false, error: 'free quota exhausted' }, { status: 402 });
+      return NextResponse.json({ ok: false, error: 'free quota exhausted or trial ended' }, { status: 402 });
     }
   }
 

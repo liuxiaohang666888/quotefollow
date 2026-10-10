@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateFollowupBody } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
-import { FREE_QUOTA, isAdminEmail } from '@/lib/paywall';
+import { FREE_QUOTA, isAdminEmail, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 import { isCronAuthorized } from '@/lib/cron-auth';
 
@@ -38,7 +38,7 @@ async function handler(req: Request) {
   }
 
   // 缓存每个账号的付费状态和 quote 总数，避免重复查询
-  const accountCache = new Map<string, { isPaid: boolean; quoteCount?: number }>();
+  const accountCache = new Map<string, { isPaid: boolean; quoteCount?: number; createdAt?: string | null }>();
 
   async function getAccountStatus(accountId: string, accountEmail: string): Promise<{ isPaid: boolean; withinQuota: boolean }> {
     if (!accountCache.has(accountId)) {
@@ -47,21 +47,21 @@ async function handler(req: Request) {
       // 先查账号的订阅状态
       const { data: acc } = await admin
         .from('accounts')
-        .select('paypal_subscription_id, email')
+        .select('paypal_subscription_id, email, created_at')
         .eq('id', accountId)
         .maybeSingle();
 
       const isPaid = isAdmin || !!(acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id));
 
       if (isPaid || isAdmin) {
-        accountCache.set(accountId, { isPaid: true });
+        accountCache.set(accountId, { isPaid: true, createdAt: (acc as any)?.created_at ?? null });
       } else {
         // 免费用户：统计 quote 数量
         const { count } = await admin
           .from('quotes')
           .select('id', { count: 'exact', head: true })
           .eq('account_id', accountId);
-        accountCache.set(accountId, { isPaid: false, quoteCount: count ?? 0 });
+        accountCache.set(accountId, { isPaid: false, quoteCount: count ?? 0, createdAt: (acc as any)?.created_at ?? null });
       }
     }
 
@@ -73,7 +73,7 @@ async function handler(req: Request) {
     // 免费用户：只有前 FREE_QUOTA 个 quote（按创建时间）能发跟进
     // 我们用 quoteCount 判断是否超出总量，对于单个 quote 再判断是否在额度内
     const quoteCount = cached.quoteCount ?? 0;
-    return { isPaid: false, withinQuota: quoteCount <= FREE_QUOTA };
+    return { isPaid: false, withinQuota: quoteCount <= FREE_QUOTA && isWithinTrialDays(cached.createdAt) };
   }
 
   let sent = 0;
