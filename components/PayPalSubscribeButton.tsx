@@ -40,7 +40,6 @@ export default function PayPalSubscribeButton({
 
     const renderButtons = () => {
       if (!window.paypal || !containerRef.current) return;
-      containerRef.current.innerHTML = '';
       try {
         window.paypal.Buttons({
           style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
