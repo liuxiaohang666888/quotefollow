@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
-const DEFAULT_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || 'P-9RN20574BN6264401NKUP3CY';
-const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
+// ⚠️ 硬编码避免 Vercel 环境变量覆盖（上次被旧值搞挂）
+const DEFAULT_PLAN_ID = 'P-9RN20574BN6264401NKUP3CY';
+const CLIENT_ID = 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
 export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || DEFAULT_PLAN_ID;
 export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || DEFAULT_PLAN_ID;
