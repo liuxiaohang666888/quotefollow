@@ -41,7 +41,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
     }
     const userId = data.user?.id;
     if (!userId) {
-      setError('Signup failed. Please check your email and try again.');
+      setError('Account created! Check your email to confirm, then log in.');
       setLoading(false);
       return;
     }
@@ -99,7 +99,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
         <div className="auth-card" style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Account created</h1>
           <p className="sub" style={{ marginBottom: '24px' }}>
-            Your account is ready. <strong>You can log in now.</strong>
+            We sent you a confirmation email. <strong>Please check your inbox to confirm your account</strong> before logging in.
           </p>
           <Link href="/login" className="btn" style={{ textDecoration: 'none' }}>
             Log in to dashboard
@@ -128,6 +128,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
               onChange={(e) => setBusinessName(e.target.value)}
               placeholder="Your company or trade name"
               required
+              autoComplete="off"
             />
           </div>
 
@@ -139,6 +140,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@business.com"
               required
+              autoComplete="off"
             />
           </div>
 
@@ -151,6 +153,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
               placeholder="At least 8 characters"
               minLength={8}
               required
+              autoComplete="new-password"
             />
           </div>
 

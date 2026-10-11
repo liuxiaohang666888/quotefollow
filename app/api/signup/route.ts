@@ -61,8 +61,7 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // Confirm email
-    await admin.auth.admin.updateUserById(userId, { email_confirm: true });
+    // Do NOT force email_confirm: standard Supabase email confirmation flow applies
 
     // Generate referral code for new user
     const newReferralCode = 'QF-' + randomUUID().slice(0, 8).toUpperCase();
