@@ -148,7 +148,7 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         q: 'How much does it cost?',
-        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). 14-day free trial. No hidden fees. Cancel anytime.',
+        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). Free for 14 days, up to 3 clients — whichever comes first. No hidden fees. Cancel anytime.',
       },
       {
         q: 'When will I see results?',
@@ -187,7 +187,7 @@ export const quotefollowConfig: VerticalConfig = {
             'Everything in Pro',
             'Lifetime $29/mo — locked while it lasts',
             'Only 10 spots — first come first served',
-            '14-day free trial',
+            'Free for 14 days, up to 3 clients',
             'Cancel anytime',
           ],
           cta: 'Get Early Bird — $29/mo',
@@ -202,7 +202,7 @@ export const quotefollowConfig: VerticalConfig = {
           period: 'month',
           features: [
             'Unlimited quotes & invoices',
-            '14-day free trial',
+            'Free for 14 days, up to 3 clients',
             'Smart follow-ups (Day 1/3/7)',
             'Electronic signatures',
             'Auto-stop when client replies',
@@ -222,7 +222,7 @@ export const quotefollowConfig: VerticalConfig = {
             'Everything in Pro',
             '2 months free vs monthly',
             'One-time payment — $490/yr',
-            '14-day free trial',
+            'Free for 14 days, up to 3 clients',
             'Cancel anytime',
           ],
           cta: 'Go Yearly — $490/yr',

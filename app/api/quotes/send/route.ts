@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     if (used >= FREE_QUOTA || !isWithinTrialDays(acc?.created_at)) {
       const reason = used >= FREE_QUOTA
         ? `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.`
-        : 'Your 14-day free trial has ended. Subscribe to continue using QuoteFollow.';
+        : 'Your free trial (14 days or 3 clients, whichever comes first) has ended. Subscribe to continue using QuoteFollow.';
       return NextResponse.json({ ok: false, error: reason }, { status: 402 });
     }
   }

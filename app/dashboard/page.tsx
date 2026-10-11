@@ -133,7 +133,7 @@ export default function DashboardPage() {
             textAlign: 'center',
           }}>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
-              {isTrialOver ? 'Your 14-day free trial has ended' : 'Free plan quota used up'}
+              {isTrialOver ? 'Your free trial (14 days or 3 clients) has ended' : 'Free plan quota used up'}
             </h2>
             <p style={{ fontSize: 14, color: 'var(--fg-dim)', margin: '12px 0 20px', lineHeight: 1.6 }}>
               {isTrialOver
@@ -238,7 +238,7 @@ export default function DashboardPage() {
             {isExhausted
               ? 'Free plan quota used up (3 clients) — '
               : isTrialOver
-                ? 'Your 14-day free trial has ended — '
+                ? 'Your free trial (14 days or 3 clients) has ended — '
                 : `Free plan: ${remaining} of ${FREE_QUOTA} clients remaining · ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left in trial`}
           </span>
           {!isExhausted && !isTrialOver && (

@@ -113,7 +113,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Create your account</h1>
-        <p className="sub">Free for up to 3 clients. Upgrade anytime for unlimited.</p>
+        <p className="sub">Free for 14 days, up to 3 clients — whichever comes first. Upgrade anytime for unlimited.</p>
 
         {error && (
           <div className="error-box">{error}</div>

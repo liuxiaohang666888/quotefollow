@@ -13,7 +13,7 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 // 定稿口径：免费档 = 3 个客户（落地页/signup/dashboard 全部按 3 说，别再加倍数）
 export const FREE_QUOTA = 3;
 
-// 免费试用期：14 天（与落地页 "14-day free trial" 文案对齐）
+// 免费试用期：14 天（与落地页 "Free for 14 days, up to 3 clients" 文案对齐）
 // 试用期内仍受 FREE_QUOTA 客户数限制；注册满 14 天后无论额度多少都锁定付费
 export const TRIAL_DAYS = 14;
 
