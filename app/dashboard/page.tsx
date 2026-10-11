@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { FREE_QUOTA, TRIAL_DAYS } from '@/lib/paywall';
 import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
+import PayPalSubscribeButton, { PLAN_PRO_ID } from '@/components/PayPalSubscribeButton';
 
 interface Quote {
   id: string;
@@ -140,13 +141,18 @@ export default function DashboardPage() {
                 ? 'You need an active subscription to keep using QuoteFollow.'
                 : `You've used all ${FREE_QUOTA} free clients. Upgrade to Pro to keep sending quotes and follow-ups.`}
             </p>
-            <Link
-              href="/signup"
-              className="btn"
-              style={{ padding: '12px 24px', fontSize: 15, width: '100%' }}
-            >
-              Upgrade to Pro — $49/mo
-            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <PayPalSubscribeButton label="Upgrade to Pro — $49/mo" />
+              <form action="/api/logout" method="post" style={{ width: '100%' }}>
+                <button
+                  type="submit"
+                  className="btn"
+                  style={{ width: '100%', padding: '12px 24px', fontSize: 15, background: 'transparent', border: '1px solid var(--border)', color: 'var(--fg)' }}
+                >
+                  Log out
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -276,7 +282,7 @@ export default function DashboardPage() {
             </div>
           )}
           {isLocked && (
-            <Link href="/signup" style={{
+            <a href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} target="_blank" rel="noopener noreferrer" style={{
               fontSize: 13,
               fontWeight: 600,
               color: '#fff',
@@ -286,7 +292,7 @@ export default function DashboardPage() {
               textDecoration: 'none',
             }}>
               Upgrade to Pro — $49/mo
-            </Link>
+            </a>
           )}
         </div>
               )}
