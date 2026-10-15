@@ -211,7 +211,7 @@ export const quotefollowConfig: VerticalConfig = {
           cta: 'Start free trial — $49/mo',
           badge: 'Most popular',
           isPopular: true,
-          planId: process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID,
+          planId: process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
         },
         {
           id: 'yearly',
