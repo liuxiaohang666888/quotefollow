@@ -17,6 +17,8 @@ interface Quote {
   quote_date: string;
   followup_count: number;
   next_followup_at: string | null;
+  require_deposit: boolean;
+  deposit_status: string;
 }
 
 type Filter = 'all' | 'following' | 'replied' | 'won' | 'lost' | 'paused' | 'closed';
@@ -412,6 +414,11 @@ export default function DashboardPage() {
                 <div className="right">
                   {q.amount !== null && q.amount > 0 && (
                     <span className="amount">${q.amount}</span>
+                  )}
+                  {q.require_deposit && (
+                    <span className={`badge-status ${q.deposit_status === 'paid' ? 'won' : 'following'}`}>
+                      {q.deposit_status === 'paid' ? 'Deposit paid' : 'Deposit due'}
+                    </span>
                   )}
                   <span className={`badge-status ${q.status}`}>
                     {STATUS_LABEL[q.status]}

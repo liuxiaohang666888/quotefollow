@@ -12,6 +12,7 @@ const SAFE_UPDATE_FIELDS = [
   'slack_webhook',
   'auto_reply_enabled',
   'business_info',
+  'payment_link',
 ];
 
 // GET: 获取当前登录用户的账号信息
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
   const { data: account, error } = await admin
     .from('accounts')
-    .select('id, email, business_name, followup_email, slack_webhook, auto_reply_enabled, business_info, paypal_subscription_id, referral_code, free_months_earned, created_at, updated_at')
+    .select('id, email, business_name, followup_email, slack_webhook, auto_reply_enabled, business_info, payment_link, paypal_subscription_id, referral_code, free_months_earned, created_at, updated_at')
     .eq('id', user.id)
     .single();
 
@@ -76,7 +77,7 @@ export async function PUT(req: NextRequest) {
     .from('accounts')
     .update(updateData)
     .eq('id', user.id)
-    .select('id, email, business_name, followup_email, slack_webhook, auto_reply_enabled, business_info, paypal_subscription_id, referral_code, free_months_earned, created_at, updated_at')
+    .select('id, email, business_name, followup_email, slack_webhook, auto_reply_enabled, business_info, payment_link, paypal_subscription_id, referral_code, free_months_earned, created_at, updated_at')
     .single();
 
   if (error) {

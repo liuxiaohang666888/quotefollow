@@ -15,6 +15,7 @@ interface Quote {
   require_deposit: boolean;
   deposit_amount: number | null;
   deposit_status: string;
+  deposit_paid_at: string | null;
   business_name?: string;
   created_at: string;
 }
@@ -294,9 +295,14 @@ export default function QuoteDetailPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: 14 }}>Amount: ${quote.deposit_amount}</span>
             <span className={`badge-status ${quote.deposit_status === 'paid' ? 'won' : 'following'}`}>
-              {quote.deposit_status === 'paid' ? 'Paid' : 'Unpaid'}
+              {quote.deposit_status === 'paid' ? 'Deposit paid' : 'Deposit unpaid'}
             </span>
           </div>
+          {quote.deposit_status === 'paid' && quote.deposit_paid_at && (
+            <div style={{ fontSize: 13, color: '#059669', marginBottom: 12 }}>
+              ✓ Paid on {new Date(quote.deposit_paid_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
+          )}
           {quote.deposit_status !== 'paid' && (
             <button className="btn" onClick={handleMarkDepositPaid} style={{ padding: '10px 20px' }}>
               Mark deposit as paid

@@ -10,6 +10,7 @@ interface Account {
   auto_reply_enabled: boolean;
   business_info: Record<string, string>;
   paypal_subscription_id: string | null;
+  payment_link: string;
 }
 
 const DEFAULT_INFO: Record<string, string> = {
@@ -55,6 +56,7 @@ export default function SettingsPage() {
         slack_webhook: account.slack_webhook,
         auto_reply_enabled: account.auto_reply_enabled,
         business_info: info,
+        payment_link: account.payment_link,
       }),
     });
     const json = await res.json();
@@ -141,6 +143,16 @@ export default function SettingsPage() {
               placeholder="https://hooks.slack.com/services/…"
             />
             <div className="hint">Hot-lead alerts will also be posted here.</div>
+          </div>
+          <div className="field">
+            <label>Payment link (for deposits)</label>
+            <input
+              type="text"
+              value={account?.payment_link || ''}
+              onChange={(e) => setAccount((a) => (a ? { ...a, payment_link: e.target.value } : a))}
+              placeholder="https://paypal.me/yourname — or any payment URL"
+            />
+            <div className="hint">Customers use this link to pay the deposit from their quote portal.</div>
           </div>
           <div className="field">
             <label>

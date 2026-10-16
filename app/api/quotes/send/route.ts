@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomBytes } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
@@ -9,6 +10,16 @@ import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// 邮件正文里的用户输入转义，防止 HTML 注入
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // 简易内存限流
 const windowMs = 60_000;
@@ -107,12 +118,27 @@ export async function POST(req: NextRequest) {
 
   const quoteDate = new Date();
 
+  // 定金要求：需要时生成客户门户 token，邮件里带 Pay deposit 按钮
+  const portalToken = requireDeposit ? randomBytes(24).toString('hex') : null;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.voxalo.top';
+
+  const emailHtml = requireDeposit && portalToken
+    ? `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#111827;">
+<p style="white-space:pre-wrap;">${escapeHtml(safeMessage)}</p>
+<div style="margin:28px 0;text-align:center;">
+<a href="${appUrl}/portal/pay/${portalToken}" style="display:inline-block;background:#16a34a;color:#ffffff;padding:13px 30px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;">Pay deposit — $${depositAmount}</a>
+<p style="color:#6b7280;font-size:13px;margin-top:10px;">A deposit of $${depositAmount} is required to lock your booking.</p>
+</div>
+</div>`
+    : `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#111827;"><p style="white-space:pre-wrap;">${escapeHtml(safeMessage)}</p></div>`;
+
   try {
     // 1. 发送报价邮件给客户
     const sentRes = await sendEmail({
       to: customerEmail,
       subject: safeSubject,
       text: safeMessage,
+      html: emailHtml,
       replyTo: acc?.followup_email || 'follow@voxalo.top',
       fromName: businessName,
     });
@@ -130,6 +156,10 @@ export async function POST(req: NextRequest) {
         source_subject: safeSubject,
         source_body: safeMessage.slice(0, 5000),
         next_followup_at: scheduleForDay(quoteDate, 1).toISOString(),
+        require_deposit: requireDeposit,
+        deposit_amount: depositAmount,
+        deposit_status: requireDeposit ? 'unpaid' : null,
+        portal_token: portalToken,
       })
       .select()
       .single();
