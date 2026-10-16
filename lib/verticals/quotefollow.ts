@@ -3,10 +3,10 @@ import type { VerticalConfig } from '../vertical';
 export const quotefollowConfig: VerticalConfig = {
   brandName: 'QuoteFollow',
   brandSlug: 'quotefollow',
-  tagline: 'Deposits upfront. Chases automatically. Stops when they reply.',
-    gradientText: 'Deposits upfront. Chases automatically. Stops when they reply.',
+  tagline: 'Follows up automatically. Stops when they reply.',
+    gradientText: 'Follows up automatically. Stops when they reply.',
   heroSub:
-      'Send your quote or invoice as usual. QuoteFollow collects deposits upfront, chases payments automatically, and stops the moment your client replies. No nagging. No awkwardness. No lost jobs.',
+      'Send your quote or invoice as usual. QuoteFollow chases payments automatically and stops the moment your client replies. No nagging. No awkwardness. No lost jobs.',
   eyebrow: '',
   audience: 'small businesses, freelancers & solo pros',
   customerLabel: 'job',
@@ -62,11 +62,7 @@ export const quotefollowConfig: VerticalConfig = {
         title: 'Instant alerts',
         desc: 'Get notified the second a client replies or is ready to book. Strike while the iron is hot.',
       },
-      {
-        iconKey: 'flame',
-        title: 'Hot lead detection',
-        desc: 'Know which quotes are hot, warm, or cold before the customer tells you. Focus your energy where it counts.',
-      },
+
       {
         iconKey: 'chart',
         title: 'Never touches your money',
@@ -74,25 +70,25 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         iconKey: 'chart',
-        title: 'Deposits & scope changes, tracked',
-        desc: 'Require a deposit to lock the booking. Log every \'just one more thing\' and turn it into a priced change order automatically.',
+        title: 'Scope changes, tracked',
+        desc: 'Log every \'just one more thing\' and turn it into a priced change order automatically.',
       },
     ],
   howItWorks: [
       {
         num: '01',
         title: 'Send your quote or invoice as usual',
-        desc: 'Email, SMS, or just paste it into the dashboard. We don\'t care how you work — we adapt to you.',
+        desc: 'Email it, or just paste it into the dashboard. We don\'t care how you work — we adapt to you.',
       },
       {
         num: '02',
-        title: 'QuoteFollow collects deposit, then follows up',
-        desc: 'Require a deposit to lock the booking. We send smart follow-ups on Day 1, 3, and 7 — not too early, not too late.',
+        title: 'Follows up on Day 1, 3, and 7 automatically',
+        desc: 'We send smart follow-ups on Day 1, 3, and 7 — not too early, not too late.',
       },
       {
         num: '03',
         title: 'Client replies? It stops. Instantly.',
-        desc: 'The moment your client answers, the sequence pauses and you get alerted. FAQs get answered automatically. You only handle real conversations.',
+        desc: 'The moment your client answers, the sequence pauses and you get alerted. You only handle real conversations.',
       },
       {
         num: '04',
@@ -101,12 +97,8 @@ export const quotefollowConfig: VerticalConfig = {
       },
     ],
   autoStopSection: {
-      title: 'Deposits & scope changes, tracked',
+      title: 'Scope changes, tracked',
       columns: [
-        {
-          scenario: 'Client pays deposit',
-          result: 'Booking locked. Follow-ups start. You\'re protected from no-shows.',
-        },
         {
           scenario: 'Client goes silent',
           result: 'Sequence keeps going: Day 1 nudge, Day 3 payment link, Day 7 final notice.',
@@ -120,11 +112,11 @@ export const quotefollowConfig: VerticalConfig = {
   faq: [
       {
         q: 'What happens when a customer replies?',
-        a: 'Follow-ups stop immediately — automatically. QuoteFollow reads your inbox, so the moment your client answers, the sequence pauses and you take over. You\'ll never be the bot that keeps nagging someone who already paid.',
+        a: 'Follow-ups stop immediately — automatically. QuoteFollow monitors replies, so the moment your client answers, the sequence pauses and you take over. You\'ll never be the bot that keeps nagging someone who already paid.',
       },
       {
         q: 'How does QuoteFollow know I sent a quote?',
-        a: 'You can forward quote or invoice emails to your unique inbox address, or paste them directly into the dashboard. Either way, we read and archive everything automatically.',
+        a: 'You can paste quote or invoice emails directly into the dashboard. QuoteFollow archives them and keeps everything tracked.',
       },
       {
         q: 'Will the customer know it\'s automated?',
@@ -135,8 +127,8 @@ export const quotefollowConfig: VerticalConfig = {
         a: 'Yes. You can review and edit every follow-up before it\'s sent. You\'re always in control.',
       },
       {
-        q: 'What if the customer asks something the AI can\'t answer?',
-        a: 'The AI handles common questions about pricing, availability, and process. For anything complex, it flags it for you and you can step in directly.',
+        q: 'What if a customer replies with a specific question?',
+        a: 'You get alerted right away and can answer directly. Anything complex is flagged for you to handle.',
       },
       {
         q: 'Do you hold my money or store my clients\' cards?',
@@ -148,15 +140,11 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         q: 'How much does it cost?',
-        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). Free for 14 days, up to 3 clients — whichever comes first. No hidden fees. Cancel anytime.',
+        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). Free for 14 days, up to 3 clients — whichever comes first. No hidden fees.',
       },
       {
         q: 'When will I see results?',
         a: 'Most users see their first recovered job within 2 weeks. The Day 3 follow-up alone can re-engage customers who went silent.',
-      },
-      {
-        q: 'How do deposits work?',
-        a: 'When you create a quote, you can mark it as requiring a deposit. Your customer pays the deposit via PayPal to lock in the booking. Once paid, follow-ups start automatically. The deposit goes straight to your PayPal.',
       },
       {
         q: 'What are scope changes?',
@@ -188,7 +176,6 @@ export const quotefollowConfig: VerticalConfig = {
             'Lifetime $29/mo — locked while it lasts',
             'Only 10 spots — first come first served',
             'Free for 14 days, up to 3 clients',
-            'Cancel anytime',
           ],
           cta: 'Get Early Bird — $29/mo',
           badge: 'Only 10 spots',
@@ -204,9 +191,7 @@ export const quotefollowConfig: VerticalConfig = {
             'Unlimited quotes & invoices',
             'Free for 14 days, up to 3 clients',
             'Smart follow-ups (Day 1/3/7)',
-            'Electronic signatures',
             'Auto-stop when client replies',
-            'Cancel anytime',
           ],
           cta: 'Start free trial — $49/mo',
           badge: 'Most popular',
@@ -223,7 +208,6 @@ export const quotefollowConfig: VerticalConfig = {
             '2 months free vs monthly',
             'One-time payment — $490/yr',
             'Free for 14 days, up to 3 clients',
-            'Cancel anytime',
           ],
           cta: 'Go Yearly — $490/yr',
           badge: '2 months free',

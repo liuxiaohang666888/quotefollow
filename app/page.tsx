@@ -102,7 +102,7 @@ export default function LandingPage() {
             Log in
           </Link>
         </div>
-        <p className="hero-trust">Free for 14 days, up to 3 clients · No credit card required · Cancel anytime</p>
+        <p className="hero-trust">Free for 14 days, up to 3 clients · No credit card required</p>
         <p className="hero-tech">
           <span className="trust-badge">Powered by PayPal</span>
         </p>
@@ -451,7 +451,7 @@ export default function LandingPage() {
             <section className="pricing-section" id="pricing">
         <p className="eyebrow">Pricing</p>
         <h2>Simple pricing</h2>
-        <p className="pricing-sub">From $29/mo. Free for 14 days, up to 3 clients. Cancel anytime.</p>
+        <p className="pricing-sub">From $29/mo. Free for 14 days, up to 3 clients.</p>
         <div className="pricing-grid">
           {config.pricing.tiers?.map((tier, i) => (
             <div className={`pricing-card ${tier.isPopular ? 'popular' : ''}`} key={tier.id || i}>
@@ -473,7 +473,7 @@ export default function LandingPage() {
               </div>
               <div className="pricing-cta">
                 <PayPalSubscribeButton planId={tier.planId} label={tier.cta || `Subscribe — $${tier.price}/mo`} />
-                <p className="pricing-guarantee">Free for 14 days, up to 3 clients · Cancel anytime</p>
+                <p className="pricing-guarantee">Free for 14 days, up to 3 clients</p>
               </div>
             </div>
           ))}
@@ -509,7 +509,7 @@ export default function LandingPage() {
           Start free trial
           <span className="arrow">→</span>
         </Link>
-        <p className="final-cta-note">Free for 14 days, up to 3 clients · No credit card required · Cancel anytime</p>
+        <p className="final-cta-note">Free for 14 days, up to 3 clients · No credit card required</p>
       </section>
 
       <footer className="footer">
