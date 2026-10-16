@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 // 客户付定金门户：凭 portal_token 读取报价定金信息 + 老板收款链接
 export async function GET(
   _request: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
-  const { token } = params;
+  const { token } = await params;
   if (!token) {
     return NextResponse.json({ ok: false, error: 'missing token' }, { status: 400 });
   }
