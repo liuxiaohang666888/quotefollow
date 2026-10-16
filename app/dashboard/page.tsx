@@ -13,17 +13,19 @@ interface Quote {
   customer_email: string;
   service_type: string;
   amount: number | null;
-  status: 'following' | 'replied' | 'won' | 'lost';
+  status: 'following' | 'replied' | 'won' | 'lost' | 'paused' | 'closed';
   quote_date: string;
   followup_count: number;
   next_followup_at: string | null;
 }
 
-type Filter = 'all' | 'following' | 'replied' | 'won' | 'lost';
+type Filter = 'all' | 'following' | 'replied' | 'won' | 'lost' | 'paused' | 'closed';
 
 const STATUS_LABEL: Record<Quote['status'], string> = {
   following: 'Following up',
   replied: 'Client replied — paused',
+  paused: 'Paused',
+  closed: 'Closed',
   won: 'Won',
   lost: 'Lost',
 };
@@ -350,14 +352,22 @@ export default function DashboardPage() {
             <div className="stat-value blue">{quotes.filter((q) => q.status === 'replied').length}</div>
           </div>
           <div className="stat-card">
+            <div className="stat-label">Paused</div>
+            <div className="stat-value" style={{ color: '#fbbf24' }}>{quotes.filter((q) => q.status === 'paused').length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Closed</div>
+            <div className="stat-value" style={{ color: '#f87171' }}>{quotes.filter((q) => q.status === 'closed').length}</div>
+          </div>
+          <div className="stat-card">
             <div className="stat-label">Lost</div>
-            <div className="stat-value" style={{ color: '#f87171' }}>{quotes.filter((q) => q.status === 'lost').length}</div>
+            <div className="stat-value" style={{ color: '#9ca3af' }}>{quotes.filter((q) => q.status === 'lost').length}</div>
           </div>
         </div>
       )}
 
       <div className="status-pills">
-        {(['all', 'following', 'replied', 'won', 'lost'] as Filter[]).map((f) => (
+        {(['all', 'following', 'replied', 'paused', 'closed', 'won', 'lost'] as Filter[]).map((f) => (
           <button
             key={f}
             className={`status-pill ${filter === f ? 'active' : ''}`}

@@ -215,9 +215,14 @@ export default function QuoteDetailPage() {
           );
         })}
 
-        {quote.status === 'replied' && (
+        {quote.status === 'paused' && (
           <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, fontSize: 13, color: '#60a5fa' }}>
-            ⏸ Follow-ups paused automatically — the customer replied. Take it from here.
+            ⏸ Follow-ups paused automatically — the customer replied. It will resume when you send this client a new quote or invoice.
+          </div>
+        )}
+        {quote.status === 'closed' && (
+          <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, fontSize: 13, color: '#f87171' }}>
+            🏁 Follow-ups closed — client explicitly refused, asked not to be contacted, or has paid.
           </div>
         )}
       </div>

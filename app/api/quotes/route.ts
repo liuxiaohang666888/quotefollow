@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseQuoteEmail } from '@/lib/ai';
 import { scheduleForDay } from '@/lib/followup';
+import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
 import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
@@ -107,6 +108,15 @@ export async function POST(req: NextRequest) {
     console.error('[quotes/create] error:', error.code);
     return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
   }
+
+  // 新报价创建 = 同客户有新商机：恢复该客户此前 paused 的报价，继续自动跟进
+  const resumed = await resumePausedFollowupsForCustomer(
+    admin,
+    user.id,
+    parsed.customer_email || '',
+    quote.id
+  );
+  console.log('[quotes/create] resumed paused followups for customer:', resumed);
 
   return NextResponse.json({ ok: true, quote_id: quote.id });
 }

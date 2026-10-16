@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
+import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
 import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
@@ -151,6 +152,10 @@ export async function POST(req: NextRequest) {
       message_id: sentRes?.id || '',
       in_reply_to: '',
     });
+
+    // 4. 新报价发出 = 同客户有新商机：恢复该客户此前 paused 的报价，继续自动跟进
+    const resumed = await resumePausedFollowupsForCustomer(admin, user.id, customerEmail, quote.id);
+    console.log('[quotes/send] resumed paused followups for customer:', resumed);
 
     return NextResponse.json({ ok: true, quote_id: quote.id });
   } catch (e) {

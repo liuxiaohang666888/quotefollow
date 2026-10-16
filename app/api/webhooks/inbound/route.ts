@@ -4,6 +4,7 @@ import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '
 import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
+import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
 import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 
@@ -274,6 +275,15 @@ export async function POST(req: NextRequest) {
     in_reply_to: '',
   });
 
+  // 新报价建档 = 同客户有新商机：恢复该客户此前 paused 的报价，继续自动跟进
+  const resumed = await resumePausedFollowupsForCustomer(
+    admin,
+    account.id,
+    parsed.customer_email || senderEmail,
+    quote.id
+  );
+  console.log('[inbound] resumed paused followups for customer:', resumed);
+
   console.log('[inbound] new quote created:', quote.id);
   return NextResponse.json({ ok: true, quote_id: quote.id });
 }
@@ -317,18 +327,17 @@ async function handleCustomerReply(args: {
     const isStop = STOP_KEYWORDS.some(k => bodyLower.includes(k));
     const isRefusal = REFUSAL_KEYWORDS.some(k => bodyLower.includes(k));
 
-    let newStatus: 'paused' | 'paid' | 'stopped';
+    let newStatus: 'paused' | 'closed';
     let notificationText: string;
 
-    if (isPaid) {
-      newStatus = 'paid';
-      notificationText = `✅ Client ${quote.customer_name || senderEmail} confirmed PAYMENT for quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — payment received.`;
-    } else if (isStop || isRefusal) {
-      newStatus = 'stopped';
-      notificationText = `🛑 Client ${quote.customer_name || senderEmail} requested to stop contact (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — explicit refusal.`;
+    if (isPaid || isStop || isRefusal) {
+      newStatus = 'closed';
+      notificationText = isPaid
+        ? `✅ Client ${quote.customer_name || senderEmail} confirmed PAYMENT for quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — payment received.`
+        : `🛑 Client ${quote.customer_name || senderEmail} requested to stop contact (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). 🏁 Follow-ups CLOSED — explicit refusal.`;
     } else {
       newStatus = 'paused';
-      notificationText = `✅ Client ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). ⏸ Follow-ups PAUSED — sequence paused. Resume manually when ready.`;
+      notificationText = `✅ Client ${quote.customer_name || senderEmail} replied to your quote (${quote.service_type || 'service'}, $${quote.amount ?? 'n/a'}). ⏸ Follow-ups PAUSED — auto-resume on next quote/invoice.`;
     }
 
     // 更新状态
