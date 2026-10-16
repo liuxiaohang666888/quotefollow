@@ -9,6 +9,7 @@ interface Account {
   slack_webhook: string;
   auto_reply_enabled: boolean;
   business_info: Record<string, string>;
+  paypal_subscription_id: string | null;
 }
 
 const DEFAULT_INFO: Record<string, string> = {
@@ -24,6 +25,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelMsg, setCancelMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [info, setInfo] = useState<Record<string, string>>(DEFAULT_INFO);
 
   async function load() {
@@ -61,6 +64,25 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 2500);
     }
     setSaving(false);
+  }
+
+  async function cancelSubscription() {
+    if (!account?.paypal_subscription_id || cancelling) return;
+    setCancelling(true);
+    setCancelMsg(null);
+    try {
+      const res = await fetch('/api/paypal/cancel-subscription', { method: 'POST' });
+      const json = await res.json();
+      if (json.ok) {
+        setAccount((a) => (a ? { ...a, paypal_subscription_id: null } : a));
+        setCancelMsg({ text: json.message || 'Cancelled — service continues until the end of the current billing period.', ok: true });
+      } else {
+        setCancelMsg({ text: 'Failed to cancel: ' + (json.error || 'unknown error'), ok: false });
+      }
+    } catch {
+      setCancelMsg({ text: 'Failed to cancel: network error', ok: false });
+    }
+    setCancelling(false);
   }
 
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
@@ -193,6 +215,43 @@ export default function SettingsPage() {
           {saved && <span style={{ color: '#059669', fontSize: 14, fontWeight: 600 }}>✓ Saved</span>}
         </div>
       </form>
+
+      {/* 订阅管理（低调入口） */}
+      <div className="card" style={{ opacity: 0.9 }}>
+        <h3>Subscription</h3>
+        {account?.paypal_subscription_id ? (
+          <>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
+              Active subscription (ID: {account.paypal_subscription_id}) — you are on the Pro plan.
+            </p>
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                className="btn"
+                type="button"
+                disabled={cancelling}
+                onClick={cancelSubscription}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 13,
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--fg)',
+                  opacity: cancelling ? 0.6 : 1,
+                }}
+              >
+                {cancelling ? 'Cancelling…' : 'Cancel subscription'}
+              </button>
+              {cancelMsg && (
+                <span style={{ fontSize: 13, color: cancelMsg.ok ? '#059669' : '#dc2626' }}>{cancelMsg.text}</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
+            No active subscription — you are on the free plan (3 clients, 14-day trial).
+          </p>
+        )}
+      </div>
 
       <FeedbackBox />
     </div>

@@ -63,3 +63,52 @@ export async function verifyPaypalSubscription(subId: string): Promise<VerifyRes
     return { ok: false, reason: 'paypal verify error' };
   }
 }
+
+// 取消 PayPal 订阅（用户主动取消）
+export async function cancelPaypalSubscription(subId: string): Promise<{ ok: boolean; reason: string }> {
+  if (!isValidPaypalSubscriptionId(subId)) {
+    return { ok: false, reason: 'invalid subscription id format' };
+  }
+
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.error('[paypal] PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET not configured for cancel!');
+    return { ok: false, reason: 'paypal credentials not configured' };
+  }
+
+  try {
+    const tokenRes = await fetch(`${API_BASE}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
+      },
+      body: 'grant_type=client_credentials',
+    });
+    if (!tokenRes.ok) {
+      return { ok: false, reason: 'paypal auth failed' };
+    }
+    const tokenJson = (await tokenRes.json()) as { access_token?: string };
+    const accessToken = tokenJson.access_token;
+    if (!accessToken) {
+      return { ok: false, reason: 'paypal auth failed: no token' };
+    }
+
+    const cancelRes = await fetch(`${API_BASE}/v1/billing/subscriptions/${encodeURIComponent(subId)}/cancel`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'Customer cancelled from Settings' }),
+    });
+    if (!cancelRes.ok) {
+      return { ok: false, reason: `cancel failed (http ${cancelRes.status})` };
+    }
+    return { ok: true, reason: 'cancelled' };
+  } catch (e) {
+    return { ok: false, reason: 'paypal cancel error' };
+  }
+}

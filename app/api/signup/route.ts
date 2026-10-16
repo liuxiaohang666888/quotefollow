@@ -75,6 +75,15 @@ export async function POST(req: NextRequest) {
       paypal_subscription_id: paypalSubscriptionId,
       referral_code: newReferralCode,
     };
+    // 试用期显式跟踪：仅新账号写入 trial_ends_at（14 天后到期），已存在账号不覆盖
+    const { data: existingAccount } = await admin
+      .from('accounts')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+    if (!existingAccount) {
+      upsertData.trial_ends_at = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    }
     if (referralCode) {
       upsertData.referred_by = referralCode; // This will be set after we look it up
     }

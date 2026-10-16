@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string; created_at: string | null } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string; created_at: string | null; trial_ends_at: string | null } | null>(null);
   const [quotaUsed, setQuotaUsed] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
     const { data: acc } = await supabase
       .from('accounts')
-      .select('followup_email, business_name, paypal_subscription_id, referral_code, created_at')
+      .select('followup_email, business_name, paypal_subscription_id, referral_code, created_at, trial_ends_at')
       .maybeSingle();
     setAccount(acc as any);
     setLoading(false);
@@ -85,10 +85,12 @@ export default function DashboardPage() {
   const isFree = !account?.paypal_subscription_id;
   const isExhausted = isFree && remaining === 0;
 
-  // 14 天试用计时（与后端 lib/paywall.ts 的 TRIAL_DAYS 对齐）
-  const trialEndsAt = account?.created_at
-    ? new Date(new Date(account.created_at).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
-    : null;
+  // 14 天试用计时：优先用显式 trial_ends_at，老账号回退到 created_at + TRIAL_DAYS 推算
+  const trialEndsAt = account?.trial_ends_at
+    ? new Date(account.trial_ends_at)
+    : account?.created_at
+      ? new Date(new Date(account.created_at).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
+      : null;
   const trialDaysLeft = trialEndsAt
     ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : TRIAL_DAYS;
