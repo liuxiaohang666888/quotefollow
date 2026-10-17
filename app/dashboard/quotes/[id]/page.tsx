@@ -18,6 +18,61 @@ interface Quote {
   deposit_paid_at: string | null;
   business_name?: string;
   created_at: string;
+  quote_date: string;
+  followup_count: number;
+  next_followup_at: string | null;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft',
+  sent: 'Sent',
+  following: 'Following up',
+  replied: 'Client replied — paused',
+  paused: 'Paused',
+  closed: 'Closed',
+  won: 'Won',
+  lost: 'Lost',
+  paid: 'Paid',
+  stopped: 'Stopped',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  draft: '#9ca3af',
+  sent: '#60a5fa',
+  following: '#a5b4fc',
+  replied: '#60a5fa',
+  paused: '#fbbf24',
+  closed: '#f87171',
+  won: '#34d399',
+  lost: '#9ca3af',
+  paid: '#34d399',
+  stopped: '#9ca3af',
+};
+
+const STATUS_NOTE: Record<string, string> = {
+  following: 'Auto follow-ups are active — next one is scheduled and will be sent unless the client replies.',
+  replied: 'The client replied, so auto follow-ups paused. Send a new quote/invoice to resume.',
+  paused: 'Follow-ups paused automatically — the customer replied. It resumes when you send a new quote or invoice.',
+  closed: 'Follow-ups closed — client explicitly refused, asked not to be contacted, or has paid.',
+  won: 'Marked as won — closed deal.',
+  lost: 'Marked as lost — no longer pursuing.',
+  draft: 'Not sent yet.',
+  sent: 'Quote sent — awaiting client response.',
+  paid: 'Paid.',
+  stopped: 'Stopped (legacy status).',
+};
+
+function statusLabel(status: string): string {
+  return STATUS_LABEL[status] || status || 'Unknown';
+}
+
+function statusColor(status: string): string {
+  return STATUS_COLOR[status] || 'var(--fg)';
+}
+
+function formatDate(iso?: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 interface ScopeChange {
@@ -155,8 +210,41 @@ export default function QuoteDetailPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 0' }}>
       <a href="/dashboard" style={{ color: '#2563eb', fontSize: 14 }}>← Back to quotes</a>
-      <h1 style={{ marginTop: 12 }}>{quote.customer_name || quote.customer_email}</h1>
-      <p style={{ color: '#6b7280', marginBottom: 24 }}>{quote.service_type}</p>
+      <h1 style={{ marginTop: 12, marginBottom: 4 }}>{quote.customer_name || quote.customer_email}</h1>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+        <span className="badge-status" style={{ color: statusColor(quote.status), borderColor: statusColor(quote.status) }}>
+          {statusLabel(quote.status)}
+        </span>
+        {quote.require_deposit && (
+          <span className={`badge-status ${quote.deposit_status === 'paid' ? 'won' : 'following'}`} style={{ color: quote.deposit_status === 'paid' ? '#34d399' : '#fbbf24' }}>
+            {quote.deposit_status === 'paid' ? 'Deposit paid' : 'Deposit due'}
+          </span>
+        )}
+        {quote.amount !== null && quote.amount > 0 && (
+          <span className="badge-status" style={{ color: '#fbbf24', borderColor: '#fbbf24' }}>
+            ${quote.amount}
+          </span>
+        )}
+      </div>
+      <p style={{ color: '#6b7280', marginBottom: 8 }}>{quote.service_type}</p>
+      <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>
+        Quoted {formatDate(quote.quote_date)}
+        {quote.followup_count > 0 && <> · {quote.followup_count} follow-up{quote.followup_count > 1 ? 's' : ''}</>}
+        {quote.next_followup_at && <> · Next follow-up: {formatDate(quote.next_followup_at)}</>}
+      </p>
+      {STATUS_NOTE[quote.status] && (
+        <div style={{
+          marginBottom: 20,
+          padding: '10px 16px',
+          borderRadius: 8,
+          fontSize: 13,
+          background: 'rgba(99,102,241,0.06)',
+          border: '1px solid rgba(99,102,241,0.25)',
+          color: '#a5b4fc',
+        }}>
+          {STATUS_NOTE[quote.status]}
+        </div>
+      )}
 
       {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#f87171' }}>{error}</div>}
       {sendSuccess && <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#34d399' }}>✓ Email sent successfully!</div>}
@@ -216,16 +304,6 @@ export default function QuoteDetailPage() {
           );
         })}
 
-        {quote.status === 'paused' && (
-          <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, fontSize: 13, color: '#60a5fa' }}>
-            ⏸ Follow-ups paused automatically — the customer replied. It will resume when you send this client a new quote or invoice.
-          </div>
-        )}
-        {quote.status === 'closed' && (
-          <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, fontSize: 13, color: '#f87171' }}>
-            🏁 Follow-ups closed — client explicitly refused, asked not to be contacted, or has paid.
-          </div>
-        )}
       </div>
 
       {/* Scope Changes */}

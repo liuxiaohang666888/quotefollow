@@ -13,24 +13,51 @@ interface Quote {
   customer_email: string;
   service_type: string;
   amount: number | null;
-  status: 'following' | 'replied' | 'won' | 'lost' | 'paused' | 'closed';
+  status: string;
   quote_date: string;
   followup_count: number;
   next_followup_at: string | null;
   require_deposit: boolean;
   deposit_status: string;
+  deposit_amount: number | null;
+  deposit_paid_at: string | null;
 }
 
 type Filter = 'all' | 'following' | 'replied' | 'won' | 'lost' | 'paused' | 'closed';
 
-const STATUS_LABEL: Record<Quote['status'], string> = {
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft',
+  sent: 'Sent',
   following: 'Following up',
   replied: 'Client replied — paused',
   paused: 'Paused',
   closed: 'Closed',
   won: 'Won',
   lost: 'Lost',
+  paid: 'Paid',
+  stopped: 'Stopped',
 };
+
+const STATUS_COLOR: Record<string, string> = {
+  draft: '#9ca3af',
+  sent: '#60a5fa',
+  following: '#a5b4fc',
+  replied: '#60a5fa',
+  paused: '#fbbf24',
+  closed: '#f87171',
+  won: '#34d399',
+  lost: '#9ca3af',
+  paid: '#34d399',
+  stopped: '#9ca3af',
+};
+
+function statusLabel(status: string): string {
+  return STATUS_LABEL[status] || status || 'Unknown';
+}
+
+function statusColor(status: string): string {
+  return STATUS_COLOR[status] || 'var(--fg)';
+}
 
 function formatDate(iso: string): string {
   if (!iso) return '—';
@@ -409,6 +436,7 @@ export default function DashboardPage() {
                     {q.service_type || 'Service not specified'}
                     {' · '}Quoted {formatDate(q.quote_date)}
                     {q.followup_count > 0 && <> · {q.followup_count} follow-up{q.followup_count > 1 ? 's' : ''}</>}
+                    {q.next_followup_at && <>{' · '}Next: {formatDate(q.next_followup_at)}</>}
                   </div>
                 </div>
                 <div className="right">
@@ -416,12 +444,12 @@ export default function DashboardPage() {
                     <span className="amount">${q.amount}</span>
                   )}
                   {q.require_deposit && (
-                    <span className={`badge-status ${q.deposit_status === 'paid' ? 'won' : 'following'}`}>
+                    <span className={`badge-status ${q.deposit_status === 'paid' ? 'won' : 'following'}`} style={{ color: q.deposit_status === 'paid' ? '#34d399' : '#fbbf24' }}>
                       {q.deposit_status === 'paid' ? 'Deposit paid' : 'Deposit due'}
                     </span>
                   )}
-                  <span className={`badge-status ${q.status}`}>
-                    {STATUS_LABEL[q.status]}
+                  <span className="badge-status" style={{ color: statusColor(q.status), borderColor: statusColor(q.status) }}>
+                    {statusLabel(q.status)}
                   </span>
                 </div>
               </div>
