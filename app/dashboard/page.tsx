@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { computeHeat } from '@/lib/heat';
 import { FREE_QUOTA, TRIAL_DAYS } from '@/lib/paywall';
 import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
 import PayPalSubscribeButton, { PLAN_PRO_ID } from '@/components/PayPalSubscribeButton';
@@ -440,6 +441,18 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="right">
+                  {(() => {
+                    const heat = computeHeat(q);
+                    return (
+                      <span
+                        className="badge-status"
+                        style={{ color: heat.color, borderColor: heat.color }}
+                        title={heat.reason}
+                      >
+                        {heat.label}
+                      </span>
+                    );
+                  })()}
                   {q.amount !== null && q.amount > 0 && (
                     <span className="amount">${q.amount}</span>
                   )}

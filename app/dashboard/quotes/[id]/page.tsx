@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { computeHeat } from '@/lib/heat';
 import { sendEmail } from '@/lib/resend';
 
 interface Quote {
@@ -212,6 +213,18 @@ export default function QuoteDetailPage() {
       <a href="/dashboard" style={{ color: '#2563eb', fontSize: 14 }}>← Back to quotes</a>
       <h1 style={{ marginTop: 12, marginBottom: 4 }}>{quote.customer_name || quote.customer_email}</h1>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+        {(() => {
+          const heat = computeHeat(quote);
+          return (
+            <span
+              className="badge-status"
+              style={{ color: heat.color, borderColor: heat.color }}
+              title={heat.reason}
+            >
+              {heat.label}
+            </span>
+          );
+        })()}
         <span className="badge-status" style={{ color: statusColor(quote.status), borderColor: statusColor(quote.status) }}>
           {statusLabel(quote.status)}
         </span>
