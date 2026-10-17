@@ -7,6 +7,7 @@ import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
 import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { Webhook } from 'svix';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,14 +25,27 @@ interface InboundMail {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-inbound-secret');
-  if (secret !== process.env.INBOUND_WEBHOOK_SECRET) {
+  // Resend 官方签名验签（Svix 协议）：必须使用原始请求体，
+  // 任何先 JSON.parse 再 stringify 都会破坏签名，导致校验失败。
+  const payload = await req.text();
+  const svixId = req.headers.get('svix-id');
+  const svixTimestamp = req.headers.get('svix-timestamp');
+  const svixSignature = req.headers.get('svix-signature');
+
+  try {
+    const wh = new Webhook(process.env.RESEND_WEBHOOK_SIGNING_SECRET || '');
+    wh.verify(payload, {
+      'svix-id': svixId || '',
+      'svix-timestamp': svixTimestamp || '',
+      'svix-signature': svixSignature || '',
+    });
+  } catch {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
   let mail: InboundMail;
   try {
-    mail = (await req.json()) as InboundMail;
+    mail = JSON.parse(payload) as InboundMail;
   } catch {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
