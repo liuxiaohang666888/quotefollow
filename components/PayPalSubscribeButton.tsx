@@ -17,6 +17,8 @@ declare global {
   }
 }
 
+const SDK_SRC = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription&enable-funding=paylater%2Ccard`;
+
 export default function PayPalSubscribeButton({
   label = 'Start free trial — $49/mo',
   planId,
@@ -27,46 +29,17 @@ export default function PayPalSubscribeButton({
   fallbackHref?: string;
 }) {
   const activePlanId = planId || DEFAULT_PLAN_ID;
-  const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState(false);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const renderedRef = useRef(false);
 
   useEffect(() => {
-    if (!activePlanId || !CLIENT_ID || !containerRef.current) return;
-    if (renderedRef.current) return;
-    renderedRef.current = true;
+    if (!activePlanId || !CLIENT_ID) return;
 
-    const renderButtons = () => {
-      if (!window.paypal || !containerRef.current) return;
-      try {
-        window.paypal.Buttons({
-          style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
-          createSubscription: (data: any, actions: any) =>
-            actions.subscription.create({ plan_id: activePlanId }),
-          onApprove: (data: any) => {
-            const url = new URL('/signup', window.location.origin);
-            url.searchParams.set('sub', data.subscriptionID);
-            window.location.href = url.toString();
-          },
-          onError: (err: any) => {
-            console.error('[PayPalSubscribeButton] PayPal button error:', err);
-            setSdkError(true);
-          },
-        }).render(containerRef.current);
-        setSdkLoaded(true);
-        setLoading(false);
-      } catch (err) {
-        console.error('[PayPalSubscribeButton] render error:', err);
-        setSdkError(true);
-        setLoading(false);
-      }
-    };
-
-    const existing = document.querySelector('script[data-paypal-sdk="qf"]');
+    let cancelled = false;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let interval: ReturnType<typeof setInterval> | undefined;
+    let renderAttempts = 0;
 
     const finish = (error: boolean) => {
       if (timeout) clearTimeout(timeout);
@@ -75,11 +48,67 @@ export default function PayPalSubscribeButton({
       setLoading(false);
     };
 
+    const renderButtons = () => {
+      if (cancelled) return;
+      if (!window.paypal || !containerRef.current) return; // 容器未就绪，交给轮询下一轮
+      if (renderAttempts >= 3) {
+        finish(true);
+        return;
+      }
+      renderAttempts++;
+      try {
+        window.paypal
+          .Buttons({
+            style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
+            createSubscription: (data: any, actions: any) =>
+              actions.subscription.create({ plan_id: activePlanId }),
+            onApprove: (data: any) => {
+              const url = new URL('/signup', window.location.origin);
+              url.searchParams.set('sub', data.subscriptionID);
+              window.location.href = url.toString();
+            },
+            onError: (err: any) => {
+              console.error('[PayPalSubscribeButton] PayPal button error:', err);
+              finish(true);
+            },
+          })
+          .render(containerRef.current)
+          .then(() => {
+            // 渲染成功后再确认 iframe 真正落盘；偶发容器未显示时重试一次
+            setTimeout(() => {
+              if (cancelled) return;
+              const hasIframe = !!containerRef.current?.querySelector('iframe');
+              if (!hasIframe && renderAttempts < 3) {
+                renderButtons();
+              } else {
+                setLoading(false);
+              }
+            }, 1200);
+          })
+          .catch((err: any) => {
+            console.error('[PayPalSubscribeButton] render error:', err);
+            if (renderAttempts >= 3) {
+              finish(true);
+            } else {
+              setTimeout(renderButtons, 500);
+            }
+          });
+      } catch (err) {
+        console.error('[PayPalSubscribeButton] render throw:', err);
+        if (renderAttempts >= 3) {
+          finish(true);
+        } else {
+          setTimeout(renderButtons, 500);
+        }
+      }
+    };
+
+    const existing = document.querySelector('script[data-paypal-sdk="qf"]');
+
     if (!existing) {
       const s = document.createElement('script');
-      s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&vault=true&intent=subscription&enable-funding=paylater%2Ccard`;
+      s.src = SDK_SRC;
       s.setAttribute('data-paypal-sdk', 'qf');
-      s.crossOrigin = null;
 
       s.onload = () => {
         let attempts = 0;
@@ -88,7 +117,7 @@ export default function PayPalSubscribeButton({
           if (window.paypal) {
             if (interval) clearInterval(interval);
             renderButtons();
-          } else if (attempts > 20) {
+          } else if (attempts > 25) {
             // SDK 脚本加载了但 paypal 对象没出现 → 校验失败（400 等）
             finish(true);
           }
@@ -124,6 +153,7 @@ export default function PayPalSubscribeButton({
     }
 
     return () => {
+      cancelled = true;
       if (timeout) clearTimeout(timeout);
       if (interval) clearInterval(interval);
     };
@@ -155,4 +185,3 @@ export default function PayPalSubscribeButton({
     </div>
   );
 }
-
