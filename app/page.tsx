@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
 import { getVerticalConfig, getBrandName } from '@/lib/vertical';
+import { createClient } from '@/lib/supabase/client';
 
 // 统一线性图标（stroke=currentColor），比 emoji 更克制、更接近苹果风格
 const icons = {
@@ -51,8 +52,35 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const config = getVerticalConfig();
   const brand = getBrandName();
+
+  useEffect(() => {
+    let cancelled = false;
+    createClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data.session) {
+          window.location.replace('/dashboard');
+        } else {
+          setCheckingAuth(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCheckingAuth(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (checkingAuth) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-dim)', fontSize: 14 }}>
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <>
