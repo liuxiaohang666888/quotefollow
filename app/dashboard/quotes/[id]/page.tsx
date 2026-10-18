@@ -470,6 +470,14 @@ export default function QuoteDetailPage() {
           )}
         </div>
       )}
+      {!quote.require_deposit && (
+        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>Deposit</h3>
+          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
+            No deposit required for this quote. To collect deposits, enable "Require deposit" when creating quotes and set your payment link in Settings.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
