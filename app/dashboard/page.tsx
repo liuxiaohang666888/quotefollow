@@ -134,7 +134,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (!e.target || !(e.target as HTMLElement).closest('#export-menu')) {
+      const t = e.target as HTMLElement | null;
+      if (!t || (!t.closest('#export-menu') && !t.closest('#export-btn'))) {
         setExportOpen(false);
       }
     }
@@ -196,6 +197,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                                             <div style={{ position: 'relative' }}>
                                               <button
+                                                id="export-btn"
                                                 className="btn"
                                                 style={{ width: 'fit-content', padding: '10px 16px', fontSize: 14 }}
                                                 onClick={() => setExportOpen(!exportOpen)}
