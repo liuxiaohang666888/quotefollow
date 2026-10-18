@@ -55,7 +55,7 @@ export const quotefollowConfig: VerticalConfig = {
       {
         iconKey: 'clock',
         title: 'Smart timing',
-        desc: 'Day 3 friendly nudge, Day 7 payment link, Day 7 final notice. Sent when your customer is most likely to reply.',
+        desc: 'Day 1 gentle check-in, Day 3 value nudge, Day 7 soft closing note. Sent when your customer is most likely to reply.',
       },
       {
         iconKey: 'bell',
@@ -101,7 +101,7 @@ export const quotefollowConfig: VerticalConfig = {
       columns: [
         {
           scenario: 'Client goes silent',
-          result: 'Sequence keeps going: Day 1 nudge, Day 3 payment link, Day 7 final notice.',
+          result: 'Sequence keeps going: Day 1 gentle check-in, Day 3 value nudge, Day 7 soft closing note.',
         },
         {
           scenario: 'Client asks for changes',
@@ -132,7 +132,7 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         q: 'Do you hold my money or store my clients\' cards?',
-        a: 'No. QuoteFollow sends payment links that go straight to your own PayPal. We never touch your funds, never store cards, and take no cut of your money.',
+        a: 'No. QuoteFollow lets you share your own payment link — payments go straight to your own PayPal. We never touch your funds, never store cards, and take no cut of your money.',
       },
       {
         q: 'Is my data secure?',
@@ -140,11 +140,11 @@ export const quotefollowConfig: VerticalConfig = {
       },
       {
         q: 'How much does it cost?',
-        a: 'Early Bird $29/mo (10 seats only), Pro $49/mo, or Yearly $490/yr (2 months free). Free for 14 days, up to 3 clients — whichever comes first. No hidden fees.',
+        a: 'Early Bird $29/mo, Pro $49/mo, or Yearly $490/yr (2 months free). Free for 14 days, up to 3 clients — whichever comes first. No hidden fees.',
       },
       {
         q: 'When will I see results?',
-        a: 'Most users see their first recovered job within 2 weeks. The Day 3 follow-up alone can re-engage customers who went silent.',
+        a: 'Automated follow-ups re-engage silent customers. The Day 3 nudge alone often brings clients back — and every reply pauses the sequence automatically.',
       },
       {
         q: 'What are scope changes?',
@@ -174,11 +174,10 @@ export const quotefollowConfig: VerticalConfig = {
           features: [
             'Everything in Pro',
             'Lifetime $29/mo — locked while it lasts',
-            'Only 10 spots — first come first served',
             'Free for 14 days, up to 3 clients',
           ],
           cta: 'Get Early Bird — $29/mo',
-          badge: 'Only 10 spots',
+          badge: 'Early Bird',
           isPopular: false,
           planId: process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID,
         },
