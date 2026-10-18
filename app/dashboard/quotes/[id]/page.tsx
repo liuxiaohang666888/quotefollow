@@ -106,6 +106,8 @@ export default function QuoteDetailPage() {
   const [sending, setSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [paymentLink, setPaymentLink] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const load = async () => {
     const supabase = createClient();
@@ -120,7 +122,13 @@ export default function QuoteDetailPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    load();
+    fetch('/api/account')
+      .then((r) => r.json())
+      .then((j) => setPaymentLink(j?.account?.payment_link || ''))
+      .catch(() => setPaymentLink(''));
+  }, [id]);
 
   const originalAmount = quote?.amount || 0;
   const totalChanges = scopeChanges.reduce((sum, s) => sum + (s.additional_amount || 0), 0);
@@ -395,9 +403,32 @@ export default function QuoteDetailPage() {
             </div>
           )}
           {quote.deposit_status !== 'paid' && (
-            <button className="btn" onClick={handleMarkDepositPaid} style={{ padding: '10px 20px' }}>
-              Mark deposit as paid
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn" onClick={handleMarkDepositPaid} style={{ padding: '10px 20px' }}>
+                Mark deposit as paid
+              </button>
+              {paymentLink && (
+                <a className="btn" href={paymentLink} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', textDecoration: 'none' }}>
+                  Pay deposit
+                </a>
+              )}
+              {paymentLink && (
+                <button
+                  className="btn"
+                  onClick={() => {
+                    navigator.clipboard.writeText(paymentLink).catch(() => {});
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  style={{ padding: '10px 20px' }}
+                >
+                  {copied ? 'Copied!' : 'Copy payment link'}
+                </button>
+              )}
+              {!paymentLink && (
+                <span style={{ fontSize: 13, color: '#6b7280' }}>No payment link set — add one in Settings to enable Pay/Copy.</span>
+              )}
+            </div>
           )}
         </div>
       )}
