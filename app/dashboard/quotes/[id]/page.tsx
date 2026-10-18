@@ -108,6 +108,7 @@ export default function QuoteDetailPage() {
   const [error, setError] = useState('');
   const [paymentLink, setPaymentLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     const supabase = createClient();
@@ -213,6 +214,24 @@ export default function QuoteDetailPage() {
     }
   }
 
+  async function handleDeleteMessage(messageId: string) {
+    if (deletingId) return;
+    setDeletingId(messageId);
+    const supabase = createClient();
+    const { error: delErr } = await supabase
+      .from('messages')
+      .delete()
+      .eq('id', messageId);
+    if (delErr) {
+      setError('Failed to delete message. You can only delete messages you sent.');
+      console.error(delErr);
+      setDeletingId(null);
+      return;
+    }
+    setDeletingId(null);
+    await load();
+  }
+
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
   if (!quote) return <p>Quote not found. <a href="/dashboard" style={{ color: '#2563eb' }}>Back</a></p>;
 
@@ -311,8 +330,27 @@ export default function QuoteDetailPage() {
                 <span style={{ fontSize: 12, fontWeight: 700, color: isIn ? '#60a5fa' : '#a5b4fc' }}>
                   {isIn ? '💬 Customer replied' : '📧 You sent'}
                 </span>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>
-                  {new Date(m.created_at).toLocaleString()}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: '#6b7280' }}>
+                    {new Date(m.created_at).toLocaleString()}
+                  </span>
+                  {!isIn && (
+                    <button
+                      onClick={() => handleDeleteMessage(m.id)}
+                      disabled={deletingId === m.id}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: deletingId === m.id ? 'default' : 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: deletingId === m.id ? '#6b7280' : '#f87171',
+                      }}
+                    >
+                      {deletingId === m.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  )}
                 </span>
               </div>
               {m.subject && (
