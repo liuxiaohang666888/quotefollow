@@ -37,20 +37,26 @@ export default function PayPalSubscribeButton({
     if (!activePlanId || !CLIENT_ID) return;
 
     let cancelled = false;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
     let interval: ReturnType<typeof setInterval> | undefined;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let renderAttempts = 0;
+    let settled = false;
 
     const finish = (error: boolean) => {
-      if (timeout) clearTimeout(timeout);
+      if (settled) return;
+      settled = true;
       if (interval) clearInterval(interval);
+      if (retryTimer) clearTimeout(retryTimer);
       if (error) setSdkError(true);
       setLoading(false);
     };
 
+    // 硬超时兜底：无论 SDK 加载/轮询/渲染处于何种状态，约 10s 后强制回退为订阅链接
+    const hardTimeout = setTimeout(() => finish(true), 10000);
+
     const renderButtons = () => {
-      if (cancelled) return;
-      if (!window.paypal || !containerRef.current) return; // 容器未就绪，交给轮询下一轮
+      if (cancelled || settled) return;
+      if (!window.paypal || !containerRef.current) return; // 容器未就绪，交给轮询/硬超时兜底
       if (renderAttempts >= 3) {
         finish(true);
         return;
@@ -76,10 +82,13 @@ export default function PayPalSubscribeButton({
           .then(() => {
             // 渲染成功后再确认 iframe 真正落盘；偶发容器未显示时重试一次
             setTimeout(() => {
-              if (cancelled) return;
+              if (cancelled || settled) return;
               const hasIframe = !!containerRef.current?.querySelector('iframe');
               if (!hasIframe && renderAttempts < 3) {
                 renderButtons();
+              } else if (!hasIframe) {
+                // 渲染完成但 iframe 未落盘且重试已耗尽 → 回退订阅链接兜底
+                finish(true);
               } else {
                 setLoading(false);
               }
@@ -90,7 +99,7 @@ export default function PayPalSubscribeButton({
             if (renderAttempts >= 3) {
               finish(true);
             } else {
-              setTimeout(renderButtons, 500);
+              retryTimer = setTimeout(renderButtons, 500);
             }
           });
       } catch (err) {
@@ -98,7 +107,7 @@ export default function PayPalSubscribeButton({
         if (renderAttempts >= 3) {
           finish(true);
         } else {
-          setTimeout(renderButtons, 500);
+          retryTimer = setTimeout(renderButtons, 500);
         }
       }
     };
@@ -111,51 +120,43 @@ export default function PayPalSubscribeButton({
       s.setAttribute('data-paypal-sdk', 'qf');
 
       s.onload = () => {
-        let attempts = 0;
-        interval = setInterval(() => {
-          attempts++;
-          if (window.paypal) {
-            if (interval) clearInterval(interval);
-            renderButtons();
-          } else if (attempts > 25) {
-            // SDK 脚本加载了但 paypal 对象没出现 → 校验失败（400 等）
-            finish(true);
-          }
-        }, 200);
+        if (cancelled || settled) return;
+        startPolling();
       };
 
       s.onerror = () => {
+        if (cancelled || settled) return;
         finish(true);
       };
-
-      timeout = setTimeout(() => {
-        if (interval) clearInterval(interval);
-        finish(true);
-      }, 8000);
 
       document.body.appendChild(s);
     } else {
       // SDK 已在页面中，直接尝试渲染
+      startPolling();
+    }
+
+    function startPolling() {
       let attempts = 0;
       interval = setInterval(() => {
         attempts++;
+        if (cancelled || settled) return;
         if (window.paypal) {
           if (interval) clearInterval(interval);
+          interval = undefined;
           renderButtons();
         } else if (attempts > 25) {
+          // SDK 脚本加载了但 paypal 对象没出现 → 校验失败（400 等）
           finish(true);
         }
       }, 200);
-      timeout = setTimeout(() => {
-        if (interval) clearInterval(interval);
-        finish(true);
-      }, 8000);
     }
 
     return () => {
       cancelled = true;
-      if (timeout) clearTimeout(timeout);
+      settled = true;
       if (interval) clearInterval(interval);
+      if (retryTimer) clearTimeout(retryTimer);
+      clearTimeout(hardTimeout);
     };
   }, [activePlanId]);
 
