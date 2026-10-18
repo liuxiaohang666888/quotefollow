@@ -45,7 +45,25 @@ export async function POST(req: NextRequest) {
 
   let mail: InboundMail;
   try {
-    mail = JSON.parse(payload) as InboundMail;
+    const parsed = JSON.parse(payload);
+    // Resend email.received 与 SES 通知格式不同：Resend 为 { data: { from, to: [] } } 小写字段，
+    // 直接按 InboundMail(大写 From/To) 解析会得到空值，导致 sender/followup 查不到账户。
+    // 此处统一归一化为 InboundMail 风格。
+    const rdata = parsed?.data && typeof parsed.data === 'object' ? parsed.data : null;
+    if (rdata) {
+      mail = {
+        From: rdata.from || '',
+        To: Array.isArray(rdata.to) ? rdata.to.join(', ') : (rdata.to || ''),
+        Subject: rdata.subject || '',
+        text: rdata.text || '',
+        html: rdata.html || '',
+        raw_mime: rdata.raw_mime || '',
+        'Message-Id': rdata.messageId || rdata.message_id || '',
+        'In-Reply-To': rdata.inReplyTo || rdata.in_reply_to || '',
+      };
+    } else {
+      mail = parsed as InboundMail;
+    }
   } catch {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
