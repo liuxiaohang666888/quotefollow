@@ -7,6 +7,7 @@ import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
 import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { Webhook } from 'svix';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,14 +25,45 @@ interface InboundMail {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-inbound-secret');
-  if (secret !== process.env.INBOUND_WEBHOOK_SECRET) {
+  // Resend 官方签名验签（Svix 协议）：必须使用原始请求体，
+  // 任何先 JSON.parse 再 stringify 都会破坏签名，导致校验失败。
+  const payload = await req.text();
+  const svixId = req.headers.get('svix-id');
+  const svixTimestamp = req.headers.get('svix-timestamp');
+  const svixSignature = req.headers.get('svix-signature');
+
+  try {
+    const wh = new Webhook(process.env.RESEND_WEBHOOK_SIGNING_SECRET || '');
+    wh.verify(payload, {
+      'svix-id': svixId || '',
+      'svix-timestamp': svixTimestamp || '',
+      'svix-signature': svixSignature || '',
+    });
+  } catch {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
   let mail: InboundMail;
   try {
-    mail = (await req.json()) as InboundMail;
+    const parsed = JSON.parse(payload);
+    // Resend email.received 与 SES 通知格式不同：Resend 为 { data: { from, to: [] } } 小写字段，
+    // 直接按 InboundMail(大写 From/To) 解析会得到空值，导致 sender/followup 查不到账户。
+    // 此处统一归一化为 InboundMail 风格。
+    const rdata = parsed?.data && typeof parsed.data === 'object' ? parsed.data : null;
+    if (rdata) {
+      mail = {
+        From: rdata.from || '',
+        To: Array.isArray(rdata.to) ? rdata.to.join(', ') : (rdata.to || ''),
+        Subject: rdata.subject || '',
+        text: rdata.text || '',
+        html: rdata.html || '',
+        raw_mime: rdata.raw_mime || '',
+        'Message-Id': rdata.messageId || rdata.message_id || '',
+        'In-Reply-To': rdata.inReplyTo || rdata.in_reply_to || '',
+      };
+    } else {
+      mail = parsed as InboundMail;
+    }
   } catch {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
   }
