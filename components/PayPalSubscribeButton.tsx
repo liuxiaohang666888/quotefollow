@@ -51,8 +51,20 @@ export default function PayPalSubscribeButton({
       setLoading(false);
     };
 
-    // 硬超时兜底：无论 SDK 加载/轮询/渲染处于何种状态，约 10s 后强制回退为订阅链接
-    const hardTimeout = setTimeout(() => finish(true), 10000);
+    // 硬超时兜底：无论 SDK 加载/轮询/渲染处于何种状态，约 10s 后强制回退为订阅链接。
+    // 兜底前先检测容器内 iframe 是否已注入：已注入说明 PayPal 订阅对话框已成功渲染，
+    // 用户可能正在完成订阅——此时不调用 finish 销毁对话框，仅隐藏 loading 占位，
+    // 保留对话框让用户继续操作；订阅成功后 onApprove 会自然跳转 /signup，
+    // 避免用户被丢到 /signup 却无法判断订阅是否成功。
+    const hardTimeout = setTimeout(() => {
+      if (cancelled || settled) return;
+      const hasIframe = !!containerRef.current?.querySelector('iframe');
+      if (hasIframe) {
+        setLoading(false);
+        return;
+      }
+      finish(true);
+    }, 10000);
 
     const renderButtons = () => {
       if (cancelled || settled) return;
