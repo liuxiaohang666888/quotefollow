@@ -217,19 +217,22 @@ export default function QuoteDetailPage() {
   async function handleDeleteMessage(messageId: string) {
     if (deletingId) return;
     setDeletingId(messageId);
-    const supabase = createClient();
-    const { error: delErr } = await supabase
-      .from('messages')
-      .delete()
-      .eq('id', messageId);
-    if (delErr) {
-      setError('Failed to delete message. You can only delete messages you sent.');
-      console.error(delErr);
+    try {
+      const res = await fetch(`/api/quotes/${id}/messages/${messageId}`, { method: 'DELETE' });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.ok) {
+        setError('Failed to delete message. You can only delete messages you sent.');
+        console.error('delete message failed:', res.status, j);
+        setDeletingId(null);
+        return;
+      }
       setDeletingId(null);
-      return;
+      await load();
+    } catch (err) {
+      setError('Failed to delete message. You can only delete messages you sent.');
+      console.error(err);
+      setDeletingId(null);
     }
-    setDeletingId(null);
-    await load();
   }
 
   if (loading) return <p style={{ color: '#6b7280' }}>Loading…</p>;
