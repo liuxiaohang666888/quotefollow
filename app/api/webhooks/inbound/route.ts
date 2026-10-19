@@ -331,6 +331,14 @@ async function handleCustomerReply(args: {
 }) {
   const { admin, messageId, senderEmail, subject, body, rawMimeB64, quoteId } = args;
 
+  // 防重：回复分支同样受 message_id 唯一约束保护。同 message_id 重复回调时
+  // 直接返回 200，不做任何后续处理——避免 messages insert 撞唯一索引报错后
+  // 仍继续 autoReply+sendEmail，造成客户收到重复 AI 回复与 OpenAI 双倍成本。
+  if (messageId && (await isDuplicateMessage(admin, messageId))) {
+    console.log('[inbound] duplicate reply ignored:', messageId);
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
   const { data: quote } = await admin.from('quotes').select('*').eq('id', quoteId).single();
 
   if (!quote) {
