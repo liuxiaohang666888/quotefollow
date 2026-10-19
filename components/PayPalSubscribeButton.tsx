@@ -60,6 +60,7 @@ export default function PayPalSubscribeButton({
       if (cancelled || settled) return;
       const hasIframe = !!containerRef.current?.querySelector('iframe');
       if (hasIframe) {
+        settled = true;
         setLoading(false);
         return;
       }

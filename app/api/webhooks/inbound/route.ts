@@ -387,15 +387,24 @@ async function handleCustomerReply(args: {
       .eq('id', quoteId);
     console.log('[inbound] quote status updated to:', newStatus);
 
-    const insertResult = await admin.from('messages').insert({
-      quote_id: quoteId,
-      direction: 'in',
-      subject,
-      body: body.slice(0, 5000),
-      raw_mime: rawMimeB64.slice(0, 50000),
-      message_id: messageId,
-      in_reply_to: '',
-    });
+    try {
+      await admin.from('messages').insert({
+        quote_id: quoteId,
+        direction: 'in',
+        subject,
+        body: body.slice(0, 5000),
+        raw_mime: rawMimeB64.slice(0, 50000),
+        message_id: messageId,
+        in_reply_to: '',
+      });
+    } catch (e: any) {
+      // 唯一索引冲突（error code 23505）：并发重复回调兜底，直接返回 200
+      if (e?.code === '23505' || e?.details?.includes('messages_message_id_key')) {
+        console.log('[inbound] duplicate reply (db conflict) ignored:', messageId);
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+      throw e;
+    }
 
     const bodyForAI = body || '(客户回复内容为空，请检查原始邮件)';
     const ai = await autoReply(quote.customer_name, bodyForAI, account?.business_info || {});
