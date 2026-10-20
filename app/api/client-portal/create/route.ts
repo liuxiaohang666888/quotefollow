@@ -29,11 +29,15 @@ export async function POST(req: Request) {
     const { randomBytes } = await import('crypto');
     const token = randomBytes(24).toString('hex');
   
-  // 计算过期时间
-  let expiresAt = null;
-  if (expiresInDays) {
-    expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
-  }
+  // 计算过期时间（L6 修复：默认 30 天过期，不再"不传就永不过期"——
+  // 客户门户 token 是Bearer 级别的凭据，永久有效等于永久后门。
+  // 范围钳制 1–365 天，防负数/天文数字把 expires_at 打到非法区间。）
+  const DEFAULT_EXPIRES_DAYS = 30;
+  const rawDays = Number(expiresInDays);
+  const days = Number.isFinite(rawDays) && rawDays > 0
+    ? Math.min(Math.floor(rawDays), 365)
+    : DEFAULT_EXPIRES_DAYS;
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: tokenData, error: tokenError } = await admin
     .from('client_access_tokens')

@@ -179,7 +179,8 @@ export const quotefollowConfig: VerticalConfig = {
           cta: 'Get Early Bird — $29/mo',
           badge: 'Early Bird',
           isPopular: false,
-          planId: process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID,
+          // 缺失时传 null → 按钮显式报错，不静默按 Pro 价扣款
+          planId: process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || null,
         },
         {
           id: 'pro',
@@ -195,6 +196,7 @@ export const quotefollowConfig: VerticalConfig = {
           cta: 'Start free trial — $49/mo',
           badge: 'Most popular',
           isPopular: true,
+          // Pro 档：环境变量缺失时组件回退到硬编码 Pro 生产计划（同计划同价，非错价）
           planId: process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
         },
         {
@@ -211,7 +213,8 @@ export const quotefollowConfig: VerticalConfig = {
           cta: 'Go Yearly — $490/yr',
           badge: '2 months free',
           isPopular: false,
-          planId: process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID,
+          // 缺失时传 null → 按钮显式报错，不静默按 Pro 价扣款
+          planId: process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || null,
         },
       ],
     },

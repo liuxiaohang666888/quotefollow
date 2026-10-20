@@ -161,7 +161,7 @@ export default function NewQuotePage() {
               <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span><strong>Pro Plan</strong></span>
-                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 18 }}>$19/mo</span>
+                <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 18 }}>$49/mo</span>
               </div>
               <ul style={{ fontSize: 13, color: 'var(--fg-dim)', margin: '8px 0 0', paddingLeft: 18 }}>
                 <li>Unlimited clients — quotes & invoices</li>

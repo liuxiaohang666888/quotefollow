@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseMimeMessage, decodeRfc2047, sanitizeMimeNoise, ParsedMime } from '@/lib/mime';
 import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { isSafeSlackWebhook } from '@/lib/slack';
 import { Webhook } from 'svix';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// 共享密钥常量时间比较，防时序侧信道
+function safeEqual(a: string, b: string): boolean {
+  const ba = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
 
 interface InboundMail {
   From: string;
@@ -25,21 +35,36 @@ interface InboundMail {
 }
 
 export async function POST(req: NextRequest) {
-  // Resend 官方签名验签（Svix 协议）：必须使用原始请求体，
-  // 任何先 JSON.parse 再 stringify 都会破坏签名，导致校验失败。
+  // 鉴权：两条合法入口，任一通过即放行；都配不上 → 401（fail-closed）
+  // A. Cloudflare Email Routing → Worker 转发：X-Inbound-Secret 共享密钥
+  //    （与 Vercel 环境变量 INBOUND_WEBHOOK_SECRET 一致，常量时间比较）
+  // B. Resend 官方 webhook 直推：Svix 签名验签（必须使用原始请求体，
+  //    任何先 JSON.parse 再 stringify 都会破坏签名导致校验失败）
+  // 背景：旧代码只认 Svix，导致 Worker 转发的入站邮件全部 401 被拒——
+  // "客户回复收不到"的隐形杀手；INBOUND_WEBHOOK_SECRET 全代码库无人读取。
   const payload = await req.text();
-  const svixId = req.headers.get('svix-id');
-  const svixTimestamp = req.headers.get('svix-timestamp');
-  const svixSignature = req.headers.get('svix-signature');
+  const expectedSecret = process.env.INBOUND_WEBHOOK_SECRET;
+  const workerSecret = req.headers.get('x-inbound-secret');
 
-  try {
-    const wh = new Webhook(process.env.RESEND_WEBHOOK_SIGNING_SECRET || '');
-    wh.verify(payload, {
-      'svix-id': svixId || '',
-      'svix-timestamp': svixTimestamp || '',
-      'svix-signature': svixSignature || '',
-    });
-  } catch {
+  let authorized = false;
+  if (expectedSecret && workerSecret && safeEqual(workerSecret, expectedSecret)) {
+    authorized = true; // Worker 转发路径
+  } else if (process.env.RESEND_WEBHOOK_SIGNING_SECRET && req.headers.get('svix-id')) {
+    try {
+      const wh = new Webhook(process.env.RESEND_WEBHOOK_SIGNING_SECRET);
+      wh.verify(payload, {
+        'svix-id': req.headers.get('svix-id') || '',
+        'svix-timestamp': req.headers.get('svix-timestamp') || '',
+        'svix-signature': req.headers.get('svix-signature') || '',
+      });
+      authorized = true; // Resend 直推路径
+    } catch {
+      authorized = false;
+    }
+  }
+
+  if (!authorized) {
+    console.warn('[inbound] unauthorized: neither valid X-Inbound-Secret nor Svix signature');
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
@@ -137,16 +162,9 @@ export async function POST(req: NextRequest) {
   // mime.text 是解析失败的占位符时不能用
   if (plainText.startsWith('(解析失败')) plainText = '';
 
-  console.log('[inbound] mime.text:', mime?.text ? mime.text.slice(0, 500) : 'NULL');
-  console.log('[inbound] mime.html:', mime?.html ? mime.html.slice(0, 300) : 'NULL');
-  console.log('[inbound] mime.parse_failed:', mime?.parse_failed);
-  console.log('[inbound] plainText after mime:', plainText ? plainText.slice(0, 500) : 'NULL');
-  console.log('[inbound] mail.text:', mail.text ? mail.text.slice(0, 500) : 'NULL');
-  console.log('[inbound] mail.html:', mail.html ? mail.html.slice(0, 300) : 'NULL');
-
+  // mime 解析没产出内容时，回退到 webhook payload 自带的 text/html
   if (!plainText) {
     plainText = mail.text || mail.html || '';
-    console.log('[inbound] fallback to mail.text/html, plainText:', plainText ? plainText.slice(0, 500) : 'NULL');
   }
 
   const body = sanitizeMimeNoise(plainText)
@@ -155,9 +173,13 @@ export async function POST(req: NextRequest) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  console.log('[inbound] final body length:', body.length);
-  console.log('[inbound] final body preview:', body.slice(0, 500));
-  console.log('[inbound] === END DEBUG ===');
+  // L2 修复：邮件正文/主题属 PII，不再打进 Vercel 日志（旧代码 slice(0,500) 全量打印）。
+  // 只记录长度与内容哈希，排障靠 inbound_debug 轨迹表（body_len/raw_len/result）+ 原始邮件存档。
+  const bodyHash = body ? crypto.createHash('sha256').update(body).digest('hex').slice(0, 12) : 'empty';
+  console.log(
+    '[inbound] parsed: body_len=%d body_hash=%s mime_failed=%s has_raw=%s',
+    body.length, bodyHash, mime?.parse_failed ?? false, !!rawMimeB64
+  );
 
   if (!body) {
     console.warn('[inbound] body is empty after parsing, saving raw MIME for debugging');
@@ -246,8 +268,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (!account) {
+    // M7 修复：旧代码返回 404 → Resend 对非 2xx 会重试，而"没有账号"重试也不会变出账号，
+    // 纯粹浪费 AI 解析与重试额度。改 200 + trace 记录，人工在轨迹表里能看到漏配的收件箱。
     await traceWrite('no_account', 'followup=' + followupEmail + ' sender=' + senderEmail);
-    return NextResponse.json({ ok: false, error: 'no account for this inbox' }, { status: 404 });
+    console.warn('[inbound] no account for inbox:', followupEmail || senderEmail);
+    return NextResponse.json({ ok: true, handled: false, reason: 'no account for this inbox' });
   }
 
   // 防白嫖兜底：邮件转发入口同样受免费额度限制（此前完全没查，免费用户可无限建档）
@@ -256,10 +281,10 @@ export async function POST(req: NextRequest) {
     !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
   if (!accountIsAdmin && !accountIsPaid) {
     const used = await countQuotesFor(admin, account.id, account.email);
-    if (used >= FREE_QUOTA || !isWithinTrialDays(account.created_at)) {
+    if (used >= FREE_QUOTA || !isTrialActive(account)) {
       await traceWrite(
         'quota_exhausted',
-        'account=' + account.id + ' used=' + used + ' trial=' + String(account.created_at)
+        'account=' + account.id + ' used=' + used + ' trial_ends=' + String(account.trial_ends_at)
       );
       // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
       await notifyOwner(
@@ -267,12 +292,35 @@ export async function POST(req: NextRequest) {
         account,
         `Free plan limit reached (${FREE_QUOTA} quotes) or 14-day trial ended. This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
       );
-      return NextResponse.json({ ok: false, error: 'free quota exhausted or trial ended' }, { status: 402 });
+      // M7 修复：旧代码返回 402 → Resend 重试，而额度/试用状态在重试窗口内不会变，
+      // 每次重试都白跑一遍 AI 解析。改 200（trace 已记录 + 主人已收到通知）。
+      return NextResponse.json({ ok: true, handled: false, reason: 'free quota exhausted or trial ended' });
     }
   }
 
   const parsed = await parseQuoteEmail(subject, body);
   const quoteDate = parsed.quote_date ? new Date(parsed.quote_date) : new Date();
+
+  // M7 幂等补齐：Resend 对超时/非 2xx 会重试，message_id 去重只覆盖 messages 表，
+  // 覆盖不到"报价已建但响应丢了"的场景（重试会再建一条重复报价 + 双倍 AI 成本）。
+  // 按 source_message_id 查重补齐这层防护（列与唯一索引见迁移 017）。
+  // 兼容期：迁移未执行导致列不存在时，跳过 quote 级去重（message 级去重上面已做），
+  // 插入时也不带该列，避免 PGRST204 报错。
+  let sourceMessageIdSupported = true;
+  if (messageId) {
+    const { data: dupQuote, error: dupErr } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('source_message_id', messageId)
+      .maybeSingle();
+    if (dupErr) {
+      sourceMessageIdSupported = false;
+      console.warn('[inbound] source_message_id dedupe skipped (migration 017 not applied?):', dupErr.code);
+    } else if (dupQuote) {
+      await traceWrite('duplicate_quote', 'source_message_id exists, quote=' + dupQuote.id);
+      return NextResponse.json({ ok: true, duplicate: true, quote_id: dupQuote.id });
+    }
+  }
 
   const { data: quote, error: qErr } = await admin
     .from('quotes')
@@ -286,6 +334,7 @@ export async function POST(req: NextRequest) {
       source_subject: subject,
       source_body: body.slice(0, 5000),
       source_raw_mime: rawMimeB64.slice(0, 50000),
+      ...(sourceMessageIdSupported && messageId ? { source_message_id: messageId } : {}),
       next_followup_at: scheduleForDay(quoteDate, 1).toISOString(),
     })
     .select()
@@ -358,14 +407,21 @@ async function handleCustomerReply(args: {
     console.log('[inbound] account lookup:', account ? 'found' : 'NOT FOUND', quote.account_id);
 
     // --- 新逻辑：检测付款/拒绝关键词，决定状态（先跑，再更新） ---
-    const bodyLower = body.toLowerCase();
-    const PAID_KEYWORDS = ['paid', 'invoice paid', 'payment received', 'payment complete', 'already paid', '付款', '已付', '付完', '结清'];
-    const STOP_KEYWORDS = ['stop', 'unsubscribe', 'never contact', 'do not contact', 'remove me', 'opt out', '别再发', '不要再发', '停止', '退订'];
-    const REFUSAL_KEYWORDS = ['not interested', 'no thanks', 'no thank you', 'go away', 'leave me alone', 'dispute', '争议', '不需要', '没兴趣'];
+    // 先剥离否定语义再匹配：旧代码 includes('paid') 子串匹配会把
+    // "unpaid"/"not paid"/"未付款" 误判成已付款 → 报价被永久关闭、跟进停发，
+    // 老板还以为收到钱了。中文否定（未/不/没/别/莫）同理处理。
+    const negated = body
+      .toLowerCase()
+      .replace(/\b(?:un|not|never|no)\s*-?\s*paid\b/g, ' ')
+      .replace(/\b(?:un|not|never|no)\s*-?\s*payment\b/g, ' ')
+      .replace(/(?:未|不|没|别|莫)\s*(?:付款|已付|付完|结清|支付)/g, ' ');
+    const PAID_PATTERNS = [/\bpaid\b/, /\binvoice paid\b/, /\bpayment (?:received|complete|completed|done|made)\b/, /\balready paid\b/, /付款/, /已付/, /付完/, /结清/];
+    const STOP_PATTERNS = [/\bstop\b/, /\bunsubscribe\b/, /\bnever contact\b/, /\bdo not contact\b/, /\bremove me\b/, /\bopt out\b/, /别再发/, /不要再发/, /停止/, /退订/];
+    const REFUSAL_PATTERNS = [/\bnot interested\b/, /\bno thanks\b/, /\bno thank you\b/, /\bgo away\b/, /\bleave me alone\b/, /\bdispute\b/, /争议/, /不需要/, /没兴趣/];
 
-    const isPaid = PAID_KEYWORDS.some(k => bodyLower.includes(k));
-    const isStop = STOP_KEYWORDS.some(k => bodyLower.includes(k));
-    const isRefusal = REFUSAL_KEYWORDS.some(k => bodyLower.includes(k));
+    const isPaid = PAID_PATTERNS.some(p => p.test(negated));
+    const isStop = STOP_PATTERNS.some(p => p.test(negated));
+    const isRefusal = REFUSAL_PATTERNS.some(p => p.test(negated));
 
     let newStatus: 'paused' | 'closed';
     let notificationText: string;
@@ -465,7 +521,8 @@ async function notifyOwner(
     }).catch((e) => console.error('[notify] email failed:', e));
   }
 
-  if (account.slack_webhook) {
+  // Slack 通知：URL 必须是官方 hooks.slack.com（防 SSRF 打内网/云元数据）
+  if (account.slack_webhook && isSafeSlackWebhook(account.slack_webhook)) {
     await fetch(account.slack_webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -473,6 +530,8 @@ async function notifyOwner(
         text: `QuoteFollow: ${text}\n${process.env.NEXT_PUBLIC_APP_URL}/dashboard/quotes/${quoteId}`,
       }),
     }).catch((e) => console.error('[notify] slack failed:', e));
+  } else if (account.slack_webhook) {
+    console.warn('[notify] slack_webhook rejected (not a hooks.slack.com https URL), skipped');
   }
 }
 

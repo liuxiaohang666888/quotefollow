@@ -5,8 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { isQuoteCreateRateLimited } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,30 +22,14 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-// 简易内存限流
-const windowMs = 60_000;
-const maxPerWindow = 10;
-const createLog = new Map<string, number[]>();
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now();
-  const arr = (createLog.get(userId) || []).filter((t) => now - t < windowMs);
-  if (arr.length >= maxPerWindow) {
-    createLog.set(userId, arr);
-    return true;
-  }
-  arr.push(now);
-  createLog.set(userId, arr);
-  return false;
-}
-
 // 发送报价邮件给客户 + 自动建档 + 安排跟进
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
-  if (isRateLimited(user.id)) {
+  // 防刷：限频（共享限流模块，见 lib/rate-limit.ts）
+  if (isQuoteCreateRateLimited(user.id)) {
     return NextResponse.json({ ok: false, error: 'rate limited: too many quotes in a minute' }, { status: 429 });
   }
 
@@ -70,7 +55,7 @@ export async function POST(req: NextRequest) {
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
     const used = await countQuotesFor(admin, user.id, user.email);
-    if (used >= FREE_QUOTA || !isWithinTrialDays(acc?.created_at)) {
+    if (used >= FREE_QUOTA || !isTrialActive(acc)) {
       const reason = used >= FREE_QUOTA
         ? `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.`
         : 'Your free trial (14 days or 3 clients, whichever comes first) has ended. Subscribe to continue using QuoteFollow.';
@@ -133,6 +118,18 @@ export async function POST(req: NextRequest) {
     : `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#111827;"><p style="white-space:pre-wrap;">${escapeHtml(safeMessage)}</p></div>`;
 
   try {
+    // 配额二次复核（M11①）：count-then-insert 之间有并发窗口，免费用户两个并发请求
+    // 可能同时通过检查。发信前再查一次把窗口压到最小（邮件一旦发出撤不回）。
+    if (!isAdmin && !isPaid) {
+      const recheck = await countQuotesFor(admin, user.id, user.email);
+      if (recheck >= FREE_QUOTA) {
+        return NextResponse.json(
+          { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
+          { status: 402 }
+        );
+      }
+    }
+
     // 1. 发送报价邮件给客户
     const sentRes = await sendEmail({
       to: customerEmail,
@@ -171,6 +168,20 @@ export async function POST(req: NextRequest) {
         { ok: false, error: `Quote sent but failed to save (code ${code}). Please contact support.` },
         { status: 500 }
       );
+    }
+
+    // 插入后复查（M11① 自纠）：并发 Burst 下最终超配额时，删掉自己刚建的这行并告知，
+    // 保证库里免费账号的报价数不会超过 FREE_QUOTA。邮件已发出的代价接受
+    // （窗口已压到毫秒级，且客户收到的是真实报价内容，不是垃圾）。
+    if (!isAdmin && !isPaid) {
+      const recount = await countQuotesFor(admin, user.id, user.email);
+      if (recount > FREE_QUOTA) {
+        await supabase.from('quotes').delete().eq('id', quote.id);
+        return NextResponse.json(
+          { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
+          { status: 402 }
+        );
+      }
     }
 
     // 3. 记录发送的邮件

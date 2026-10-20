@@ -12,9 +12,11 @@ export const dynamic = 'force-dynamic';
 //   2) 校验串 = transmission_id | transmission_time | webhook_id | crc32(raw_body)
 //   3) RSA-SHA256(PKCS1 v1.5) 验签，失败返回 400（PayPal 不会重试，需在后台排查）
 // 事件处理：
-//   BILLING.SUBSCRIPTION.CANCELLED → resource.id 置空对应账号订阅（回免费/试用态）
+//   BILLING.SUBSCRIPTION.CANCELLED / EXPIRED / SUSPENDED → resource.id 置空对应账号订阅（回免费/试用态）
 //   PAYMENT.SALE.COMPLETED        → resource.billing_agreement_id 确认激活（幂等）
 //   PAYMENT.SALE.DENIED           → resource.billing_agreement_id 置无效（清空订阅 ID）
+//   PAYMENT.SALE.REFUNDED         → 退款：置空订阅 ID，撤销付费权益
+//   PAYMENT.SALE.REVERSED         → 拒付(chargeback)：置空订阅 ID，撤销付费权益
 
 // PayPal 证书地址白名单（仅允许官方域名，防 SSRF）
 const CERT_CACHE = new Map<string, { pem: string; fetchedAt: number }>();
@@ -171,6 +173,34 @@ async function handlePaypalEvent(
         return { handled: false, reason: 'DENIED event missing/invalid billing_agreement_id' };
       }
       return downgradeBySubId(admin, subId, 'DENIED');
+    }
+
+    case 'PAYMENT.SALE.REFUNDED': {
+      // 退款：用户已收款退回，付费权益必须同步撤销（此前不处理 → 退款后照样免费用）
+      const subId = resource?.billing_agreement_id;
+      if (!subId || !isValidPaypalSubscriptionId(subId)) {
+        return { handled: false, reason: 'REFUNDED event missing/invalid billing_agreement_id' };
+      }
+      return downgradeBySubId(admin, subId, 'REFUNDED');
+    }
+
+    case 'PAYMENT.SALE.REVERSED': {
+      // 拒付(chargeback)：比退款更严重，同样撤销权益
+      const subId = resource?.billing_agreement_id;
+      if (!subId || !isValidPaypalSubscriptionId(subId)) {
+        return { handled: false, reason: 'REVERSED event missing/invalid billing_agreement_id' };
+      }
+      return downgradeBySubId(admin, subId, 'REVERSED');
+    }
+
+    case 'BILLING.SUBSCRIPTION.EXPIRED':
+    case 'BILLING.SUBSCRIPTION.SUSPENDED': {
+      // 到期/暂停：与 CANCELLED 同等处理（subscription-check cron 也把这两个视为确定性失效）
+      const subId = resource?.id;
+      if (!subId || !isValidPaypalSubscriptionId(subId)) {
+        return { handled: false, reason: `${eventType} event missing/invalid resource.id` };
+      }
+      return downgradeBySubId(admin, subId, eventType.split('.').pop() as string);
     }
 
     default:

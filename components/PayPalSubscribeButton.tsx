@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 // PayPal - voxalo.top 正式生产配置（2026-08-31 刘燕青 PayPal China 账号）
-// ⚠️ 硬编码避免 Vercel 环境变量覆盖（上次被旧值搞挂）
+// ⚠️ DEFAULT_PLAN_ID 是硬编码的 Pro 生产计划：避免 Vercel 环境变量被旧值覆盖时三档全失效。
+// ⚠️ Early Bird / Yearly 的 plan ID 缺失时【绝不静默回退】到 DEFAULT_PLAN_ID——
+//    那会把 $29/$490 的用户按 Pro($49/mo) 扣款。缺失时渲染显式配置错误，交运维补环境变量。
 const DEFAULT_PLAN_ID = 'P-9RN20574BN6264401NKUP3CY';
 const CLIENT_ID = 'BAAiHU_tF-l4jpKcab2GieWPXp01JkjyfcK1hHMcNKjrJNuQ2I7fyO_zefuimDTiNd-kT7abpAs1p649dk';
 export const PLAN_PRO_ID = process.env.NEXT_PUBLIC_PAYPAL_PRO_PLAN_ID || DEFAULT_PLAN_ID;
-export const PLAN_EARLY_BIRD_ID = process.env.NEXT_PUBLIC_PAYPAL_EARLY_BIRD_PLAN_ID || DEFAULT_PLAN_ID;
-export const PLAN_YEARLY_ID = process.env.NEXT_PUBLIC_PAYPAL_YEARLY_PLAN_ID || DEFAULT_PLAN_ID;
 const INVOICE_URL = process.env.NEXT_PUBLIC_PAYPAL_INVOICE_URL || 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-9RN20574BN6264401NKUP3CY';
 
 declare global {
@@ -25,10 +25,16 @@ export default function PayPalSubscribeButton({
   fallbackHref,
 }: {
   label?: string;
-  planId?: string;
+  planId?: string | null;
   fallbackHref?: string;
 }) {
-  const activePlanId = planId || DEFAULT_PLAN_ID;
+  // planId 语义：
+  //   undefined → 调用方未指定档位 → 用 Pro 生产计划（DEFAULT_PLAN_ID 本身就是 Pro 档）
+  //   null      → 调用方指定了档位、但该档 plan ID 环境变量缺失 → 显式配置错误，
+  //               绝不静默回退到别的计划（避免 Early Bird/Yearly 被按 Pro 错价扣款）
+  //   string    → 使用调用方指定的计划
+  const configMissing = planId === null;
+  const activePlanId = configMissing ? null : (planId || PLAN_PRO_ID);
   const [sdkError, setSdkError] = useState(false);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -172,6 +178,18 @@ export default function PayPalSubscribeButton({
       clearTimeout(hardTimeout);
     };
   }, [activePlanId]);
+
+  // 档位 plan ID 缺失：显式配置错误。不给订阅按钮、也不给默认计划链接，
+  // 防止用户被按错误价格扣款；需运维补齐 NEXT_PUBLIC_PAYPAL_*_PLAN_ID 后恢复。
+  if (configMissing) {
+    return (
+      <div className="paypal-subscribe" aria-label={label}>
+        <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>
+          Payment is temporarily unavailable — plan configuration error. Please contact support.
+        </p>
+      </div>
+    );
+  }
 
   if (!activePlanId || !CLIENT_ID) {
     return (

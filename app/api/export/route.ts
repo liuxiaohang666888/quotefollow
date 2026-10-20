@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { csvCell } from '@/lib/csv';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,15 +54,18 @@ export async function GET(req: NextRequest) {
       .eq('quotes.account_id', user.id);
 
     // Fetch followup logs (通过 quote 关联到 account)
+    // 注意：messages 表没有 account_id/sent_at/type/status 列（旧代码查这些列
+    // 会直接 400，导出整体坏掉），只取真实存在的列。
     const { data: followups } = await supabase
       .from('messages')
-      .select('*, quotes!inner(account_id)')
+      .select('id, quote_id, direction, subject, created_at, quotes!inner(account_id)')
       .eq('quotes.account_id', user.id)
       .order('created_at', { ascending: false });
 
     // Generate CSV
     if (format === 'csv') {
       // Quotes CSV
+      // 注意：quotes 表没有 sent_at/paid_at 列（旧代码查它们导出必 400），已移除
       const quotesHeaders = [
         'Quote ID',
         'Customer Name',
@@ -72,8 +76,6 @@ export async function GET(req: NextRequest) {
         'Deposit Amount ($)',
         'Deposit Status',
         'Created At',
-        'Sent At',
-        'Paid At',
       ];
 
       const quotesRows = quotes?.map(q => [
@@ -86,27 +88,23 @@ export async function GET(req: NextRequest) {
         q.deposit_amount?.toString() || '0',
         q.deposit_status || 'N/A',
         q.created_at,
-        q.sent_at || '',
-        q.paid_at || '',
       ]) || [];
 
       // Followups CSV
       const followupHeaders = [
         'Message ID',
         'Quote ID',
-        'Type',
+        'Direction',
         'Subject',
-        'Sent At',
-        'Status',
+        'Created At',
       ];
 
       const followupRows = followups?.map(m => [
         m.id,
         m.quote_id,
-        m.type,
+        m.direction,
         m.subject || '',
-        m.sent_at || m.created_at,
-        m.status,
+        m.created_at,
       ]) || [];
 
       // Scope changes CSV
@@ -122,22 +120,23 @@ export async function GET(req: NextRequest) {
         s.id,
         s.quote_id,
         s.description,
-        s.amount.toString(),
+        (s.additional_amount ?? 0).toString(),
         s.created_at,
       ]) || [];
 
+      // csvCell：双引号转义 + 公式注入防护（= + - @ 开头的单元格前置单引号）
       const csv = [
         '=== QUOTES ===',
         quotesHeaders.join(','),
-        ...quotesRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+        ...quotesRows.map(r => r.map(csvCell).join(',')),
         '',
         '=== FOLLOW-UPS ===',
         followupHeaders.join(','),
-        ...followupRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+        ...followupRows.map(r => r.map(csvCell).join(',')),
         '',
         '=== SCOPE CHANGES ===',
         scopeHeaders.join(','),
-        ...scopeRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+        ...scopeRows.map(r => r.map(csvCell).join(',')),
       ].join('\n');
 
       const filename = `quotefollow-export-${range}-${now.toISOString().split('T')[0]}.csv`;

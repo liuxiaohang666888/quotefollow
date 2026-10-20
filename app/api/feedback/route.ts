@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/server';
+import { isCronAuthorized } from '@/lib/cron-auth';
+import { isFeedbackRateLimited } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +19,17 @@ const REASONS = [
 // Submit feedback (works logged-in or anonymous)
 export async function POST(req: NextRequest) {
   try {
+    // M10 修复：① 防垃圾数据——匿名 insert 加 IP 限流（共享限流模块）；
+    // ② 取登录态必须用服务端 supabase 客户端——旧代码用浏览器端 createClient
+    //    （lib/supabase/client），Node 环境里读不到 cookie，登录用户的反馈永远关联不上账号。
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
+    if (isFeedbackRateLimited(ip)) {
+      return NextResponse.json({ ok: false, error: 'Too many submissions. Please try again later.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const reason: string = body?.reason || '';
     const details: string = (body?.details || '').slice(0, 2000);
@@ -35,7 +48,7 @@ export async function POST(req: NextRequest) {
     let accountId: string | null = null;
     let email: string | null = null;
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         accountId = data.user.id;
@@ -64,10 +77,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Owner view: GET /api/feedback?key=<CRON_SECRET>
+// Owner view: GET /api/feedback
+// M10 修复：密钥从 URL query（?key=）改为 Authorization Header——query 会进
+// Vercel 访问日志/浏览器历史/Referer，等于把 CRON_SECRET 写进日志。
+// 统一走 isCronAuthorized（fail-closed + 常量时间比较）。
 export async function GET(req: NextRequest) {
-  const key = new URL(req.url).searchParams.get('key');
-  if (!key || key !== process.env.CRON_SECRET) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

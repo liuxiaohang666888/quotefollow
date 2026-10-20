@@ -25,7 +25,6 @@ export async function POST(request: Request) {
   return handleLogout(request);
 }
 
-// 兜底：部分客户端/旧表单用 GET 提交，405 会导致退出后卡死
-export async function GET(request: Request) {
-  return handleLogout(request);
-}
+// L4 修复：删除 GET 导出——GET 可被跨站 <img>/<link> 静默触发（登录态用户访问恶意页面即被注销，
+// 也可作为注销 CSRF 的放大器）。全站调用方均为 <form method="post">（dashboard/layout、dashboard/page），
+// 无 GET 调用方。如未来确需 GET 兜底，应加 CSRF token 而非裸放行。

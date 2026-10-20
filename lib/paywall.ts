@@ -24,6 +24,22 @@ export function isWithinTrialDays(createdAt: string | null | undefined): boolean
   return Date.now() - created < TRIAL_DAYS * 24 * 60 * 60 * 1000;
 }
 
+// 试用期判定的唯一入口（M12 修复）：所有入口（quotes / quotes:send / inbound / followups cron）
+// 都必须用这一个函数，不再各自拼 isWithinTrialDays(acc.created_at)。
+// 口径：trial_ends_at 优先（显式跟踪，见 013 迁移）；没有才回退 created_at + 14 天。
+// 账号不存在时返回 false——不能再像旧代码那样"查不到 created_at 就当试用期内"，
+// 那会让试用过期的存量账号恒通过付费墙（select 没取 created_at 时 undefined 恒真）。
+export function isTrialActive(
+  account: { created_at?: string | null; trial_ends_at?: string | null } | null | undefined
+): boolean {
+  if (!account) return false;
+  if (account.trial_ends_at) {
+    const end = new Date(account.trial_ends_at).getTime();
+    if (!Number.isNaN(end)) return Date.now() < end;
+  }
+  return isWithinTrialDays(account.created_at);
+}
+
 // 额度统计必须按 account_id（报价归属于账号），绝不能按 customer_email（那是客户的邮箱）。
 // 兜底：优先按邮箱关联统计（防删号重注册换新账号ID绕过额度），join 失败自动回退按账号ID统计。
 export async function countQuotesFor(

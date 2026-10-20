@@ -16,11 +16,16 @@ const ROOT = join(__dirname, '..');
 const VERTICALS_DIR = join(ROOT, 'lib', 'verticals');
 const REGISTRY_FILE = join(ROOT, 'lib', 'vertical.ts');
 
-const slug = process.argv[2]?.toLowerCase();
+const rawSlug = process.argv[2]?.toLowerCase() || '';
 
-if (!slug) {
+// Slug 净化（审查报告 §9 低危项）：slug 会进入文件路径（join(VERTICALS_DIR, `${slug}.ts`)）
+// 和生成代码（export const ${slug}Config），不净化则 `../../foo` 可路径遍历、
+// 任意字符可注入生成文件。只放行小写字母/数字/连字符，且不以连字符开头或结尾。
+const slug = rawSlug;
+if (!slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
   console.error('Usage: node scripts/vertical-create.mjs <slug>');
   console.error('Example: node scripts/vertical-create.mjs roofing');
+  console.error('Slug must be lowercase letters/digits/hyphens (e.g. "hvac", "appliance-repair").');
   process.exit(1);
 }
 
@@ -134,7 +139,7 @@ export const ${slug}Config: VerticalConfig = {
     },
     {
       q: 'How much does it cost?',
-      a: '$29/month for the Professional plan. Less than one lost job. Cancel anytime.',
+      a: '$49/month for the Professional plan. Less than one lost job. Cancel anytime.',
     },
     {
       q: 'Is my data secure?',
@@ -149,7 +154,8 @@ export const ${slug}Config: VerticalConfig = {
     closing: 'Not because their prices were wrong. Not because their work was bad. Because they forgot to follow up.',
   },
   pricing: {
-    monthly: 29,
+    // 价格单点来源：lib/verticals/quotefollow.ts（改价只改那一处，本模板跟随主站）
+    monthly: 49,
     currency: 'USD',
   },
   footer: {

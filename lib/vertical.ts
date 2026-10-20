@@ -86,7 +86,9 @@ export interface VerticalConfig {
       cta: string;
       badge: string;
       isPopular?: boolean;
-      planId?: string;
+      // planId：string=指定计划；null=档位已配置但环境变量缺失（组件渲染显式错误，不静默回退）；
+      // undefined=未指定档位（组件用默认 Pro 生产计划）
+      planId?: string | null;
     }[];
   };
   footer: {

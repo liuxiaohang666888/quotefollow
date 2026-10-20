@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isSafeSlackWebhook } from '@/lib/slack';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,30 @@ export async function PUT(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'bad json' }, { status: 400 });
+  }
+
+  // Slack Webhook 防 SSRF：保存时就校验，只允许官方 hooks.slack.com 的 https 地址
+  // （不校验的话，攻击者填内网地址即可借服务端 fetch 打内网/云元数据接口）
+  if ('slack_webhook' in body) {
+    const sw = body.slack_webhook;
+    if (sw !== '' && sw != null && !isSafeSlackWebhook(sw)) {
+      return NextResponse.json(
+        { ok: false, error: 'slack_webhook must be an https://hooks.slack.com/... URL' },
+        { status: 400 }
+      );
+    }
+  }
+
+  // payment_link 协议校验（L8 修复）：该值会在报价详情页渲染成 <a href>，
+  // javascript:/data: 等协议等于自 XSS 入口。只放行 http/https。
+  if ('payment_link' in body) {
+    const pl = body.payment_link;
+    if (pl !== '' && pl != null && !/^https?:\/\//i.test(String(pl))) {
+      return NextResponse.json(
+        { ok: false, error: 'payment_link must be an http(s) URL' },
+        { status: 400 }
+      );
+    }
   }
 
   // 只保留安全字段，过滤掉敏感字段（如 paypal_subscription_id, free_months_earned 等）

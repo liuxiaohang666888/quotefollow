@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/resend';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify cron secret
-    const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    // 鉴权：统一走 isCronAuthorized（fail-closed，CRON_SECRET 缺失一律 401）。
+    // 旧代码直接比对 `Bearer ${process.env.CRON_SECRET}`，密钥未配置时
+    // 请求方发 "Bearer undefined" 即可绕过（两侧都是 undefined 字符串相等）。
+    if (!isCronAuthorized(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -43,21 +45,25 @@ export async function GET(req: NextRequest) {
           .lte('created_at', monthEnd);
 
         // Get won quotes this month
+        // 注意：quotes 表没有 paid_at 列——旧代码查 paid_at 导致"成交额恒为 0"。
+        // 用 updated_at 近似"本月成交"（标记为 won 后该行不再被跟进 cron 改动）。
         const { data: wonQuotes } = await supabase
           .from('quotes')
           .select('*')
           .eq('account_id', account.id)
           .eq('status', 'won')
-          .gte('paid_at', monthStart)
-          .lte('paid_at', monthEnd);
+          .gte('updated_at', monthStart)
+          .lte('updated_at', monthEnd);
 
         // Get follow-ups sent this month
+        // 注意：messages 表没有 account_id / sent_at 列——旧代码查它们导致"跟进数恒为 0"。
+        // messages 经 quote_id 归属 quotes，用 !inner 嵌入过滤 account_id，时间用 created_at。
         const { data: followups } = await supabase
           .from('messages')
-          .select('*')
-          .eq('account_id', account.id)
-          .gte('sent_at', monthStart)
-          .lte('sent_at', monthEnd);
+          .select('id, quote_id, direction, created_at, quotes!inner(account_id)')
+          .eq('quotes.account_id', account.id)
+          .gte('created_at', monthStart)
+          .lte('created_at', monthEnd);
 
         const totalQuotes = quotes?.length || 0;
         const totalWon = wonQuotes?.length || 0;
@@ -138,8 +144,20 @@ export async function GET(req: NextRequest) {
           </html>
         `;
 
+        // 收件人用账号所有者邮箱（auth.users），不用 followup_email：
+        // 所有账号的 followup_email 默认都是共享收件箱 follow@voxalo.top，
+        // 月报发过去会被 Cloudflare Email Routing 转回入站 webhook 解析成
+        // "新报价"，制造垃圾数据（反馈回环）。
+        const { data: owner } = await supabase.auth.admin.getUserById(account.id);
+        const ownerEmail = owner?.user?.email;
+        if (!ownerEmail) {
+          console.warn(`[cron/monthly-report] no owner email for account ${account.id} — skipped`);
+          failed++;
+          continue;
+        }
+
         await sendEmail({
-          to: account.followup_email,
+          to: ownerEmail,
           subject,
           html,
         });

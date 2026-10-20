@@ -56,10 +56,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, completed: 0 });
     }
 
-    let completed = 0;
+    // M11③：每个 pending referral 的 referrer 都要 +1。旧代码只给 pending[0].referrer
+    // 加月份，多 referrer 场景（同一被荐人有多条 pending）下其他人漏加。
+    // 用 .select() 拿回写结果，确保乐观锁真的命中了行（0 行 = 已被并发完成）。
+    const completedRefs: { referrer_id: string }[] = [];
     for (const r of pending) {
       // Mark referral completed (+1 month for each side)
-      const { error: updateErr } = await admin
+      const { data: updated, error: updateErr } = await admin
         .from('referrals')
         .update({ 
           status: 'completed', 
@@ -68,26 +71,44 @@ export async function POST(req: NextRequest) {
           subscription_id: acc.paypal_subscription_id,
         })
         .eq('id', r.id)
-        .eq('status', 'pending'); // 乐观锁：确保还是 pending 状态
+        .eq('status', 'pending') // 乐观锁：确保还是 pending 状态
+        .select('referrer_id')
+        .maybeSingle();
 
-      if (!updateErr) {
-        completed++;
+      if (!updateErr && updated) {
+        completedRefs.push(updated);
       }
     }
+    const completed = completedRefs.length;
 
     if (completed > 0) {
-      // Increment free_months_earned for both parties
-      for (const accountId of [pending[0].referrer_id, userId]) {
-        const { data: accData } = await admin
-          .from('accounts')
-          .select('free_months_earned')
-          .eq('id', accountId)
-          .maybeSingle();
-        if (accData) {
-          await admin
+      // 按 referrer 聚合本轮完成数（同一 referrer 多条 referral 要累加），被荐人本人 +1 次
+      const grantCount = new Map<string, number>();
+      for (const ref of completedRefs) {
+        grantCount.set(ref.referrer_id, (grantCount.get(ref.referrer_id) || 0) + 1);
+      }
+      grantCount.set(userId, (grantCount.get(userId) || 0) + 1);
+
+      for (const [accountId, months] of grantCount) {
+        // M11④：原子自增。旧代码 read-modify-write 无锁，并发完成会丢更新。
+        // RPC increment_free_months 由迁移 017 创建；迁移未执行时回退读后写（兼容期）。
+        const { error: rpcErr } = await admin.rpc('increment_free_months', {
+          account_id: accountId,
+          months,
+        });
+        if (rpcErr) {
+          console.warn('[referral/complete] rpc increment_free_months unavailable, fallback to read-modify-write:', rpcErr.code);
+          const { data: accData } = await admin
             .from('accounts')
-            .update({ free_months_earned: (accData.free_months_earned || 0) + 1 })
-            .eq('id', accountId);
+            .select('free_months_earned')
+            .eq('id', accountId)
+            .maybeSingle();
+          if (accData) {
+            await admin
+              .from('accounts')
+              .update({ free_months_earned: (accData.free_months_earned || 0) + months })
+              .eq('id', accountId);
+          }
         }
       }
     }

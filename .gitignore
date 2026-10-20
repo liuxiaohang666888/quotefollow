@@ -9,3 +9,8 @@ next-env.d.ts
 .mime-test*.cjs
 .vercel
 nul
+# 审查报告 L9：部署产物/压缩包/内部笔记不应入库
+.wrangler/
+*.zip
+.hermes/
+*.log

@@ -9,10 +9,20 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get('code');
-  const next = searchParams.get('next') || '/dashboard';
 
-  // 只允许站内路径，防 open redirect
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+  // 只允许站内路径，防 open redirect（L5 修复）：
+  // 旧代码只挡 // 开头，漏了 /\（部分浏览器会把反斜杠规范化成正斜杠 → //evil.com）。
+  // 现在用 new URL(next, origin) 解析，只放行"解析后 host 与本站一致、且 pathname 以 / 开头"的目标。
+  const next = searchParams.get('next') || '/dashboard';
+  let safeNext = '/dashboard';
+  try {
+    const target = new URL(next, origin);
+    if (target.origin === origin && target.pathname.startsWith('/') && !target.pathname.startsWith('//')) {
+      safeNext = target.pathname + target.search;
+    }
+  } catch {
+    // 解析失败 → 回落默认页
+  }
 
   if (code) {
     const supabase = await createClient();

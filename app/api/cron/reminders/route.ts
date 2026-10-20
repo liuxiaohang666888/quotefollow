@@ -17,7 +17,8 @@ async function handler(req: Request) {
 
   // 查找逾期且未付费的客户（距离到期日超过 7 天）
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  
+  const today = new Date().toISOString().split('T')[0];
+
   const { data: clients, error } = await admin
     .from('clients')
     .select(`
@@ -34,8 +35,10 @@ async function handler(req: Request) {
     `)
     .eq('invoice_paid', false)
     .not('invoice_due_date', 'is', null)
-    .lt('invoice_due_date', new Date().toISOString().split('T')[0])
-    .or('last_reminder_sent.is.null,last_reminder_sent.lt.7d'); // 至少 7 天没发过提醒
+    .lt('invoice_due_date', today)
+    // 至少 7 天没发过提醒。注意：PostgREST 的 or 过滤器不接受 "7d" 这种相对时间
+    // （旧代码写 lt.7d 必然 400 报错，整个 cron 从来没成功过），必须传 ISO 时间戳。
+    .or(`last_reminder_sent.is.null,last_reminder_sent.lt.${sevenDaysAgo}`);
 
   if (error) {
     console.error('[cron/reminders] query error:', error);

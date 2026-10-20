@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isValidPaypalSubscriptionId, verifyPaypalSubscription } from '@/lib/paypal';
 import { randomUUID } from 'crypto';
@@ -44,6 +45,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
     }
 
+    // 鉴权（防越权）：已登录用户只能为自己的 userId 建档，
+    // 禁止凭 body 伪造他人 userId 建账号/改 referral_code。
+    // 未登录场景（邮箱确认流程中 supabase.auth.signUp 尚未产生会话）走到下方
+    // "仅首次插入" 分支处理，同样禁止改写已存在的账号行。
+    const supabase = await createClient();
+    const { data: { user: sessionUser } } = await supabase.auth.getUser();
+    if (sessionUser && userId !== sessionUser.id) {
+      return NextResponse.json({ ok: false, error: 'userId does not match the logged-in user' }, { status: 403 });
+    }
+
     const emailCheck = isEmailRepeated(email.toLowerCase());
     if (emailCheck.blocked) {
       return NextResponse.json({ ok: false, error: `This email has been used too many times (${emailCheck.count}). Try a different email.` }, { status: 429 });
@@ -81,6 +92,16 @@ export async function POST(req: NextRequest) {
       .select('id')
       .eq('id', userId)
       .maybeSingle();
+
+    // 防越权兜底：账号行已存在、但当前没有"登录态归属该 userId"的证明时，拒绝一切写入。
+    // 已登录用户已在上面校验 userId === session.user.id；这里封堵"无会话 + 行已存在"的
+    // 伪造写入路径（敌手可凭 body 任意 userId 覆盖他人账号字段/ referral_code）。
+    // 按幂等成功返回，不破坏注册流程前端提示。
+    if (existingAccount && !(sessionUser && sessionUser.id === userId)) {
+      console.warn('[signup/api] account row exists without matching session — write skipped:', userId);
+      return NextResponse.json({ ok: true, referralCode: null, skipped: true });
+    }
+
     if (!existingAccount) {
       upsertData.trial_ends_at = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
     }

@@ -23,9 +23,11 @@ export async function GET(
   }
 
   // 带上商家名称，让页面更可信
+  // L6 修复：不再返回 followup_email——公开页（无需登录）暴露商家内部收件箱，
+  // 等于给垃圾邮件/爬虫递目标。前端页面本就未使用该字段（已 grep 验证）。
   const { data: account } = await admin
     .from('accounts')
-    .select('business_name, followup_email')
+    .select('business_name')
     .eq('id', quote.account_id)
     .maybeSingle();
 
@@ -39,7 +41,6 @@ export async function GET(
       quote_date: quote.quote_date,
       source_subject: quote.source_subject,
       business_name: account?.business_name || '',
-      followup_email: account?.followup_email || '',
     },
   });
 }

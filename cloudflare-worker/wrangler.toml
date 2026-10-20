@@ -11,7 +11,10 @@ keep_vars = true
 # Cloudflare Worker 的 fetch 跟随跨子域重定向时会剥掉 X-Inbound-Secret 头
 # → 后端 401 拒收 → "客户回复为空/收不到" 的隐形杀手
 BACKEND_URL = "https://www.voxalo.top/api/webhooks/inbound"
-# 与 Vercel 后端的 INBOUND_WEBHOOK_SECRET 完全一致。
-# 说明：wrangler secret put 报 10053（该名字已被面板上的普通文本变量占用），
-# 所以这里直接用 [vars] 覆盖成正确值，效果一样（Worker 能读到 env.INBOUND_SECRET）
-INBOUND_SECRET = "qf-wb-vX8kLm2pRtZ4nQsY6hBcN9dF3jGw5eT7a"
+# ⚠️ INBOUND_SECRET 不再写在本文件里（曾以明文提交进 git，已泄露，必须轮换）。
+# 正确配置方式（二选一，推荐 secret）：
+#   1) wrangler secret put INBOUND_SECRET   （加密存储，不进仓库）
+#   2) Cloudflare 面板 -> Workers -> flat-term-8bf2 -> Settings -> Variables 添加
+# 注意：若面板里还留着旧的同名"普通文本变量"，wrangler secret put 会报 10053，
+# 需先在面板删除该普通文本变量，再执行 secret put。
+# 轮换后的新值必须与 Vercel 的 INBOUND_WEBHOOK_SECRET 完全一致。

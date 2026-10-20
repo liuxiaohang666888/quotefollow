@@ -119,12 +119,18 @@ export default {
   },
 
   // HTTP 处理器：放在对象内部（不遮蔽全局 fetch），预览访问不再报 "No fetch handler!"
-  // 调试入口：访问 /?debug=T7a 会模拟一封邮件 POST 到后端，用于不用真邮件就验证链路
+  // 调试入口（L3 修复）：/?debug=<token> 会模拟一封邮件 POST 到后端，用于不用真邮件就验证链路。
+  // 旧代码写死 ?debug=T7a——任何人扫到 Worker URL 都能触发，等于一个公开的"给后端灌测试邮件"入口。
+  // 现在 debug token 从环境变量 DEBUG_TOKEN 读取（未配置 = 调试入口关闭），
+  // 且必须同时带正确的 X-Inbound-Secret 头，双重要求，匿名扫描打不进来。
+  // 配置：wrangler secret put DEBUG_TOKEN（人工操作，见修复报告"需人工处理"清单）
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.searchParams.get('debug') === 'T7a') {
-      if (!env.INBOUND_SECRET) {
-        return new Response('debug: INBOUND_SECRET not set on worker', { status: 500 });
+    const debugToken = url.searchParams.get('debug');
+    if (debugToken) {
+      const providedSecret = request.headers.get('X-Inbound-Secret') || '';
+      if (!env.DEBUG_TOKEN || !env.INBOUND_SECRET || debugToken !== env.DEBUG_TOKEN || providedSecret !== env.INBOUND_SECRET) {
+        return new Response('not found', { status: 404 });
       }
       const backend = env.BACKEND_URL || DEFAULT_BACKEND;
       try {

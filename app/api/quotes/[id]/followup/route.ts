@@ -40,6 +40,32 @@ export async function POST(
     .single();
 
   const step = (Math.min(quote.followup_count, 2) + 1) as 1 | 2 | 3;
+  const newCount = quote.followup_count + 1;
+  const quoteDate = quote.quote_date ? new Date(quote.quote_date) : new Date();
+  const nextDate = newCount >= 3 ? null : scheduleForDay(quoteDate, (newCount + 1) as 1 | 2 | 3).toISOString();
+
+  // 幂等抢占（M11②）：双击/并发点击时，只有一个请求能把 followup_count 从旧值改走，
+  // 另一个请求匹配不到行 → 409。抢占必须发生在发信之前，否则邮件已经重复发出、
+  // 事后更新计数毫无意义。发送失败时回滚计数与排期，允许用户重试。
+  const { data: claimed } = await admin
+    .from('quotes')
+    .update({
+      followup_count: newCount,
+      last_followup_at: new Date().toISOString(),
+      next_followup_at: nextDate,
+    })
+    .eq('id', quote.id)
+    .eq('followup_count', quote.followup_count) // CAS：只有没人动过才能改
+    .select('id')
+    .maybeSingle();
+
+  if (!claimed) {
+    return NextResponse.json(
+      { ok: false, error: 'a follow-up is already being sent for this quote' },
+      { status: 409 }
+    );
+  }
+
   const body = await generateFollowupBody(
     step,
     quote.customer_name,
@@ -74,23 +100,18 @@ export async function POST(
       in_reply_to: '',
     });
 
-    // 更新跟进计数 + 下一次时间
-    const newCount = quote.followup_count + 1;
-    const quoteDate = quote.quote_date ? new Date(quote.quote_date) : new Date();
-    const nextDate = newCount >= 3 ? null : scheduleForDay(quoteDate, (newCount + 1) as 1 | 2 | 3).toISOString();
-
-    await admin
-      .from('quotes')
-      .update({
-        followup_count: newCount,
-        last_followup_at: new Date().toISOString(),
-        next_followup_at: nextDate,
-      })
-      .eq('id', quote.id);
-
     return NextResponse.json({ ok: true, followup_count: newCount });
   } catch (e) {
     console.error('[followup-now] send failed:', e);
+    // 回滚抢占：计数与排期恢复原值，用户可立即重试（不会卡死在"已计一次但没发"）
+    await admin
+      .from('quotes')
+      .update({
+        followup_count: quote.followup_count,
+        last_followup_at: quote.last_followup_at,
+        next_followup_at: quote.next_followup_at,
+      })
+      .eq('id', quote.id);
     return NextResponse.json({ ok: false, error: 'failed to send follow-up' }, { status: 500 });
   }
 }

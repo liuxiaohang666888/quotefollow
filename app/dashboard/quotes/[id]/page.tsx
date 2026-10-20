@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { computeHeat } from '@/lib/heat';
-import { sendEmail } from '@/lib/resend';
+// 注意：发信已全部挪到服务端 API（/api/quotes/[id]/scope-send、/api/quotes/[id]/deposit），
+// 不再在客户端 import lib/resend——服务端 SDK 进浏览器包既有密钥暴露风险，功能实际也是坏的。
 
 interface Quote {
   id: string;
@@ -103,10 +104,14 @@ export default function QuoteDetailPage() {
   const [newAmount, setNewAmount] = useState('');
   const [draftSubject, setDraftSubject] = useState('');
   const [draftBody, setDraftBody] = useState('');
+  const [draftScopeId, setDraftScopeId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [error, setError] = useState('');
   const [paymentLink, setPaymentLink] = useState('');
+  // L8 渲染守卫：payment_link 是用户自填值，只有 http(s) 协议才渲染成 <a href>
+  // （保存时服务端已校验；这里防旧数据/直改数据库进来的 javascript: 链接自 XSS）
+  const safePaymentLink = /^https?:\/\//i.test(paymentLink) ? paymentLink : '';
   const [copied, setCopied] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -140,16 +145,18 @@ export default function QuoteDetailPage() {
     if (!newDesc.trim() || !newAmount) return;
 
     const supabase = createClient();
-    const { error: insertErr } = await supabase
+    const { data: inserted, error: insertErr } = await supabase
       .from('scope_changes')
       .insert({
         quote_id: id,
         description: newDesc.trim(),
         additional_amount: parseFloat(newAmount),
         status: 'pending',
-      });
+      })
+      .select('id')
+      .single();
 
-    if (insertErr) {
+    if (insertErr || !inserted) {
       setError('Failed to add scope change');
       return;
     }
@@ -160,6 +167,7 @@ export default function QuoteDetailPage() {
 
     setDraftSubject(subject);
     setDraftBody(body);
+    setDraftScopeId(inserted.id);
     setNewDesc('');
     setNewAmount('');
     await load();
@@ -171,20 +179,24 @@ export default function QuoteDetailPage() {
     setSendSuccess(false);
 
     try {
-      const result = await sendEmail({
-        to: quote?.customer_email || '',
-        subject: draftSubject,
-        text: draftBody,
+      if (!draftScopeId) {
+        setError('Draft expired — please add the scope change again.');
+        return;
+      }
+      // 服务端代发（含归属校验），不再客户端直连 resend
+      const res = await fetch(`/api/quotes/${id}/scope-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scopeChangeId: draftScopeId }),
       });
-
-      // Mark as sent
-      const supabase = createClient();
-      await supabase
-        .from('scope_changes')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
-        .eq('id', scopeChanges[0]?.id);
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.ok) {
+        setError(j?.error || 'Failed to send email. Please try again.');
+        return;
+      }
 
       setSendSuccess(true);
+      setDraftScopeId(null);
       await load();
     } catch (err) {
       setError('Failed to send email. Please try again.');
@@ -196,22 +208,14 @@ export default function QuoteDetailPage() {
 
   async function handleMarkDepositPaid() {
     if (!quote) return;
-    const supabase = createClient();
-    await supabase
-      .from('quotes')
-      .update({ deposit_status: 'paid', deposit_paid_at: new Date().toISOString() })
-      .eq('id', id);
-    await load();
-
-    // Send confirmation email
-    const subject = `Deposit Received — Your booking is locked in!`;
-    const body = `Hi ${quote.customer_name},\n\nGreat news! We've received your deposit of $${quote.deposit_amount}. Your booking is officially on the schedule.\n\nLooking forward to working with you!\n\nBest,\n${quote.business_name || 'QuoteFollow'}`;
-
-    try {
-      await sendEmail({ to: quote.customer_email, subject, text: body });
-    } catch (e) {
-      console.error('Failed to send deposit confirmation:', e);
+    // 服务端处理：标记已付 + 发确认邮件（含归属校验与幂等）
+    const res = await fetch(`/api/quotes/${id}/deposit`, { method: 'POST' });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j?.ok) {
+      setError(j?.error || 'Failed to mark deposit as paid. Please try again.');
+      return;
     }
+    await load();
   }
 
   async function handleDeleteMessage(messageId: string) {
@@ -448,8 +452,8 @@ export default function QuoteDetailPage() {
               <button className="btn" onClick={handleMarkDepositPaid} style={{ padding: '10px 20px' }}>
                 Mark deposit as paid
               </button>
-              {paymentLink && (
-                <a className="btn" href={paymentLink} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', textDecoration: 'none' }}>
+              {safePaymentLink && (
+                <a className="btn" href={safePaymentLink} target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', textDecoration: 'none' }}>
                   Pay deposit
                 </a>
               )}

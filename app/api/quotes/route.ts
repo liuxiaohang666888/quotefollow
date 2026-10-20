@@ -4,28 +4,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { parseQuoteEmail } from '@/lib/ai';
 import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor, isWithinTrialDays } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { isQuoteCreateRateLimited } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-// 简易内存限流：每个用户每 60 秒最多创建 10 条报价（防脚本刷爆 AI 成本）
-const windowMs = 60_000;
-const maxPerWindow = 10;
-const createLog = new Map<string, number[]>();
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now();
-  const arr = (createLog.get(userId) || []).filter((t) => now - t < windowMs);
-  if (arr.length >= maxPerWindow) {
-    createLog.set(userId, arr);
-    return true;
-  }
-  arr.push(now);
-  createLog.set(userId, arr);
-  return false;
-}
 
 // 手动创建报价：老板在后台粘贴报价邮件内容 → AI 解析 → 建档 → 安排跟进
 // 这是"邮件转发"之外的另一个入口，不依赖域名/邮件路由，今天即可用。
@@ -34,20 +18,22 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
 
-  // 防刷：限频
-  if (isRateLimited(user.id)) {
+  // 防刷：限频（共享限流模块，见 lib/rate-limit.ts）
+  if (isQuoteCreateRateLimited(user.id)) {
     return NextResponse.json({ ok: false, error: 'rate limited: too many quotes in a minute' }, { status: 429 });
   }
 
   const admin = createAdminClient();
 
   // 自愈：账号行缺失（注册中断导致"半截账号"）时自动补建，避免下方 insert 报 FK 23503
-  let acc = (await admin.from('accounts').select('paypal_subscription_id').eq('id', user.id).maybeSingle()).data;
+  // 注意：必须连 created_at / trial_ends_at 一起取——旧代码只取 paypal_subscription_id，
+  // 导致试用期检查对存量账号恒真（undefined → 恒"试用期内"），试用过期后仍可建档（M12）。
+  let acc = (await admin.from('accounts').select('paypal_subscription_id, created_at, trial_ends_at').eq('id', user.id).maybeSingle()).data;
   if (!acc) {
     const { data: created, error: accErr } = await admin
       .from('accounts')
       .upsert({ id: user.id, email: user.email ?? '', followup_email: 'follow@voxalo.top' }, { onConflict: 'id' })
-      .select('paypal_subscription_id, created_at')
+      .select('paypal_subscription_id, created_at, trial_ends_at')
       .single();
     if (accErr) console.error('[quotes] account self-heal failed:', accErr);
     acc = created ?? acc;
@@ -58,7 +44,7 @@ export async function POST(req: NextRequest) {
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
   if (!isAdmin && !isPaid) {
     const used = await countQuotesFor(admin, user.id, user.email);
-    if (used >= FREE_QUOTA || !isWithinTrialDays((acc as any)?.created_at)) {
+    if (used >= FREE_QUOTA || !isTrialActive(acc)) {
       const reason = used >= FREE_QUOTA
         ? `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.`
         : 'Your free trial (14 days or 3 clients, whichever comes first) has ended. Subscribe to continue using QuoteFollow.';
@@ -107,6 +93,20 @@ export async function POST(req: NextRequest) {
   if (error) {
     console.error('[quotes/create] error:', error.code);
     return NextResponse.json({ ok: false, error: 'internal error' }, { status: 500 });
+  }
+
+  // 配额 TOCTOU 自纠（M11①）：count-then-insert 之间有并发窗口，两个请求可能同时通过检查。
+  // 插入后复查一次：超配额就删掉自己刚建的这一行并拒绝——最终状态不会超过免费额度，
+  // 每个请求只删自己的行，不会误删别人的报价。
+  if (!isAdmin && !isPaid) {
+    const recount = await countQuotesFor(admin, user.id, user.email);
+    if (recount > FREE_QUOTA) {
+      await admin.from('quotes').delete().eq('id', quote.id);
+      return NextResponse.json(
+        { ok: false, error: `Free plan allows ${FREE_QUOTA} quotes. Subscribe to add more.` },
+        { status: 402 }
+      );
+    }
   }
 
   // 新报价创建 = 同客户有新商机：恢复该客户此前 paused 的报价，继续自动跟进
