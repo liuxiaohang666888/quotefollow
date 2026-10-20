@@ -198,7 +198,7 @@ export default function DashboardPage() {
                                             <div style={{ position: 'relative' }}>
                                               <button
                                                 id="export-btn"
-                                                className="btn" data-magnetic
+                                                className="btn"
                                                 style={{ width: 'fit-content', padding: '10px 16px', fontSize: 14 }}
                                                 onClick={() => setExportOpen(!exportOpen)}
                                               >
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                                             </div>
                                             <Link
                                               href="/dashboard/new"
-                                              className="btn" data-magnetic
+                                              className="btn"
                                               style={{ width: 'fit-content', padding: '10px 16px', opacity: isLocked ? 0.5 : 1, pointerEvents: isLocked ? 'none' : 'auto' }}
                                             >
                                               + Send a quote
@@ -345,11 +345,11 @@ export default function DashboardPage() {
       <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
         Your link: <code style={{ background: 'rgba(99,102,241,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{storedCode ? `voxalo.top/signup?ref=${storedCode}` : 'Loading...'}</code>
       </span>
-      <button className="btn" data-magnetic style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => {
+      <button className="btn" style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => {
         if (!storedCode) return;
         navigator.clipboard.writeText(`https://www.voxalo.top/signup?ref=${storedCode}`).then(() => alert('Link copied!'));
       }}>{storedCode ? 'Copy link' : 'Loading...'}</button>
-                      <Link href="/dashboard/refer" className="btn" data-magnetic style={{ padding: '8px 16px', fontSize: 13, background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--fg)' }}>View stats</Link>
+                      <Link href="/dashboard/refer" className="btn" style={{ padding: '8px 16px', fontSize: 13, background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--fg)' }}>View stats</Link>
                     </div>
                   </div>
                 </div>

@@ -71,7 +71,7 @@ export default function LoginPage() {
               autoComplete="new-password"
             />
           </div>
-          <button className="btn" data-magnetic type="submit" disabled={loading} style={{ width: '100%' }}>
+          <button className="btn" type="submit" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>

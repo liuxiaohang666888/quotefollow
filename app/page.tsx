@@ -68,10 +68,15 @@ export default function LandingPage() {
             <span className="brand-name">{brand}</span>
           </div>
           <nav className="landing-nav">
-            <Link href="#pricing" className="nav-link"> Pricing</Link>
-            <Link href="#how-it-works" className="nav-link"> How it Works</Link>
-            <Link href="#features" className="nav-link"> Features</Link>
-            <Link href="/login" className="nav-link"> Log in</Link>
+            <Link href="#pricing" className="nav-link">Pricing</Link>
+            <Link href="#how-it-works" className="nav-link">How it Works</Link>
+            <Link href="#features" className="nav-link nav-link-drop">
+              Features
+              <svg className="nav-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </Link>
+            <Link href="/login" className="nav-link nav-link-login">Log in</Link>
             <Link href="/signup" className="btn btn-sm">Start free trial</Link>
           </nav>
         </div>

@@ -117,7 +117,9 @@ export default function FxLayer() {
         el.style.setProperty('--fx-sy', `${(py * 100).toFixed(2)}%`);
       });
 
-      document.querySelectorAll<HTMLElement>(MAGNETIC_SELECTOR).forEach((el) => {
+      // Magnetic only for landing content area; excluded for landing header nav and ALL user-facing UI (dashboard/login/signup/portal)
+      document.querySelectorAll<HTMLElement>('.landing ' + MAGNETIC_SELECTOR).forEach((el) => {
+        if (el.closest('.landing-header')) return;
         if (!el.dataset.magnetic) el.dataset.magnetic = 'true';
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) return;
@@ -133,8 +135,11 @@ export default function FxLayer() {
 
     const onLeave = (e: MouseEvent) => {
       if (!e.relatedTarget) {
-        document.querySelectorAll<HTMLElement>(`[data-tilt],${MAGNETIC_SELECTOR}`).forEach((el) => {
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((el) => {
           el.style.transform = '';
+        });
+        document.querySelectorAll<HTMLElement>('.landing ' + MAGNETIC_SELECTOR).forEach((el) => {
+          if (el.closest('.landing-header')) return;
           el.style.setProperty('--mx', '0px');
           el.style.setProperty('--my', '0px');
         });
@@ -204,6 +209,16 @@ export default function FxLayer() {
         '.btn, button, .logout, .faq-question, .public-accept, .public-decline, [data-magnetic]',
       ) as HTMLElement | null;
       if (!host || (host as HTMLButtonElement).disabled) return;
+      // Ripple ring (universal click feedback; no magnetic displacement)
+      const ring = document.createElement('span');
+      ring.className = 'fx-ripple-ring';
+      const blRect = burstLayer.getBoundingClientRect();
+      ring.style.left = `${e.clientX}px`;
+      ring.style.top = `${e.clientY}px`;
+      ring.style.setProperty('--rx', `${(e.clientX - blRect.left).toFixed(1)}px`);
+      ring.style.setProperty('--ry', `${(e.clientY - blRect.top).toFixed(1)}px`);
+      burstLayer.appendChild(ring);
+      window.setTimeout(() => ring.remove(), 650);
       const count = 10;
       for (let i = 0; i < count; i++) {
         const p = document.createElement('span');

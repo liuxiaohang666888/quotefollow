@@ -85,7 +85,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
           <p className="sub" style={{ marginBottom: '24px' }}>
             We sent you a confirmation email. <strong>Please check your inbox to confirm your account</strong> before logging in.
           </p>
-          <Link href="/login" className="btn" data-magnetic style={{ textDecoration: 'none' }}>
+          <Link href="/login" className="btn" style={{ textDecoration: 'none' }}>
             Log in to dashboard
           </Link>
         </div>
@@ -147,7 +147,7 @@ export default function SignupForm({ paypalSub, refCode }: SignupFormProps) {
             <p className="hint">Pre-configured — all forwarded/BCC emails go here automatically</p>
           </div>
 
-          <button type="submit" className="btn" data-magnetic style={{ width: '100%' }} disabled={loading}>
+          <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
             {loading ? 'Creating account...' : 'Create account — free'}
           </button>
         </form>

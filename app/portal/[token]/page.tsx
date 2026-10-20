@@ -80,16 +80,16 @@ export default function ClientPortalPage() {
     && new Date(data.invoice.dueDate!) < new Date();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen fx-portal-bg py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* 头部 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+        <div className="fx-portal-card rounded-xl p-6 mb-4">
           <h1 className="text-2xl font-bold text-gray-900">项目进度</h1>
           <p className="text-gray-500 mt-1">客户：{data.name}</p>
         </div>
 
         {/* 项目状态 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+        <div className="fx-portal-card rounded-xl p-6 mb-4">
           <h2 className="text-lg font-semibold mb-4">当前状态</h2>
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -112,7 +112,7 @@ export default function ClientPortalPage() {
         </div>
 
         {/* 发票信息 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+        <div className="fx-portal-card rounded-xl p-6 mb-4">
           <h2 className="text-lg font-semibold mb-4">发票信息</h2>
           {data.invoice.amount ? (
             <div className="space-y-2">
@@ -154,7 +154,7 @@ export default function ClientPortalPage() {
         </div>
 
         {/* 联系信息 */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="fx-portal-card rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">联系方式</h2>
           <div className="space-y-2 text-sm text-gray-600">
             {data.email && <div>📧 {data.email}</div>}
