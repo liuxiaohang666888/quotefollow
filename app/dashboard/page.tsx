@@ -7,6 +7,7 @@ import { computeHeat } from '@/lib/heat';
 import { FREE_QUOTA, TRIAL_DAYS } from '@/lib/paywall';
 import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
 import PayPalSubscribeButton, { PLAN_PRO_ID } from '@/components/PayPalSubscribeButton';
+import { getVerticalConfig } from '@/lib/vertical';
 
 interface Quote {
   id: string;
@@ -66,6 +67,7 @@ function formatDate(iso: string): string {
 }
 
 export default function DashboardPage() {
+  const config = getVerticalConfig();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,13 @@ export default function DashboardPage() {
                 : `You've used all ${FREE_QUOTA} free clients. Upgrade to Pro to keep sending quotes and follow-ups.`}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <PayPalSubscribeButton label="Upgrade to Pro — $49/mo" />
+              {config.pricing.tiers?.map((tier) => (
+                <PayPalSubscribeButton
+                  key={tier.id}
+                  planId={tier.planId}
+                  label={tier.cta || `Subscribe — $${tier.price}/${tier.period === 'month' ? 'mo' : 'yr'}`}
+                />
+              ))}
               <form action="/api/logout" method="post" style={{ width: '100%' }}>
                 <button
                   type="submit"
