@@ -14,6 +14,42 @@ function getClient(): OpenAI {
   });
 }
 
+// 统一 AI 调用入口：主模型（OPENAI 配置）失败时自动降级到智谱 GLM 兜底，
+// 两者都失败才抛错，由调用方走原有 fallback（正则解析/默认模板/转人工）。
+// 环境变量：GLM_API_KEY / GLM_BASE_URL / GLM_MODEL（默认 glm-4-flash）
+async function complete(
+  params: OpenAI.Chat.Completions.CompletionCreateParamsNonStreaming
+): Promise<string> {
+  try {
+    const res = await getClient().chat.completions.create(params);
+    const content = res.choices[0]?.message?.content || '';
+    if (content) return content;
+  } catch (e: any) {
+    console.error('[ai] primary model failed, falling back to GLM:', e?.message || e);
+  }
+
+  const glmKey = process.env.GLM_API_KEY;
+  if (glmKey) {
+    try {
+      const glm = new OpenAI({
+        apiKey: glmKey,
+        baseURL: process.env.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
+        timeout: 25000,
+        maxRetries: 1,
+      });
+      const res = await glm.chat.completions.create({
+        ...params,
+        model: process.env.GLM_MODEL || 'glm-4-flash',
+      });
+      const content = res.choices[0]?.message?.content || '';
+      if (content) return content;
+    } catch (e2: any) {
+      console.error('[ai] GLM fallback failed:', e2?.message || e2);
+    }
+  }
+  throw new Error('all AI providers failed');
+}
+
 export interface ParsedQuote {
   customer_email: string;
   customer_name: string;
@@ -50,10 +86,9 @@ export async function parseQuoteEmail(
   subject: string,
   body: string
 ): Promise<ParsedQuote> {
-  const client = getClient();
   let raw = '';
   try {
-    const res = await client.chat.completions.create({
+    raw = await complete({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       temperature: 0,
       response_format: { type: 'json_object' },
@@ -65,7 +100,6 @@ export async function parseQuoteEmail(
         },
       ],
     });
-    raw = res.choices[0]?.message?.content || '';
   } catch (e) {
     // AI 服务挂掉/超时/欠费：不能让整条建档链路崩掉，降级到正则解析
     console.error('[ai] parseQuoteEmail API failed, using regex fallback:', e);
@@ -111,7 +145,6 @@ export async function autoReply(
   customerReply: string,
   businessInfo: Record<string, unknown>
 ): Promise<AutoReplyResult> {
-  const client = getClient();
   const biz = Object.entries(businessInfo)
     .filter(([, v]) => v)
     .map(([k, v]) => `${k}: ${v}`)
@@ -119,7 +152,7 @@ export async function autoReply(
 
   let raw = '';
   try {
-    const res = await client.chat.completions.create({
+    raw = await complete({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       temperature: 0.3,
       response_format: { type: 'json_object' },
@@ -131,7 +164,6 @@ export async function autoReply(
         },
       ],
     });
-    raw = res.choices[0]?.message?.content || '';
   } catch (e) {
     // AI 挂了：不敢瞎回客户，转人工处理
     console.error('[ai] autoReply API failed, escalating to human:', e);
@@ -169,7 +201,6 @@ export async function generateFollowupBody(
   businessName: string,
   businessInfo: Record<string, unknown>
 ): Promise<string> {
-  const client = getClient();
   const biz = Object.entries(businessInfo)
     .filter(([, v]) => v)
     .map(([k, v]) => `${k}: ${v}`)
@@ -180,7 +211,7 @@ export async function generateFollowupBody(
 
   let raw = '';
   try {
-    const res = await client.chat.completions.create({
+    raw = await complete({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       temperature: 0.7,
       messages: [
@@ -191,7 +222,6 @@ export async function generateFollowupBody(
         },
       ],
     });
-    raw = res.choices[0]?.message?.content || '';
   } catch (e) {
     // AI 挂了：用模板兜底，跟进邮件照发（cron 每天跑，不能因 AI 抖动整体崩掉）
     console.error('[ai] generateFollowupBody API failed, using template:', e);
