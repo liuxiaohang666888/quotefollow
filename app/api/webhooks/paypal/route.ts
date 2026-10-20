@@ -147,6 +147,26 @@ async function handlePaypalEvent(
       return downgradeBySubId(admin, subId, 'CANCELLED');
     }
 
+    case 'BILLING.SUBSCRIPTION.ACTIVATED': {
+      // 订阅激活确认（P0 修复）：订阅 ID 已登记（登录绑定模式或 signup 写入）→ 幂等确认激活，
+      // 绝不触发降级；未登记 → webhook 不含账号标识无法反查，激活仍以绑定/signup 写入为准，跳过不误伤。
+      const subId = resource?.id;
+      if (!subId || !isValidPaypalSubscriptionId(subId)) {
+        return { handled: false, reason: 'ACTIVATED event missing/invalid resource.id' };
+      }
+      const { data: account } = await admin
+        .from('accounts')
+        .select('id, email')
+        .eq('paypal_subscription_id', subId)
+        .maybeSingle();
+      if (account) {
+        console.log(`[webhook/paypal] ACTIVATED: sub ${subId} confirmed active for ${account.email}`);
+        return { handled: true, action: 'activated_already_active', email: account.email };
+      }
+      console.warn(`[webhook/paypal] ACTIVATED: no account with sub ${subId} — activation handled by bind/signup, skip`);
+      return { handled: true, action: 'activated_no_account' };
+    }
+
     case 'PAYMENT.SALE.COMPLETED': {
       const subId = resource?.billing_agreement_id;
       if (!subId || !isValidPaypalSubscriptionId(subId)) {

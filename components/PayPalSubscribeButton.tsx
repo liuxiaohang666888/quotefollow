@@ -23,10 +23,18 @@ export default function PayPalSubscribeButton({
   label = 'Start free trial — $49/mo',
   planId,
   fallbackHref,
+  bindMode = false,
+  onBound,
 }: {
   label?: string;
   planId?: string | null;
   fallbackHref?: string;
+  // bindMode：已登录绑定模式（锁定弹窗场景）。onApprove 不再跳 /signup 注册新账号，
+  // 而是调用 /api/account/bind-subscription 把订阅 ID 写入当前登录账号；
+  // 写成功后调用 onBound（前端重查 account → isFree=false 自动解锁）。
+  // 默认 false：保持注册模式（跳 /signup?sub=...），落地页 / subscribe-test 不受影响。
+  bindMode?: boolean;
+  onBound?: () => void;
 }) {
   // planId 语义：
   //   undefined → 调用方未指定档位 → 用 Pro 生产计划（DEFAULT_PLAN_ID 本身就是 Pro 档）
@@ -37,7 +45,11 @@ export default function PayPalSubscribeButton({
   const activePlanId = configMissing ? null : (planId || PLAN_PRO_ID);
   const [sdkError, setSdkError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [bindError, setBindError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // bindMode 走 ref：避免把 props 加入 SDK 渲染 effect 依赖导致 SDK 重复渲染
+  const bindModeRef = useRef(bindMode);
+  bindModeRef.current = bindMode;
 
   useEffect(() => {
     if (!activePlanId || !CLIENT_ID) return;
@@ -87,7 +99,31 @@ export default function PayPalSubscribeButton({
             style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
             createSubscription: (data: any, actions: any) =>
               actions.subscription.create({ plan_id: activePlanId }),
-            onApprove: (data: any) => {
+            onApprove: async (data: any) => {
+              // 已登录绑定模式（锁定弹窗）：不再跳 /signup 注册新账号，
+              // 调用后端接口把订阅 ID 写入当前登录账号 → 前端重查 account → isFree=false 解锁
+              if (bindModeRef.current) {
+                try {
+                  const res = await fetch('/api/account/bind-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscriptionId: data.subscriptionID }),
+                  });
+                  const json = await res.json();
+                  if (!res.ok || !json?.ok) {
+                    console.error('[PayPalSubscribeButton] bind failed:', json?.error || res.status);
+                    setBindError(json?.error || 'Failed to activate your subscription. Please use "I\'ve paid — re-check my account" below.');
+                    return;
+                  }
+                  setBindError(null);
+                  onBound?.();
+                } catch (err) {
+                  console.error('[PayPalSubscribeButton] bind error:', err);
+                  setBindError('Network error while activating. Please use "I\'ve paid — re-check my account" below.');
+                }
+                return;
+              }
+              // 注册模式（落地页 / subscribe-test 等）：保持跳转 /signup 注册新账号
               const url = new URL('/signup', window.location.origin);
               url.searchParams.set('sub', data.subscriptionID);
               window.location.href = url.toString();
@@ -213,6 +249,11 @@ export default function PayPalSubscribeButton({
         <button className="btn" disabled style={{ opacity: 0.6 }}>
           Loading PayPal…
         </button>
+      )}
+      {bindError && (
+        <p style={{ color: '#f87171', fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>
+          {bindError}
+        </p>
       )}
     </div>
   );

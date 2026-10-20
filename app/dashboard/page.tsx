@@ -76,6 +76,7 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [exportOpen, setExportOpen] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const { referral_code: storedCode } = useEnsureReferralCode();
 
   const loadQuotes = useCallback(async () => {
@@ -96,6 +97,18 @@ export default function DashboardPage() {
     setAccount(acc as any);
     setLoading(false);
   }, []);
+
+  // 兜底重试："我已付款，重新检查"——重新拉取 account，
+  // 若订阅 ID 已写入（绑定模式成功/其他入口付款）则 isFree=false 自动解锁
+  const handleRecheck = useCallback(async () => {
+    if (rechecking) return;
+    setRechecking(true);
+    try {
+      await loadQuotes();
+    } finally {
+      setRechecking(false);
+    }
+  }, [rechecking, loadQuotes]);
 
   useEffect(() => {
     loadQuotes();
@@ -216,12 +229,21 @@ export default function DashboardPage() {
                     </ul>
                   )}
                   <div style={{ textAlign: 'center' }}>
-                    <PayPalSubscribeButton planId={tier.planId} label={tier.cta || `Subscribe — $${tier.price}/${tier.period === 'month' ? 'mo' : 'yr'}`} />
+                    <PayPalSubscribeButton planId={tier.planId} bindMode onBound={loadQuotes} label={tier.cta || `Subscribe — $${tier.price}/${tier.period === 'month' ? 'mo' : 'yr'}`} />
                   </div>
                 </div>
               ))}
             </div>
-            <form action="/api/logout" method="post" style={{ width: '100%', maxWidth: 300, margin: '14px auto 0' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleRecheck}
+              disabled={rechecking}
+              style={{ width: '100%', maxWidth: 300, margin: '14px auto 0', padding: '10px 20px', fontSize: 13, background: 'transparent', border: '1px solid var(--border)', color: 'var(--fg)' }}
+            >
+              {rechecking ? 'Checking…' : "I've paid — re-check my account"}
+            </button>
+            <form action="/api/logout" method="post" style={{ width: '100%', maxWidth: 300, margin: '8px auto 0' }}>
               <button
                 type="submit"
                 className="btn"
