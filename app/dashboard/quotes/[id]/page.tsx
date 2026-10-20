@@ -215,6 +215,8 @@ export default function QuoteDetailPage() {
       setError(j?.error || 'Failed to mark deposit as paid. Please try again.');
       return;
     }
+    // 新增前端特效：收款成功撒彩带庆祝（不影响业务逻辑）
+    if (typeof window !== 'undefined') (window as unknown as { __fxConfetti?: () => void }).__fxConfetti?.();
     await load();
   }
 

@@ -15,6 +15,9 @@ import { useEffect, useRef } from 'react';
  */
 export default function FxLayer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const burstRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -95,6 +98,9 @@ export default function FxLayer() {
 
     /* ---------- 2) Delegated tilt + spotlight ---------- */
     const TILT_MAX = 6;
+    /* 补齐遗漏按钮：所有主要按钮自动获得磁吸委托，无需逐个手写 data-magnetic */
+    const MAGNETIC_SELECTOR =
+      '[data-magnetic], .btn, .btn-sm, .btn-ghost, .logout, .faq-question, .public-accept, .public-decline, button[type="submit"]';
     const onMove = (e: MouseEvent) => {
       if (prefersReduced) return;
       const { clientX, clientY } = e;
@@ -111,7 +117,8 @@ export default function FxLayer() {
         el.style.setProperty('--fx-sy', `${(py * 100).toFixed(2)}%`);
       });
 
-      document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
+      document.querySelectorAll<HTMLElement>(MAGNETIC_SELECTOR).forEach((el) => {
+        if (!el.dataset.magnetic) el.dataset.magnetic = 'true';
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) return;
         const dx = clientX - (r.left + r.width / 2);
@@ -126,7 +133,7 @@ export default function FxLayer() {
 
     const onLeave = (e: MouseEvent) => {
       if (!e.relatedTarget) {
-        document.querySelectorAll<HTMLElement>('[data-tilt],[data-magnetic]').forEach((el) => {
+        document.querySelectorAll<HTMLElement>(`[data-tilt],${MAGNETIC_SELECTOR}`).forEach((el) => {
           el.style.transform = '';
           el.style.setProperty('--mx', '0px');
           el.style.setProperty('--my', '0px');
@@ -187,6 +194,107 @@ export default function FxLayer() {
     const mo = new MutationObserver(() => observeStats());
     mo.observe(document.body, { childList: true, subtree: true });
 
+    /* ---------- 4) Universal click burst (ripple particles on buttons) ---------- */
+    const burstLayer = burstRef.current;
+    const BURST_COLORS = ['#818cf8', '#a78bfa', '#38bdf8', '#34d399'];
+    const onClickBurst = (e: MouseEvent) => {
+      if (prefersReduced || !burstLayer) return;
+      const t = e.target as HTMLElement | null;
+      const host = t?.closest?.(
+        '.btn, button, .logout, .faq-question, .public-accept, .public-decline, [data-magnetic]',
+      ) as HTMLElement | null;
+      if (!host || (host as HTMLButtonElement).disabled) return;
+      const count = 10;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('span');
+        p.className = 'fx-burst-particle';
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 24 + Math.random() * 44;
+        p.style.left = `${e.clientX}px`;
+        p.style.top = `${e.clientY}px`;
+        p.style.setProperty('--bx', `${(Math.cos(ang) * dist).toFixed(1)}px`);
+        p.style.setProperty('--by', `${(Math.sin(ang) * dist).toFixed(1)}px`);
+        p.style.setProperty('--bs', `${(3 + Math.random() * 4).toFixed(1)}px`);
+        p.style.setProperty('--bd', `${(Math.random() * 0.35).toFixed(2)}s`);
+        p.style.setProperty('--bc', BURST_COLORS[i % BURST_COLORS.length]);
+        burstLayer.appendChild(p);
+        window.setTimeout(() => p.remove(), 750);
+      }
+    };
+    document.addEventListener('click', onClickBurst);
+
+    /* ---------- 5) Cursor glow (soft light halo follows pointer) ---------- */
+    const glow = glowRef.current;
+    let glowRaf = 0;
+    let glowCleanup: (() => void) | null = null;
+    if (glow) {
+      if (prefersReduced) {
+        glow.style.display = 'none';
+      } else {
+        let gx = -9999;
+        let gy = -9999;
+        let tx = -9999;
+        let ty = -9999;
+        const onGlowMove = (e: MouseEvent) => {
+          tx = e.clientX;
+          ty = e.clientY;
+        };
+        const glowTick = () => {
+          gx += (tx - gx) * 0.14;
+          gy += (ty - gy) * 0.14;
+          glow.style.transform = `translate(${gx - 150}px, ${gy - 150}px)`;
+          glowRaf = requestAnimationFrame(glowTick);
+        };
+        window.addEventListener('mousemove', onGlowMove);
+        glowRaf = requestAnimationFrame(glowTick);
+        glowCleanup = () => {
+          window.removeEventListener('mousemove', onGlowMove);
+          cancelAnimationFrame(glowRaf);
+        };
+      }
+    }
+
+    /* ---------- 6) Top scroll progress bar ---------- */
+    const bar = progressRef.current;
+    let cleanupScroll: (() => void) | null = null;
+    if (bar) {
+      const update = () => {
+        const sh = document.documentElement.scrollHeight - window.innerHeight;
+        const p = sh > 0 ? Math.min(1, window.scrollY / sh) : 0;
+        bar.style.width = `${(p * 100).toFixed(1)}%`;
+      };
+      update();
+      window.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update);
+      cleanupScroll = () => {
+        window.removeEventListener('scroll', update);
+        window.removeEventListener('resize', update);
+      };
+    }
+
+    /* ---------- 7) Confetti celebration (window.__fxConfetti) ---------- */
+    const CONFETTI_COLORS = ['#818cf8', '#a78bfa', '#38bdf8', '#34d399', '#fbbf24', '#f472b6'];
+    const createConfetti = () => {
+      if (!burstLayer) return;
+      const count = 110;
+      for (let i = 0; i < count; i++) {
+        const c = document.createElement('span');
+        c.className = 'fx-confetti-piece';
+        const size = 6 + Math.random() * 6;
+        c.style.left = `${(Math.random() * window.innerWidth).toFixed(0)}px`;
+        c.style.width = `${size.toFixed(1)}px`;
+        c.style.height = `${(size * (0.4 + Math.random() * 0.8)).toFixed(1)}px`;
+        c.style.setProperty('--cd', `${(Math.random() * 0.8).toFixed(2)}s`);
+        c.style.setProperty('--ct', `${(2.2 + Math.random() * 1.6).toFixed(2)}s`);
+        c.style.setProperty('--cr', `${(Math.random() * 720).toFixed(0)}deg`);
+        c.style.setProperty('--cc', CONFETTI_COLORS[i % CONFETTI_COLORS.length]);
+        c.style.setProperty('--cw', `${Math.random() < 0.5 ? 1 : -1}`);
+        burstLayer.appendChild(c);
+        window.setTimeout(() => c.remove(), 3400);
+      }
+    };
+    (window as unknown as { __fxConfetti?: () => void }).__fxConfetti = createConfetti;
+
     return () => {
       cancelAnimationFrame(raf);
       cleanupResize?.();
@@ -194,6 +302,9 @@ export default function FxLayer() {
       document.documentElement.removeEventListener('mouseleave', onLeave);
       io.disconnect();
       mo.disconnect();
+      document.removeEventListener('click', onClickBurst);
+      glowCleanup?.();
+      cleanupScroll?.();
     };
   }, []);
 
@@ -202,6 +313,9 @@ export default function FxLayer() {
       <div aria-hidden className="fx-bg" />
       <div aria-hidden className="fx-grid" />
       <canvas ref={canvasRef} aria-hidden className="fx-particles" />
+      <div ref={burstRef} aria-hidden className="fx-burst-layer" />
+      <div ref={glowRef} aria-hidden className="fx-cursor-glow" />
+      <div ref={progressRef} aria-hidden className="fx-scroll-progress" />
     </>
   );
 }
