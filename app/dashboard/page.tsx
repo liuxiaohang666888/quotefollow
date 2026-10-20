@@ -165,8 +165,8 @@ export default function DashboardPage() {
             background: '#0a0a0f',
             border: '1px solid var(--border)',
             borderRadius: 16,
-            padding: '28px 32px',
-            maxWidth: 460,
+            padding: '24px 28px',
+            maxWidth: 780,
             width: '100%',
             textAlign: 'center',
           }}>
@@ -178,14 +178,14 @@ export default function DashboardPage() {
                 ? 'You need an active subscription to keep using QuoteFollow.'
                 : `You've used all ${FREE_QUOTA} free clients. Upgrade to Pro to keep sending quotes and follow-ups.`}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'stretch', textAlign: 'center' }}>
               {config.pricing.tiers?.map((tier) => (
                 <div
                   key={tier.id}
                   style={{
                     border: tier.isPopular ? '1px solid rgba(99,102,241,0.55)' : '1px solid rgba(255,255,255,0.12)',
                     borderRadius: 14,
-                    padding: '14px 16px 12px',
+                    padding: '12px 10px 10px',
                     background: 'rgba(255,255,255,0.04)',
                     textAlign: 'left',
                     position: 'relative',
@@ -194,22 +194,22 @@ export default function DashboardPage() {
                 >
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,#6366f1,#a855f7,#6366f1)' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700 }}>{tier.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>{tier.name}</span>
                     {tier.badge && (
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: tier.isPopular ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'rgba(255,255,255,0.10)', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.05, whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: tier.isPopular ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'rgba(255,255,255,0.10)', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.05, whiteSpace: 'nowrap' }}>
                         {tier.badge}
                       </span>
                     )}
                   </div>
-                  <div style={{ marginTop: 6, fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(135deg,#fff 0%,#a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1.1 }}>
+                  <div style={{ marginTop: 4, fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(135deg,#fff 0%,#a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1.1 }}>
                     ${tier.price}
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--fg-dim)', WebkitTextFillColor: 'var(--fg-dim)', marginLeft: 4 }}>/ {tier.period === 'month' ? 'month' : 'year'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--fg-dim)', WebkitTextFillColor: 'var(--fg-dim)', marginLeft: 4 }}>/ {tier.period === 'month' ? 'month' : 'year'}</span>
                   </div>
                   {tier.features && tier.features.length > 0 && (
-                    <ul style={{ margin: '8px 0 10px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {tier.features.slice(0, 3).map((feat, j) => (
-                        <li key={j} style={{ fontSize: 12, color: 'var(--fg-dim)', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                          <span style={{ color: '#34d399', fontSize: 12, lineHeight: 1.5 }}>✓</span>
+                    <ul style={{ margin: '6px 0 8px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {tier.features.slice(0, 2).map((feat, j) => (
+                        <li key={j} style={{ fontSize: 11, color: 'var(--fg-dim)', display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+                          <span style={{ color: '#34d399', fontSize: 11, lineHeight: 1.5 }}>✓</span>
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -220,16 +220,16 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
-              <form action="/api/logout" method="post" style={{ width: '100%' }}>
-                <button
-                  type="submit"
-                  className="btn"
-                  style={{ width: '100%', padding: '12px 24px', fontSize: 15, background: 'transparent', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                >
-                  Log out
-                </button>
-              </form>
             </div>
+            <form action="/api/logout" method="post" style={{ width: '100%', maxWidth: 300, margin: '14px auto 0' }}>
+              <button
+                type="submit"
+                className="btn"
+                style={{ width: '100%', padding: '10px 20px', fontSize: 13, background: 'transparent', border: '1px solid var(--border)', color: 'var(--fg)' }}
+              >
+                Log out
+              </button>
+            </form>
           </div>
         </div>
       )}
