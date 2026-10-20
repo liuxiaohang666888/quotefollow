@@ -1826,3 +1826,178 @@ footer {
   }
 }
 
+
+
+/* ===== QF 去 AI 味微交互（灵感：galaxy loaders/Buttons + morphicons，MIT 合规，自包含） ===== */
+
+/* 1) checkingAuth 居中 dot-spinner（源自 Uiverse abrahamcalsin，克制配色） */
+.qf-loader {
+  --qf-size: 28px;
+  --qf-speed: 0.9s;
+  --qf-color: rgba(201, 201, 221, 0.85);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: var(--qf-size);
+  width: var(--qf-size);
+}
+.qf-loader__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+}
+.qf-loader__dot::before {
+  content: '';
+  height: 20%;
+  width: 20%;
+  border-radius: 50%;
+  background-color: var(--qf-color);
+  transform: scale(0);
+  opacity: 0.5;
+  animation: qf-pulse calc(var(--qf-speed) * 1.111) ease-in-out infinite;
+}
+.qf-loader__dot:nth-child(2) { transform: rotate(45deg); }
+.qf-loader__dot:nth-child(2)::before { animation-delay: calc(var(--qf-speed) * -0.875); }
+.qf-loader__dot:nth-child(3) { transform: rotate(90deg); }
+.qf-loader__dot:nth-child(3)::before { animation-delay: calc(var(--qf-speed) * -0.75); }
+.qf-loader__dot:nth-child(4) { transform: rotate(135deg); }
+.qf-loader__dot:nth-child(4)::before { animation-delay: calc(var(--qf-speed) * -0.625); }
+.qf-loader__dot:nth-child(5) { transform: rotate(180deg); }
+.qf-loader__dot:nth-child(5)::before { animation-delay: calc(var(--qf-speed) * -0.5); }
+.qf-loader__dot:nth-child(6) { transform: rotate(225deg); }
+.qf-loader__dot:nth-child(6)::before { animation-delay: calc(var(--qf-speed) * -0.375); }
+.qf-loader__dot:nth-child(7) { transform: rotate(270deg); }
+.qf-loader__dot:nth-child(7)::before { animation-delay: calc(var(--qf-speed) * -0.25); }
+.qf-loader__dot:nth-child(8) { transform: rotate(315deg); }
+.qf-loader__dot:nth-child(8)::before { animation-delay: calc(var(--qf-speed) * -0.125); }
+@keyframes qf-pulse {
+  0%, 100% { transform: scale(0); opacity: 0.5; }
+  50% { transform: scale(1); opacity: 1; }
+}
+
+/* 2) 按钮微交互：主 CTA 悬停扫光 + 箭头位移；ghost 微光 */
+.landing .btn {
+  position: relative;
+  overflow: hidden;
+}
+.landing .btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 45%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  pointer-events: none;
+  opacity: 0;
+}
+.landing .btn:hover::after {
+  animation: qf-sheen 0.75s ease;
+}
+.landing .btn .arrow {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+.landing .btn:hover .arrow {
+  transform: translateX(4px);
+}
+.landing .btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+@keyframes qf-sheen {
+  0% { left: -60%; opacity: 1; }
+  100% { left: 120%; opacity: 1; }
+}
+
+/* 3) hero trustbar：SVG 描边打勾依次勾选 */
+.landing .trustbar-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  font-weight: 700;
+}
+.landing .trustbar-check svg .qf-trust-tick {
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: qf-draw 0.5s ease-out forwards;
+}
+.landing .hero-trustbar .trustbar-item:nth-child(2) .qf-trust-tick { animation-delay: 0.25s; }
+.landing .hero-trustbar .trustbar-item:nth-child(3) .qf-trust-tick { animation-delay: 0.5s; }
+.landing .hero-trustbar .trustbar-item:nth-child(4) .qf-trust-tick { animation-delay: 0.75s; }
+.landing .hero-trustbar .trustbar-item:nth-child(5) .qf-trust-tick { animation-delay: 1s; }
+
+/* 4) Features：图标形变交给 FeatureIcon（morphicons），容器 hover 微提亮已存在，仅统一过渡 */
+.landing .feature-icon { transition: color 0.2s, border-color 0.2s, transform 0.2s; }
+.landing .feature-card:hover .feature-icon { transform: translateY(-1px); }
+
+/* 5) Compare：圆环 + 叉/勾 描边入场 */
+.landing .compare-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.landing .compare-icon svg .qf-ring {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: qf-draw 0.55s 0.1s ease-out forwards;
+}
+.landing .compare-icon svg .qf-mark {
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: qf-draw 0.3s 0.5s ease-out forwards;
+}
+
+/* 6) FAQ：chevron 旋转（隐藏旧版 + 伪元素，避免双符号） */
+.landing .faq-question::after { content: none; }
+.landing .faq-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  margin-left: 12px;
+}
+.landing .faq-toggle svg { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.landing .faq-toggle.open svg { transform: rotate(180deg); }
+
+/* 7) Footer：品牌图表图标微动 */
+.landing .footer .brand-icon svg { transition: transform 0.2s ease; }
+.landing .footer .footer-brand:hover .brand-icon svg { transform: translateY(-1px); }
+
+/* 8) Pricing 卡片 hover：轻 lift + 阴影过渡（数字滚动由 PriceRoll 组件负责） */
+.landing .pricing-card {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.22s, box-shadow 0.22s;
+}
+.landing .pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 14px 34px rgba(0, 0, 0, 0.35),
+    0 0 80px rgba(99, 102, 241, 0.14);
+}
+
+/* 9) 减弱动态：全部微动画跟随系统偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .landing .btn::after { display: none; }
+  .landing .btn .arrow { transition: none; }
+  .landing .trustbar-check svg .qf-trust-tick,
+  .landing .compare-icon svg .qf-ring,
+  .landing .compare-icon svg .qf-mark { animation: none; stroke-dashoffset: 0; }
+  .landing .faq-toggle svg { transition: none; }
+  .qf-loader__dot::before { animation: none; transform: scale(1); opacity: 0.8; }
+}

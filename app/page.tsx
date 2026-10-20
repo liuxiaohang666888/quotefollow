@@ -6,50 +6,10 @@ import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import DashboardPreview from '@/components/DashboardPreview';
 import { getVerticalConfig, getBrandName } from '@/lib/vertical';
 import { createClient } from '@/lib/supabase/client';
+import FeatureIcon from '@/components/FeatureIcon';
+import PriceRoll from '@/components/PriceRoll';
 
-// 统一线性图标（stroke=currentColor），比 emoji 更克制、更接近苹果风格
-const icons = {
-  chat: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-  ),
-  clock: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
-    </svg>
-  ),
-  flame: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12h4l3-8 4 16 3-8h4"/>
-    </svg>
-  ),
-  chart: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/>
-    </svg>
-  ),
-  reply: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-    </svg>
-  ),
-  bell: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-    </svg>
-  ),
-};
-
-const iconMap: Record<string, React.ReactNode> = {
-  chat: icons.chat,
-  clock: icons.clock,
-  flame: icons.flame,
-  chart: icons.chart,
-  reply: icons.reply,
-  bell: icons.bell,
-};
-
+// 线性图标统一迁移至 components/FeatureIcon.tsx（morphicons 形变），此处不再内联
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -77,7 +37,16 @@ export default function LandingPage() {
   if (checkingAuth) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-dim)', fontSize: 14 }}>
-        Loading…
+        <div className="qf-loader" role="status" aria-label="Loading">
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+          <i className="qf-loader__dot" />
+        </div>
       </div>
     );
   }
@@ -116,7 +85,11 @@ export default function LandingPage() {
           <div className="hero-trustbar">
             {config.trustBar.map((item, i) => (
               <span className="trustbar-item" key={i}>
-                <span className="trustbar-check">✓</span> {item}
+                <span className="trustbar-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="5 12.5 10 17.5 19 6.5" className="qf-trust-tick" />
+                  </svg>
+                </span> {item}
               </span>
             ))}
           </div>
@@ -158,7 +131,12 @@ export default function LandingPage() {
         <div className="compare-grid">
           <div className="compare-col compare-no">
             <div className="compare-header">
-              <span className="compare-icon">✕</span>
+              <span className="compare-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" className="qf-ring" />
+                  <path d="M9 9l6 6M15 9l-6 6" className="qf-mark" />
+                </svg>
+              </span>
               <span>No follow-up</span>
             </div>
             <div className="compare-scenario">
@@ -191,7 +169,12 @@ export default function LandingPage() {
           </div>
           <div className="compare-col compare-yes">
             <div className="compare-header">
-              <span className="compare-icon">✓</span>
+              <span className="compare-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" className="qf-ring" />
+                  <polyline points="8 12.5 11 15.5 16 9" className="qf-mark" />
+                </svg>
+              </span>
               <span>{brand} follows up</span>
             </div>
             <div className="compare-scenario">
@@ -263,7 +246,9 @@ export default function LandingPage() {
         <div className="features-grid">
           {config.features.map((f, i) => (
             <div className="feature-card" key={i}>
-              <div className="feature-icon">{iconMap[f.iconKey]}</div>
+              <div className="feature-icon">
+                <FeatureIcon kind={f.iconKey} />
+              </div>
               <h3>{f.title}</h3>
               <p>{f.desc}</p>
             </div>
@@ -488,7 +473,7 @@ export default function LandingPage() {
                 {tier.badge && <div className="pricing-badge">{tier.badge}</div>}
               </div>
               <div className="pricing-price">
-                <span className="pricing-amount">${tier.price}</span>
+                <PriceRoll value={tier.price} />
                 <span className="pricing-period">{tier.period === 'month' ? '/ month' : tier.period}</span>
               </div>
               <div className="pricing-features">
@@ -517,7 +502,11 @@ export default function LandingPage() {
             <div className="faq-item" key={i}>
               <button className="faq-question" onClick={() => setActive(active === i ? -1 : i)}>
                 <span>{item.q}</span>
-                <span className="faq-toggle">{active === i ? '−' : '+'}</span>
+                <span className={`faq-toggle${active === i ? ' open' : ''}`} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
               </button>
               {active === i && (
                 <div className="faq-answer">
@@ -542,7 +531,13 @@ export default function LandingPage() {
 
       <footer className="footer">
         <div className="footer-brand">
-          <span className="brand-icon">⚡</span>
+          <span className="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-6" />
+            </svg>
+          </span>
           <span className="brand-name">{brand}</span>
         </div>
         <div className="footer-links">
