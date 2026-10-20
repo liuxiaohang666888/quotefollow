@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { computeHeat } from '@/lib/heat';
 import { FREE_QUOTA, TRIAL_DAYS } from '@/lib/paywall';
 import { useEnsureReferralCode } from '@/hooks/useEnsureReferralCode';
-import PayPalSubscribeButton, { PLAN_PRO_ID } from '@/components/PayPalSubscribeButton';
+import PayPalSubscribeButton from '@/components/PayPalSubscribeButton';
 import { getVerticalConfig } from '@/lib/vertical';
 
 interface Quote {
@@ -382,17 +382,9 @@ export default function DashboardPage() {
             </div>
           )}
           {isLocked && (
-            <a href={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${PLAN_PRO_ID}`} target="_blank" rel="noopener noreferrer" style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#fff',
-              background: '#f59e0b',
-              padding: '6px 14px',
-              borderRadius: 8,
-              textDecoration: 'none',
-            }}>
-              Upgrade to Pro — $49/mo
-            </a>
+            <div style={{ minWidth: 220, maxWidth: 280 }}>
+              <PayPalSubscribeButton label="Upgrade to Pro — $49/mo" bindMode onBound={loadQuotes} />
+            </div>
           )}
         </div>
               )}

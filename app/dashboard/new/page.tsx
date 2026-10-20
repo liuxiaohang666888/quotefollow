@@ -98,6 +98,15 @@ export default function NewQuotePage() {
     }
   }
 
+  // 已登录绑定模式回调：PayPal 订阅绑定到当前账号成功后触发，
+  // 关闭升级弹窗并刷新，用户可重新提交报价（isFree 已解除不再 402）
+  function handleBound() {
+    setShowUpgradeModal(false);
+    setError('');
+    setLoading(false);
+    router.refresh();
+  }
+
   return (
     <div>
       <Link href="/dashboard" style={{ color: 'var(--fg-dim)', fontSize: 14 }}>
@@ -176,7 +185,7 @@ export default function NewQuotePage() {
                   Go Back
                 </Link>
                 <div style={{ flex: 1 }}>
-                  <PayPalSubscribeButton label="Upgrade Now" />
+                  <PayPalSubscribeButton label="Upgrade Now" bindMode onBound={handleBound} />
                 </div>
               </div>
               <p style={{ fontSize: 12, color: 'var(--fg-dim)', textAlign: 'center', margin: 0 }}>
