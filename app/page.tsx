@@ -95,11 +95,11 @@ export default function LandingPage() {
           </div>
         )}
         <div className="hero-actions">
-          <Link href="/signup" className="btn">
+          <Link href="/signup" className="btn" data-magnetic data-liquid>
             Start free trial
             <span className="arrow">→</span>
           </Link>
-          <Link href="/login" className="btn btn-ghost">
+          <Link href="/login" className="btn btn-ghost" data-magnetic>
             Log in
           </Link>
         </div>
@@ -115,7 +115,7 @@ export default function LandingPage() {
         <h2>These are the jobs people lose because they forgot to follow up.</h2>
         <div className="case-cards">
           {config.painPoints.map((p, i) => (
-            <div className="case-card" key={i}>
+            <div className="case-card" key={i} data-tilt>
               <div className="case-tag">{p.tag}</div>
               <p>{p.quote}</p>
               <div className="case-loss">{p.loss}: <strong>{p.amount}</strong></div>
@@ -230,7 +230,7 @@ export default function LandingPage() {
         <h2>Set it up once. Walk away. Win more jobs.</h2>
         <div className="steps-grid">
           {config.howItWorks.map((step, i) => (
-            <div className="step-card" key={i}>
+            <div className="step-card" key={i} data-tilt>
               <div className="step-num">{step.num}</div>
               <h3>{step.title}</h3>
               <p>{step.desc}</p>
@@ -245,7 +245,7 @@ export default function LandingPage() {
         <h2>Everything you need to stop losing quotes</h2>
         <div className="features-grid">
           {config.features.map((f, i) => (
-            <div className="feature-card" key={i}>
+            <div className="feature-card" key={i} data-tilt>
               <div className="feature-icon">
                 <FeatureIcon kind={f.iconKey} />
               </div>
@@ -264,7 +264,7 @@ export default function LandingPage() {
         <DashboardPreview />
         <div className="preview-cta">
           <p>Ready to stop losing quotes? Set up your dashboard in 10 minutes.</p>
-          <Link href="/signup" className="btn">
+          <Link href="/signup" className="btn" data-magnetic>
             Start free trial →
           </Link>
         </div>
@@ -325,7 +325,7 @@ export default function LandingPage() {
                 placeholder="Days overdue"
                 style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
               />
-              <button className="btn" style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => {
+              <button className="btn" data-magnetic style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => {
                 const el = document.getElementById('email-results');
                 if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
               }}>
@@ -435,7 +435,7 @@ export default function LandingPage() {
                           fontFamily: 'monospace',
                         }}
                       />
-                      <button className="btn" style={{ padding: '14px 24px', whiteSpace: 'nowrap' }}>
+                      <button className="btn" data-magnetic style={{ padding: '14px 24px', whiteSpace: 'nowrap' }}>
                         Copy
                       </button>
                     </div>
@@ -467,7 +467,7 @@ export default function LandingPage() {
         <p className="pricing-sub">From $29/mo. Free for 14 days, up to 3 clients.</p>
         <div className="pricing-grid">
           {config.pricing.tiers?.map((tier, i) => (
-            <div className={`pricing-card ${tier.isPopular ? 'popular' : ''}`} key={tier.id || i}>
+            <div className={`pricing-card ${tier.isPopular ? 'popular' : ''}`} key={tier.id || i} data-tilt>
               <div className="pricing-header">
                 <div className="pricing-name">{tier.name}</div>
                 {tier.badge && <div className="pricing-badge">{tier.badge}</div>}

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
+import FxLayer from '@/components/FxLayer';
 import { getBrandName, getVerticalConfig } from '@/lib/vertical';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <FxLayer />
         {children}
         <Analytics />
       </body>
