@@ -281,21 +281,28 @@ export async function POST(req: NextRequest) {
     (!!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id)) ||
     hasActiveFreeMonth(account);
   if (!accountIsAdmin && !accountIsPaid) {
-    const used = await countQuotesFor(admin, account.id, account.email);
-    if (used >= FREE_QUOTA || !isTrialActive(account)) {
-      await traceWrite(
-        'quota_exhausted',
-        'account=' + account.id + ' used=' + used + ' trial_ends=' + String(account.trial_ends_at)
-      );
-      // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
-      await notifyOwner(
-        admin,
-        account,
-        `Free plan limit reached (${FREE_QUOTA} quotes) or 14-day trial ended. This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
-      );
-      // M7 修复：旧代码返回 402 → Resend 重试，而额度/试用状态在重试窗口内不会变，
-      // 每次重试都白跑一遍 AI 解析。改 200（trace 已记录 + 主人已收到通知）。
-      return NextResponse.json({ ok: true, handled: false, reason: 'free quota exhausted or trial ended' });
+    // M17 修复：free_month_expires_at 为 NULL（未设置到期时间）视为免费额度可用，不拦截；
+    // 仅当显式设置了到期时间且已过期时才进入额度/试用检查。
+    const freeMonthExpired =
+      account.free_month_expires_at != null &&
+      new Date(account.free_month_expires_at).getTime() <= Date.now();
+    if (freeMonthExpired) {
+      const used = await countQuotesFor(admin, account.id, account.email);
+      if (used >= FREE_QUOTA || !isTrialActive(account)) {
+        await traceWrite(
+          'quota_exhausted',
+          'account=' + account.id + ' used=' + used + ' trial_ends=' + String(account.trial_ends_at)
+        );
+        // 通知账号主人：转发被拒绝，避免用户以为系统吞了邮件
+        await notifyOwner(
+          admin,
+          account,
+          `Free plan limit reached (${FREE_QUOTA} quotes) or 14-day trial ended. This forwarded quote was NOT saved.\nUpgrade to Pro ($49/mo) to keep capturing quotes: ${process.env.NEXT_PUBLIC_APP_URL || ''}/signup`
+        );
+        // M7 修复：旧代码返回 402 → Resend 重试，而额度/试用状态在重试窗口内不会变，
+        // 每次重试都白跑一遍 AI 解析。改 200（trace 已记录 + 主人已收到通知）。
+        return NextResponse.json({ ok: true, handled: false, reason: 'free quota exhausted or trial ended' });
+      }
     }
   }
 
