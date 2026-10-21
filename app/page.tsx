@@ -13,6 +13,34 @@ import PriceRoll from '@/components/PriceRoll';
 export default function LandingPage() {
   const [active, setActive] = useState<number>(-1);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  // 免费模板工具：输入与生成结果（纯前端，无注册）
+  const [toolName, setToolName] = useState('');
+  const [toolAmount, setToolAmount] = useState('');
+  const [toolDays, setToolDays] = useState('');
+  const [toolEmails, setToolEmails] = useState<{ day: string; title: string; body: string; tone: string }[]>([]);
+  const [toolError, setToolError] = useState('');
+  const handleGenerateTool = () => {
+    const amt = parseFloat(toolAmount);
+    const days = parseInt(toolDays, 10);
+    if (!toolAmount.trim() || isNaN(amt) || amt <= 0) {
+      setToolError('Please enter a valid invoice amount.');
+      setToolEmails([]);
+      return;
+    }
+    if (!toolDays.trim() || isNaN(days) || days < 0) {
+      setToolError('Please enter valid days overdue.');
+      setToolEmails([]);
+      return;
+    }
+    setToolError('');
+    const formatted = '$' + amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const name = toolName.trim() || '[Client Name]';
+    setToolEmails([
+      { day: 'Day 1', title: 'Friendly check-in', body: `Hi ${name}, just checking in on the invoice for ${formatted}. Any questions or ready to move forward? No rush — just wanted to follow up.`, tone: 'friendly' },
+      { day: 'Day 3', title: 'Payment reminder', body: `Hi ${name}, following up on the outstanding invoice of ${formatted}. It's now ${days} days past due. Please let me know if there's an issue or if you need an updated payment schedule.`, tone: 'professional' },
+      { day: 'Day 7', title: 'Final notice', body: `Hi ${name}, this is a final reminder regarding the overdue payment of ${formatted}. If payment has already been sent, please disregard this message. Otherwise, please remit payment within 5 business days to avoid any further action.`, tone: 'firm' },
+    ]);
+  };
   const config = getVerticalConfig();
   const brand = getBrandName();
 
@@ -318,41 +346,49 @@ export default function LandingPage() {
               <input
                 type="text"
                 placeholder="Client name (optional)"
+                value={toolName}
+                onChange={(e) => setToolName(e.target.value)}
                 style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
               />
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 placeholder="Invoice amount ($)"
+                value={toolAmount}
+                onChange={(e) => setToolAmount(e.target.value)}
                 style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
               />
               <input
                 type="number"
+                min="0"
+                step="1"
                 placeholder="Days overdue"
+                value={toolDays}
+                onChange={(e) => setToolDays(e.target.value)}
                 style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 16, background: 'var(--bg-glass)', color: 'var(--fg)' }}
               />
-              <button className="btn" data-magnetic style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={() => {
-                const el = document.getElementById('email-results');
-                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-              }}>
+              <button className="btn" data-magnetic style={{ width: '100%', padding: 14, fontSize: 16 }} onClick={handleGenerateTool}>
                 Generate 3 follow-up emails →
               </button>
             </div>
           </div>
-          <div id="email-results" style={{ textAlign: 'left', marginBottom: 24, display: 'none' }}>
-            {[
-              { day: 'Day 1', title: 'Friendly check-in', body: 'Hi [Client Name], just checking in on the invoice for ${amount}. Any questions or ready to move forward? No rush — just wanted to follow up.', tone: 'friendly' },
-              { day: 'Day 3', title: 'Payment reminder', body: 'Hi [Client Name], following up on the outstanding invoice of ${amount}. It\'s now a few days past due. Please let me know if there\'s an issue or if you need an updated payment schedule.', tone: 'professional' },
-              { day: 'Day 7', title: 'Final notice', body: 'Hi [Client Name], this is a final reminder regarding the overdue payment of ${amount}. If payment has already been sent, please disregard this message. Otherwise, please remit payment within 5 business days to avoid any further action.', tone: 'firm' },
-            ].map((email, i) => (
-              <div key={i} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#a5b4fc' }}>{email.day}: {email.title}</span>
-                  <button onClick={() => { navigator.clipboard.writeText(email.body); alert('Copied!'); }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 12px', color: 'var(--fg-dim)', cursor: 'pointer', fontSize: 12 }}>Copy</button>
+          {toolError && (
+            <p style={{ color: '#dc2626', fontSize: 14, marginBottom: 12, textAlign: 'center' }}>{toolError}</p>
+          )}
+          {toolEmails.length > 0 && (
+            <div style={{ textAlign: 'left', marginBottom: 24 }}>
+              {toolEmails.map((email, i) => (
+                <div key={i} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#a5b4fc' }}>{email.day}: {email.title}</span>
+                    <button onClick={() => { navigator.clipboard.writeText(email.body); alert('Copied!'); }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 12px', color: 'var(--fg-dim)', cursor: 'pointer', fontSize: 12 }}>Copy</button>
+                  </div>
+                  <p style={{ fontSize: 14, color: 'var(--fg-dim)', lineHeight: 1.6, margin: 0 }}>{email.body}</p>
                 </div>
-                <p style={{ fontSize: 14, color: 'var(--fg-dim)', lineHeight: 1.6, margin: 0 }}>{email.body}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
             Want these sent automatically? That's QuoteFollow. → <a href="/signup" style={{ color: '#2563eb', fontWeight: 600 }}>Start free trial</a>
           </p>
@@ -417,9 +453,9 @@ export default function LandingPage() {
             <section className="refer-section" style={{ marginTop: 80, marginBottom: 80 }}>
               <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
                 <p className="eyebrow">Refer & Earn</p>
-                <h2>Recommend QuoteFollow. Both get 1 month free.</h2>
+                <h2>Share QuoteFollow and earn rewards.</h2>
                 <p style={{ color: '#6b7280', fontSize: 18, marginBottom: 32 }}>
-                  Share your link. When someone subscribes, you both get 1 month free.
+                  Invite your network — our invite program rewards you for successful referrals.
                 </p>
                 <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 24, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
                   <div style={{ marginBottom: 24 }}>
@@ -445,22 +481,12 @@ export default function LandingPage() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
-                    <div style={{ textAlign: 'center', padding: '0 24px', borderRight: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
-                      <div style={{ color: '#6b7280', fontSize: 14 }}>Referred</div>
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '0 24px' }}>
-                      <div style={{ fontSize: 32, fontWeight: 700, color: '#2563eb' }}>0</div>
-                      <div style={{ color: '#6b7280', fontSize: 14 }}>Free months</div>
-                    </div>
-                  </div>
                   <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>
                     Share your link in emails, Slack, LinkedIn, or DMs. Works for anyone — freelancers, agencies, contractors.
                   </p>
                 </div>
                 <p style={{ color: '#2563eb', fontWeight: 600, marginTop: 16 }}>
-                  Want to earn 20% recurring commission? <a href="/affiliate" style={{ color: '#2563eb', fontWeight: 600 }}>Become an affiliate →</a>
+                  Want to partner with us? <a href="/affiliate" style={{ color: '#2563eb', fontWeight: 600 }}>Join the affiliate waitlist →</a>
                 </p>
               </div>
             </section>

@@ -53,7 +53,7 @@ export default function ReferPage() {
     <div>
       <Link href="/dashboard" style={{ color: '#2563eb', fontSize: 14 }}>← Back to dashboard</Link>
       <h1 style={{ marginTop: 12 }}>Refer & Earn</h1>
-      <p className="page-sub">Share your link. When someone subscribes, you both get 1 month free.</p>
+      <p className="page-sub">Share your link. Our invite program rewards you for successful referrals.</p>
 
       {/* Referral Link Card */}
       <div className="card" style={{ marginBottom: 24 }}>

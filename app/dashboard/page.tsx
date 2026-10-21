@@ -395,7 +395,7 @@ export default function DashboardPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ flex: 1, minWidth: 280 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, color: '#a5b4fc', marginBottom: 4 }}>Refer & Earn</p>
-                      <p style={{ fontSize: 13, color: '#818cf8', margin: 0 }}>Share your link. When someone subscribes, you both get 1 month free.</p>
+                      <p style={{ fontSize: 13, color: '#818cf8', margin: 0 }}>Share your link. Our invite program rewards you for successful referrals.</p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <span style={{ fontSize: 13, color: '#818cf8', fontWeight: 500 }}>
