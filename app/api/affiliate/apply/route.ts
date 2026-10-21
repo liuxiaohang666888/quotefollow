@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendEmail } from '@/lib/resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,8 +71,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Failed to submit application' }, { status: 500 });
     }
 
-    // TODO: Send notification email to team
-    // await sendEmail({ ... })
+    // 通知站主：复用现有 Resend 邮件能力（与 inbound/followup 邮件同风格）。
+    // OWNER_EMAIL 未配置或发送失败时静默跳过，不影响申请成功响应。
+    const ownerEmail = process.env.OWNER_EMAIL;
+    if (ownerEmail) {
+      try {
+        await sendEmail({
+          to: ownerEmail,
+          subject: `[QuoteFollow] New affiliate waitlist application: ${name.trim()}`,
+          text: [
+            'A new affiliate waitlist application has been submitted:',
+            '',
+            `Name: ${name.trim()}`,
+            `Company: ${company.trim()}`,
+            `Email: ${email.toLowerCase().trim()}`,
+            `Website: ${website.trim()}`,
+            `Traffic: ${traffic}`,
+            `Promotion plan: ${message?.trim() || '(none)'}`,
+          ].join('\n'),
+        });
+        console.log('[affiliate/apply] owner notification sent to', ownerEmail);
+      } catch (e) {
+        console.warn('[affiliate/apply] owner notification failed (silently skipped):', e);
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

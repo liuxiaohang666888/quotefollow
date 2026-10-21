@@ -57,6 +57,11 @@ inbox; we chase them on day 1/3/7, answer common questions, and ping you on hot 
 > The sender address format for `RESEND_FROM_EMAIL`:
 > `Your Business <followup@yourdomain.com>` — must match your verified domain.
 
+> **`OWNER_EMAIL`** (optional): when someone joins the affiliate waitlist
+> (e.g. `https://yourdomain.com/join`), a notification email is sent to this
+> address. If it's not set, the notification is silently skipped and the
+> application still succeeds. It uses the same Resend setup above.
+
 ---
 
 ## 3. Get your AI key

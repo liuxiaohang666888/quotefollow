@@ -18,7 +18,7 @@ async function handler(req: Request) {
   // 取所有有 paypal_subscription_id 的账户
   const { data: accounts, error } = await admin
     .from('accounts')
-    .select('id, email, paypal_subscription_id')
+    .select('id, email, paypal_subscription_id, free_month_expires_at')
     .not('paypal_subscription_id', 'is', null);
 
   if (error) {
@@ -33,6 +33,7 @@ async function handler(req: Request) {
   let checked = 0;
   let downgraded = 0;
   let skippedTransient = 0;
+  let deferredFreeMonth = 0;
   let errors = 0;
 
   // 只有"确定性失效"才降级；PayPal API 抖动/超时/5xx 跳过，防止误伤付费用户
@@ -61,6 +62,16 @@ async function handler(req: Request) {
         console.warn(
           `[cron/subscription-check] subscription DEFINITIVELY INACTIVE for ${acc.email}: ${verify.reason} (sub=${acc.paypal_subscription_id})`
         );
+        // free_months_earned 真抵扣：赠送免费月生效中则暂不清空订阅 ID（保持解锁），待到期后再降级
+        const freeMonthActive =
+          !!acc.free_month_expires_at && new Date(acc.free_month_expires_at).getTime() > Date.now();
+        if (freeMonthActive) {
+          console.log(
+            `[cron/subscription-check] free month active until ${acc.free_month_expires_at} for ${acc.email} — keeping subscription id, downgrade deferred`
+          );
+          deferredFreeMonth++;
+          continue;
+        }
         // 降级：清除订阅 ID，用户变回免费版
         await admin
           .from('accounts')
@@ -75,7 +86,7 @@ async function handler(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, checked, downgraded, skippedTransient, errors });
+  return NextResponse.json({ ok: true, checked, downgraded, skippedTransient, deferredFreeMonth, errors });
 }
 
 export async function GET(req: Request) {

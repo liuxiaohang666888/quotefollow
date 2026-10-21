@@ -20,7 +20,7 @@ export default function ReferPage() {
 
       const { data: acc } = await supabase
         .from('accounts')
-        .select('referral_code, free_months_earned, business_name')
+        .select('referral_code, free_months_earned, business_name, free_month_expires_at')
         .eq('id', user.id)
         .single();
       setAccount(acc);
@@ -48,6 +48,8 @@ export default function ReferPage() {
   const referredCount = referrals.length;
   const completedCount = referrals.filter(r => r.status === 'completed').length;
   const freeMonths = account?.free_months_earned || 0;
+  const freeMonthExpiresAt = account?.free_month_expires_at ? new Date(account.free_month_expires_at) : null;
+  const freeMonthActive = freeMonths > 0 && !!freeMonthExpiresAt && freeMonthExpiresAt.getTime() > Date.now();
 
   return (
     <div>
@@ -101,6 +103,15 @@ export default function ReferPage() {
         <div className="stat-card">
           <div className="stat-label">Free months</div>
           <div className="stat-value amber">{freeMonths}</div>
+          <div style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 4 }}>
+            {freeMonthExpiresAt
+              ? freeMonthActive
+                ? `Active until ${freeMonthExpiresAt.toLocaleDateString()}`
+                : `Expired ${freeMonthExpiresAt.toLocaleDateString()}`
+              : freeMonths > 0
+                ? 'To be activated on your next cancellation'
+                : 'Earn 1 month per completed referral'}
+          </div>
         </div>
       </div>
 

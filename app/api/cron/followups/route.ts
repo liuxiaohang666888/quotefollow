@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateFollowupBody } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
-import { FREE_QUOTA, isAdminEmail, isTrialActive } from '@/lib/paywall';
+import { FREE_QUOTA, isAdminEmail, isTrialActive, hasActiveFreeMonth } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 import { isCronAuthorized } from '@/lib/cron-auth';
 
@@ -47,13 +47,13 @@ async function handler(req: Request) {
       // 先查账号的订阅状态
       const { data: acc } = await admin
         .from('accounts')
-        .select('paypal_subscription_id, email, created_at, trial_ends_at')
+        .select('paypal_subscription_id, email, created_at, trial_ends_at, free_months_earned, free_month_expires_at')
         .eq('id', accountId)
         .maybeSingle();
 
-      const isPaid = isAdmin || !!(acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id));
+      const isPaid = isAdmin || !!(acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id)) || hasActiveFreeMonth(acc);
 
-      if (isPaid || isAdmin) {
+      if (isPaid) {
         accountCache.set(accountId, { isPaid: true, createdAt: (acc as any)?.created_at ?? null, trialEndsAt: (acc as any)?.trial_ends_at ?? null });
       } else {
         // 免费用户：统计 quote 数量

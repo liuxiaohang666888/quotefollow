@@ -6,7 +6,7 @@ import { parseQuoteEmail, autoReply } from '@/lib/ai';
 import { sendEmail } from '@/lib/resend';
 import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive, hasActiveFreeMonth } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 import { isSafeSlackWebhook } from '@/lib/slack';
 import { Webhook } from 'svix';
@@ -278,7 +278,8 @@ export async function POST(req: NextRequest) {
   // 防白嫖兜底：邮件转发入口同样受免费额度限制（此前完全没查，免费用户可无限建档）
   const accountIsAdmin = isAdminEmail(account.email);
   const accountIsPaid =
-    !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
+    (!!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id)) ||
+    hasActiveFreeMonth(account);
   if (!accountIsAdmin && !accountIsPaid) {
     const used = await countQuotesFor(admin, account.id, account.email);
     if (used >= FREE_QUOTA || !isTrialActive(account)) {

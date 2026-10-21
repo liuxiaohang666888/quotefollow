@@ -71,7 +71,7 @@ export default function DashboardPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string; created_at: string | null; trial_ends_at: string | null } | null>(null);
+  const [account, setAccount] = useState<{ followup_email: string; business_name: string; paypal_subscription_id: string | null; referral_code: string; created_at: string | null; trial_ends_at: string | null; free_months_earned: number | null; free_month_expires_at: string | null } | null>(null);
   const [quotaUsed, setQuotaUsed] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
     const { data: acc } = await supabase
       .from('accounts')
-      .select('followup_email, business_name, paypal_subscription_id, referral_code, created_at, trial_ends_at')
+      .select('followup_email, business_name, paypal_subscription_id, referral_code, created_at, trial_ends_at, free_months_earned, free_month_expires_at')
       .maybeSingle();
     setAccount(acc as any);
     setLoading(false);
@@ -127,7 +127,11 @@ export default function DashboardPage() {
   }, [account]);
 
   const remaining = Math.max(0, FREE_QUOTA - quotaUsed);
-  const isFree = !account?.paypal_subscription_id;
+  // free_months_earned 真抵扣：赠送免费月生效中（free_month_expires_at 未过期）视为解锁，不锁定
+  const freeMonthActive =
+    !!account && (account.free_months_earned || 0) > 0 && !!account.free_month_expires_at &&
+    new Date(account.free_month_expires_at).getTime() > Date.now();
+  const isFree = !account?.paypal_subscription_id && !freeMonthActive;
   const isExhausted = isFree && remaining === 0;
 
   // 14 天试用计时：优先用显式 trial_ends_at，老账号回退到 created_at + TRIAL_DAYS 推算

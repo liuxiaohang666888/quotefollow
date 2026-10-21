@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { completePendingReferrals } from '@/lib/referral-complete';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -161,6 +162,12 @@ async function handlePaypalEvent(
         .maybeSingle();
       if (account) {
         console.log(`[webhook/paypal] ACTIVATED: sub ${subId} confirmed active for ${account.email}`);
+        // Refer 付费后补判定：订阅激活确认即尝试完成该账号 pending 的邀请（幂等，无 pending 自动跳过）。
+        try {
+          await completePendingReferrals(admin, account.id, { skipVerify: true });
+        } catch (e) {
+          console.error('[webhook/paypal] ACTIVATED referral complete failed:', e);
+        }
         return { handled: true, action: 'activated_already_active', email: account.email };
       }
       console.warn(`[webhook/paypal] ACTIVATED: no account with sub ${subId} — activation handled by bind/signup, skip`);

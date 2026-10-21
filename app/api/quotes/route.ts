@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { parseQuoteEmail } from '@/lib/ai';
 import { scheduleForDay } from '@/lib/followup';
 import { resumePausedFollowupsForCustomer } from '@/lib/followup-resume';
-import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive } from '@/lib/paywall';
+import { isAdminEmail, FREE_QUOTA, countQuotesFor, isTrialActive, hasActiveFreeMonth } from '@/lib/paywall';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
 import { isQuoteCreateRateLimited } from '@/lib/rate-limit';
 
@@ -28,12 +28,12 @@ export async function POST(req: NextRequest) {
   // 自愈：账号行缺失（注册中断导致"半截账号"）时自动补建，避免下方 insert 报 FK 23503
   // 注意：必须连 created_at / trial_ends_at 一起取——旧代码只取 paypal_subscription_id，
   // 导致试用期检查对存量账号恒真（undefined → 恒"试用期内"），试用过期后仍可建档（M12）。
-  let acc = (await admin.from('accounts').select('paypal_subscription_id, created_at, trial_ends_at').eq('id', user.id).maybeSingle()).data;
+  let acc = (await admin.from('accounts').select('paypal_subscription_id, created_at, trial_ends_at, free_months_earned, free_month_expires_at').eq('id', user.id).maybeSingle()).data;
   if (!acc) {
     const { data: created, error: accErr } = await admin
       .from('accounts')
       .upsert({ id: user.id, email: user.email ?? '', followup_email: 'follow@voxalo.top' }, { onConflict: 'id' })
-      .select('paypal_subscription_id, created_at, trial_ends_at')
+      .select('paypal_subscription_id, created_at, trial_ends_at, free_months_earned, free_month_expires_at')
       .single();
     if (accErr) console.error('[quotes] account self-heal failed:', accErr);
     acc = created ?? acc;
@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
   // 防白嫖：免费账号（无有效订阅）限制报价总数，管理员豁免
   const isAdmin = isAdminEmail(user.email);
   const isPaid = !!acc?.paypal_subscription_id && isValidPaypalSubscriptionId(acc.paypal_subscription_id);
-  if (!isAdmin && !isPaid) {
+  const isUnlocked = isPaid || hasActiveFreeMonth(acc);
+  if (!isAdmin && !isUnlocked) {
     const used = await countQuotesFor(admin, user.id, user.email);
     if (used >= FREE_QUOTA || !isTrialActive(acc)) {
       const reason = used >= FREE_QUOTA

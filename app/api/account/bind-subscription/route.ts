@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+import { completePendingReferrals } from '@/lib/referral-complete';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,5 +62,14 @@ export async function POST(req: NextRequest) {
   }
 
   console.log(`[bind-subscription] bound sub ${subId} to account ${account.email}`);
+
+  // Refer 付费后补判定：绑定订阅成功即尝试完成该账号 pending 的邀请（幂等，无 pending 自动跳过）。
+  // 绑定动作本身即用户主动付款成功，跳过二次 PayPal verify，减少外部调用。
+  try {
+    await completePendingReferrals(admin, user.id, { skipVerify: true });
+  } catch (e) {
+    console.error('[bind-subscription] referral complete failed:', e);
+  }
+
   return NextResponse.json({ ok: true, account });
 }

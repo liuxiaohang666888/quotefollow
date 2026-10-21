@@ -1,3 +1,5 @@
+import { isValidPaypalSubscriptionId } from '@/lib/paypal';
+
 // 付费墙管理端绕过：只有列在 NEXT_PUBLIC_ADMIN_EMAILS 的邮箱可免订阅测试。
 // 这是给开发者/管理员自己的账号用的，公众无法伪造（邮箱由 Supabase 会话提供）。
 export function isAdminEmail(email: string | null | undefined): boolean {
@@ -59,4 +61,30 @@ export async function countQuotesFor(
     .select('id', { count: 'exact', head: true })
     .eq('account_id', accountId);
   return count ?? 0;
+}
+
+// free_months_earned 真抵扣：赠送免费月是否生效中（free_months_earned > 0 且 free_month_expires_at 未过期）。
+// 生效期间即使没有有效订阅也保持解锁；到期后按免费用户降级。
+export function hasActiveFreeMonth(account: {
+  free_months_earned?: number | null;
+  free_month_expires_at?: string | null;
+} | null | undefined): boolean {
+  if (!account) return false;
+  const earned = Number(account.free_months_earned ?? 0);
+  if (earned <= 0) return false;
+  const expires = account.free_month_expires_at ? new Date(account.free_month_expires_at).getTime() : null;
+  if (expires === null || Number.isNaN(expires)) return false;
+  return expires > Date.now();
+}
+
+// 统一解锁判定：付费订阅有效 或 赠送免费月生效中。
+// 所有付费墙判定点（quotes/quotes-send/followups/inbound/dashboard）共用此语义。
+export function isUnlocked(account: {
+  paypal_subscription_id?: string | null;
+  free_months_earned?: number | null;
+  free_month_expires_at?: string | null;
+} | null | undefined): boolean {
+  if (!account) return false;
+  const paid = !!account.paypal_subscription_id && isValidPaypalSubscriptionId(account.paypal_subscription_id);
+  return paid || hasActiveFreeMonth(account);
 }
